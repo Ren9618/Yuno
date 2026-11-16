@@ -491,7 +491,7 @@ fun VideoContent(
         )
         if (botWait > 0f) {
             Text(
-                "YouTube is checking this connection. Trying again…",
+                stringResource(R.string.video_bot_check_waiting),
                 color = Color.White,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -1140,6 +1140,8 @@ private fun BoxScope.ErrorPanel(message: String, state: PlayerState, onCollapse:
             Text(stringResource(R.string.player_error_bot_check), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, lineHeight = 19.sp, textAlign = TextAlign.Center)
             Spacer(Modifier.height(4.dp))
             Text(stringResource(R.string.player_error_bot_check_hint), color = Color.White.copy(alpha = 0.78f), fontSize = 13.sp, lineHeight = 18.sp, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(2.dp))
+            Text(stringResource(R.string.player_error_bot_check_auto), color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp, lineHeight = 16.sp, textAlign = TextAlign.Center)
         } else {
             Text(message, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, lineHeight = 19.sp, textAlign = TextAlign.Center)
         }
@@ -1153,6 +1155,21 @@ private fun BoxScope.ErrorPanel(message: String, state: PlayerState, onCollapse:
                     Modifier.pressable { state.openInYouTube(context) }.clip(CircleShape).background(Color.White.copy(alpha = 0.2f)).padding(horizontal = 18.dp, vertical = 9.dp),
                 ) { Text(stringResource(R.string.video_open_in_youtube), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1) }
             }
+        }
+        if (state.botCheck) {
+            // The hint's manual fix, one tap away: toggle there and the player retries on
+            // its own the moment the network comes back (BotCheckRecovery listens for it).
+            Spacer(Modifier.height(8.dp))
+            Box(
+                Modifier.pressable {
+                    runCatching {
+                        context.startActivity(
+                            android.content.Intent(android.provider.Settings.ACTION_AIRPLANE_MODE_SETTINGS)
+                                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                        )
+                    }
+                }.clip(CircleShape).background(Color.White.copy(alpha = 0.12f)).padding(horizontal = 18.dp, vertical = 9.dp),
+            ) { Text(stringResource(R.string.video_airplane_settings), color = Color.White.copy(alpha = 0.85f), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1) }
         }
     }
 }

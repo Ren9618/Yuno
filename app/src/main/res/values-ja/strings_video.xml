@@ -3,6 +3,8 @@
 
     <!-- Small note under the loading spinner while YouTube runs a bot check on this connection. -->
     <string name="video_bot_check_waiting">YouTube がこの接続を確認しています。再試行中…</string>
+    <!-- Third bot-check action: opens Android\'s airplane-mode page, the fix the hint describes. -->
+    <string name="video_airplane_settings">機内モード設定</string>
 
     <!-- Accessibility labels of the round buttons on the video. -->
     <string name="video_audio_only">音声のみ</string>

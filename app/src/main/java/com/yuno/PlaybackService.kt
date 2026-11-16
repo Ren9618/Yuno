@@ -121,7 +121,12 @@ class PlaybackService : MediaSessionService() {
                 .build()
         }
         // Before the session's own listener: the UI must see the recovery when the error reaches it.
-        player.addListener(StreamRecoverer(player, sources, resolver))
+        val recoverer = StreamRecoverer(player, sources, resolver)
+        player.addListener(recoverer)
+        // A video playing its 360p fallback gets the real streams swapped in when the
+        // background bot-check wait (BotCheckRecovery) passes.
+        val onRecovered: (String) -> Unit = { id -> recoverer.onRecovered(id) }
+        recoveredListener = onRecovered.also(BotCheckRecovery::addListener)
         resumeSaver = ResumeSaver(player).also(player::addListener)
         player.addListener(SessionSaver())
         watchTime = WatchTimeReporter(player).also(player::addListener)
@@ -150,8 +155,12 @@ class PlaybackService : MediaSessionService() {
 
     private var resumeSaver: ResumeSaver? = null
     private var watchTime: WatchTimeReporter? = null
+    /** Registered with BotCheckRecovery in onCreate, so a recovered 360p fallback swaps. */
+    private var recoveredListener: ((String) -> Unit)? = null
 
     override fun onDestroy() {
+        recoveredListener?.let(BotCheckRecovery::removeListener)
+        recoveredListener = null
         resumeSaver?.saveNow()
         watchTime?.finish()
         session?.run {
@@ -264,6 +273,18 @@ private class StreamRecoverer(
         player.removeMediaItem(index)
         player.seekTo(index, positionMs)
         player.prepare()
+    }
+
+    /**
+     * The bot check passed for a video playing its 360p fallback ([BotCheckRecovery]): the
+     * real streams are in the cache now — swap the source in place, at the same spot.
+     * Called on a worker thread; the swap happens on the main one.
+     */
+    fun onRecovered(id: String) = main.post {
+        val item = player.currentMediaItem ?: return@post
+        if (item.mediaId != id || player.playerError != null) return@post
+        Log.i("Yuno", "bot check passed for $id; the 360p fallback swaps for the real streams")
+        resume(item, player.currentPosition)
     }
 
     private companion object {

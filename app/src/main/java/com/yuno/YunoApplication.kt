@@ -51,11 +51,16 @@ class YunoApplication : Application(), ImageLoaderFactory {
         ShortsBank.init(this)
         AppUpdate.init(this)
         // Stream URLs are bound to the network they were fetched on: forget them on a switch.
+        // A video waiting out a bot check retries right away on the fresh address, too —
+        // the check rides on the address, which is what the airplane-mode hint is about.
         getSystemService(android.net.ConnectivityManager::class.java)?.registerDefaultNetworkCallback(
             object : android.net.ConnectivityManager.NetworkCallback() {
                 private var last: android.net.Network? = null
                 override fun onAvailable(network: android.net.Network) {
-                    if (last != null && last != network) StreamCache.invalidateAll()
+                    if (last != null && last != network) {
+                        StreamCache.invalidateAll()
+                        BotCheckRecovery.networkChanged()
+                    }
                     last = network
                 }
             },

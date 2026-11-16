@@ -49,6 +49,8 @@
     <string name="player_error_geo">この動画はお住まいの国では利用できません。</string>
 <string name="player_error_bot_check">YouTube がロボットでないことの確認を求めています。</string>
     <string name="player_error_bot_check_hint">機内モードをオンにしてからオフに戻すと、たいてい解決します。</string>
+    <!-- Under the hint: the panel isn\'t the end, the player keeps waiting the check out by itself. -->
+    <string name="player_error_bot_check_auto">Yuno はバックグラウンドで数分間試し続け、ネットワークが変わるたびにすぐ再試行します。</string>
     <string name="player_error_private">この動画は非公開です。</string>
     <string name="player_error_members_only">この動画はメンバー限定です。Yuno はまだメンバー限定動画を再生できません。</string>
     <string name="player_error_unavailable">この動画は利用できません。</string>

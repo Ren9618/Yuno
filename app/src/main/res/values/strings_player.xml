@@ -50,6 +50,8 @@
     <string name="player_error_geo">This video isn\'t available in your country.</string>
 <string name="player_error_bot_check">YouTube is asking to confirm you\'re not a bot.</string>
     <string name="player_error_bot_check_hint">Turning airplane mode on and back off usually fixes it.</string>
+    <!-- Under the hint: the panel isn\'t the end, the player keeps waiting the check out by itself. -->
+    <string name="player_error_bot_check_auto">Yuno keeps trying in the background for a few minutes, and again whenever the network changes.</string>
     <string name="player_error_private">This video is private.</string>
     <string name="player_error_members_only">This is a members-only video. Yuno can\'t play members-only videos yet.</string>
     <string name="player_error_unavailable">This video isn\'t available.</string>

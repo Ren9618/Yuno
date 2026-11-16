@@ -385,6 +385,9 @@ object StreamCache {
                 // cached and the load can be retried.
                 if (!picked.usesSeparate && BotCheck.refusedSince(id, startedAt)) throw StreamsRefused(id, it)
                 entries[id] = Entry(it, System.currentTimeMillis())
+                // A load that carried the real streams ends any background wait (BotCheckRecovery):
+                // a retry by hand shouldn't leave a wait that re-swaps the video later.
+                BotCheckRecovery.stop(id)
                 Net.noteMediaHost((picked.video ?: picked.muxed)?.content)
             }
         }
@@ -472,6 +475,9 @@ object BotCheck {
         if (partial != null && StreamSelection.pick(partial).isPlayable) {
             Log.w("Yuno", "bot check for $id; giving up on the real streams, playing the 360p combined one")
             StreamCache.keepRefused(id, partial)
+            // The 360p one plays for now; the check is waited out in the background and the
+            // real streams swap in when it passes (the service's StreamRecoverer).
+            BotCheckRecovery.schedule(id)
             return partial
         }
         Log.w("Yuno", "bot check for $id; giving up")

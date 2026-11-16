@@ -317,6 +317,10 @@ class PlayerState(private val scope: CoroutineScope) {
                     Log.w(TAG, "details failed for ${item.id}", it)
                     botCheck = it is org.schabi.newpipe.extractor.exceptions.SignInConfirmNotBotException
                     error = YouTube.friendlyError(it)
+                    // The panel keeps its buttons, and the check is waited out in the
+                    // background: the video opens itself when it passes (or sooner, when
+                    // the network changes).
+                    if (botCheck) BotCheckRecovery.schedule(item.id)
                     // Comments wait for details; without this their spinner never stopped.
                     comments.load(item.id)
                 }
@@ -670,6 +674,20 @@ class PlayerState(private val scope: CoroutineScope) {
 
     /** Fresh links too: the cached ones may be exactly what YouTube refused. */
     fun retry() = current?.let { item -> StreamCache.invalidate(item.id); current = null; open(item) }
+
+    /**
+     * The bot check passed for the video stuck on the error panel ([BotCheckRecovery]):
+     * open it again — the cache holds the real streams now, so this resolves at once.
+     * Called on a worker thread; the reopen runs on the state's own scope.
+     */
+    fun onBotCheckRecovered(id: String) {
+        scope.launch {
+            val item = current ?: return@launch
+            if (item.id != id || !botCheck) return@launch
+            Log.i(TAG, "bot check passed for $id; opening it again")
+            open(item)
+        }
+    }
 
     /** The video in YouTube's own app, from where it stopped. */
     fun openInYouTube(context: android.content.Context) {
@@ -1026,7 +1044,11 @@ fun rememberPlayerState(): PlayerState {
                 state.onConnected()
             }
         }, ContextCompat.getMainExecutor(context))
+        // A video stuck on the bot-check panel opens itself when the background wait passes.
+        val recovered: (String) -> Unit = { id -> state.onBotCheckRecovered(id) }
+        BotCheckRecovery.addListener(recovered)
         onDispose {
+            BotCheckRecovery.removeListener(recovered)
             state.controller?.removeListener(state.listener)
             MediaController.releaseFuture(future)
             state.controller = null
