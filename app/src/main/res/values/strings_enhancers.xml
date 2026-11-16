@@ -1,0 +1,41 @@
+<resources>
+    <!-- Settings › Enhancements: the Morphe light set's community extras around the player. -->
+    <string name="settings_enhancers">Enhancements</string>
+    <!-- Return YouTube Dislike (returnyoutubedislikeapi.com). -->
+    <string name="settings_ryd_title">Return YouTube Dislike</string>
+    <string name="settings_ryd_line">The dislike count comes from the Return YouTube Dislike community. Your own dislike still goes to YouTube.</string>
+    <!-- DeArrow (dearrow.ajay.app). -->
+    <string name="settings_dearrow_title">DeArrow</string>
+    <string name="settings_dearrow_line">The open video\'s title and thumbnail come from the DeArrow community when it has a better one. Videos keep their creator\'s own otherwise.</string>
+    <!-- The player\'s own buttons, only shown while their switch is on. -->
+    <string name="settings_mute_button_title">Mute button</string>
+    <string name="settings_mute_button_line">A button under the video that silences it and brings the sound back</string>
+    <string name="settings_loop_button_title">Loop button</string>
+    <string name="settings_loop_button_line">A button under the video that repeats it instead of letting it end</string>
+    <string name="settings_copy_button_title">Copy buttons</string>
+    <string name="settings_copy_button_line">A button under the video that copies its title, description or link; a video\'s hold menu gains Copy link</string>
+    <!-- Shared links lose the tracking parameters. -->
+    <string name="settings_sanitize_title">Sanitize sharing links</string>
+    <string name="settings_sanitize_line">Shared links leave out the tracking parameters YouTube adds, like “si”</string>
+
+    <!-- The decoder policy: software-only decoding, and per-codec disables (Morphe\'s codec switches). -->
+    <string name="settings_codecs_software_title">Software decoders only</string>
+    <string name="settings_codecs_software_line">Hardware decoders are never created; every stream decodes in software. For devices whose decoders crash</string>
+    <string name="settings_codecs_avc_title">Disable AVC (H.264)</string>
+    <string name="settings_codecs_hevc_title">Disable HEVC (H.265)</string>
+    <string name="settings_codecs_vp9_title">Disable VP9</string>
+    <string name="settings_codecs_av1_title">Disable AV1</string>
+    <string name="settings_codecs_disabled_line">Videos in this codec are skipped; another codec plays them, or only the sound does</string>
+    <string name="settings_codecs_sync_title">Synchronous MediaCodec</string>
+    <string name="settings_codecs_sync_line">MediaCodec is created without its async callback loop — for devices that crash on it</string>
+
+    <!-- The player\'s mute and loop pills. -->
+    <string name="player_mute">Mute</string>
+    <string name="player_unmute">Unmute</string>
+    <string name="player_loop">Loop</string>
+    <!-- The copy pill\'s menu. -->
+    <string name="player_copy_title">Copy title</string>
+    <string name="player_copy_description">Copy description</string>
+    <string name="player_copy_link">Copy link</string>
+    <string name="player_copied">Copied</string>
+</resources>

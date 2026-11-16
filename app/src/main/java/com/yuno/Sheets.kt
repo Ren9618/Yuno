@@ -94,6 +94,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
@@ -110,6 +111,7 @@ import com.yuno.icons.SfIcons
 fun VideoOptionsSheet(video: VideoItem, player: PlayerState, onDismiss: () -> Unit) {
     val c = MaterialTheme.colorScheme
     val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -132,6 +134,14 @@ fun VideoOptionsSheet(video: VideoItem, player: PlayerState, onDismiss: () -> Un
         OptionRow(Icons.Rounded.Share, stringResource(R.string.ui_share)) {
             shareLink(context, "https://youtu.be/${video.id}", video.title)
             onDismiss()
+        }
+        if (Enhancers.showCopy) {
+            OptionRow(SfIcons.ContentCopy, stringResource(R.string.player_copy_link)) {
+                clipboard?.setText(
+                    androidx.compose.ui.text.AnnotatedString(Enhancers.link("https://youtu.be/${video.id}")),
+                )
+                onDismiss()
+            }
         }
         video.feedback?.notInterested?.let {
             OptionRow(Icons.Rounded.DoNotDisturbOn, stringResource(R.string.ui_not_interested)) { player.notInterested(video); onDismiss() }

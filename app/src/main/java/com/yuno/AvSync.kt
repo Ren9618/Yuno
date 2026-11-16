@@ -10,7 +10,12 @@ import androidx.annotation.RequiresApi
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.Renderer
+import androidx.media3.exoplayer.audio.AudioRendererEventListener
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.MediaCodecAudioRenderer
+import androidx.media3.exoplayer.mediacodec.MediaCodecAdapter
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
+import androidx.media3.exoplayer.mediacodec.SynchronousMediaCodecAdapter
 import androidx.media3.exoplayer.video.MediaCodecVideoRenderer
 import androidx.media3.exoplayer.video.VideoRendererEventListener
 import kotlin.math.abs
@@ -136,10 +141,12 @@ class SyncedRenderersFactory(context: Context) : DefaultRenderersFactory(context
         out: ArrayList<Renderer>,
     ) {
         // Same settings DefaultRenderersFactory uses; the app ships no extension decoders.
+        // The codec policy (CodecSettings) decides which decoders may be created, and whether
+        // MediaCodec runs through the synchronous adapter (devices that crash on the async one).
         out += SyncedVideoRenderer(
             MediaCodecVideoRenderer.Builder(context)
-                .setCodecAdapterFactory(codecAdapterFactory)
-                .setMediaCodecSelector(mediaCodecSelector)
+                .setCodecAdapterFactory(adapterFactory())
+                .setMediaCodecSelector(CodecSettings.wrap(mediaCodecSelector))
                 .setAllowedJoiningTimeMs(allowedVideoJoiningTimeMs)
                 .setEnableDecoderFallback(enableDecoderFallback)
                 .setEventHandler(eventHandler)
@@ -147,6 +154,48 @@ class SyncedRenderersFactory(context: Context) : DefaultRenderersFactory(context
                 .setMaxDroppedFramesToNotify(50),
         )
     }
+
+    override fun buildAudioRenderers(
+        context: Context,
+        extensionRendererMode: Int,
+        mediaCodecSelector: MediaCodecSelector,
+        enableDecoderFallback: Boolean,
+        audioSink: AudioSink,
+        eventHandler: Handler,
+        eventListener: AudioRendererEventListener,
+        out: ArrayList<Renderer>,
+    ) {
+        // DefaultRenderersFactory builds the audio renderer with its own (async) adapter
+        // factory, so this one is built here when the synchronous adapter is wanted; the
+        // audio decoders follow the codec policy too (audio can crash on the same broken
+        // media stack the video decoders do).
+        if (!CodecSettings.syncAdapters) {
+            super.buildAudioRenderers(
+                context,
+                extensionRendererMode,
+                CodecSettings.wrap(mediaCodecSelector),
+                enableDecoderFallback,
+                audioSink,
+                eventHandler,
+                eventListener,
+                out,
+            )
+            return
+        }
+        out += MediaCodecAudioRenderer(
+            context,
+            adapterFactory(),
+            CodecSettings.wrap(mediaCodecSelector),
+            enableDecoderFallback,
+            eventHandler,
+            eventListener,
+            audioSink,
+        )
+    }
+
+    /** MediaCodec's adapter: async (the default) or synchronous when the policy says so. */
+    private fun adapterFactory(): MediaCodecAdapter.Factory =
+        if (CodecSettings.syncAdapters) SynchronousMediaCodecAdapter.Factory() else codecAdapterFactory
 }
 
 /** Sees the playback position shifted by [AvSync.offsetUs], so frames reach the screen on time. */

@@ -66,6 +66,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuno.icons.SfIcons
+import com.yuno.icons.YunoIcons
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -82,6 +83,7 @@ enum class SettingsPage(@StringRes val titleRes: Int, val icon: ImageVector) {
     Playback(R.string.settings_playback, SfIcons.PlayCircle),
     Captions(R.string.captions_title, Icons.Rounded.ClosedCaption),
     SponsorBlock(R.string.settings_sponsorblock, SfIcons.FastForward),
+    Enhancers(R.string.settings_enhancers, SfIcons.AutoAwesome),
     Shorts(R.string.ui_shorts, SfIcons.Shorts),
     Appearance(R.string.ui_appearance, SfIcons.Palette),
     Language(R.string.language_title, SfIcons.Language),
@@ -182,6 +184,7 @@ private fun MainPage(
         PlaybackBody(player, search)
         CaptionsBody(search)
         SponsorBlockBody(search)
+        EnhancersBody(search)
         ShortsBody(search)
         AppearanceBody(search)
         LanguageBody(search)
@@ -211,6 +214,7 @@ private fun PageBody(
         SettingsPage.Playback -> PlaybackBody(player, search)
         SettingsPage.Captions -> CaptionsBody(search)
         SettingsPage.SponsorBlock -> SponsorBlockBody(search)
+        SettingsPage.Enhancers -> EnhancersBody(search)
         SettingsPage.Shorts -> ShortsBody(search)
         SettingsPage.Appearance -> AppearanceBody(search)
         SettingsPage.Language -> LanguageBody(search)
@@ -400,6 +404,71 @@ private fun SponsorBlockBody(search: SettingsSearch) {
                         }
                     },
                 ) { SponsorBlock.setAction(category, SponsorBlock.Action.entries[it]) }
+            }
+        }
+    }
+}
+
+/**
+ * The Morphe light set's switches (Enhancers.kt): the community extras around the player.
+ * Return YouTube Dislike and DeArrow go out to their sites' own APIs; the mute, loop and
+ * copy rows only show or hide the player's own buttons.
+ */
+@Composable
+private fun EnhancersBody(search: SettingsSearch) {
+    SearchableSettingsGroup(search, header = stringResource(R.string.settings_enhancers)) {
+        val rydTitle = stringResource(R.string.settings_ryd_title)
+        val rydLine = stringResource(R.string.settings_ryd_line)
+        row(rydTitle, rydLine) {
+            ToggleRow(SfIcons.ThumbDown, rydTitle, rydLine, ReturnYouTubeDislike.enabled) { ReturnYouTubeDislike.updateEnabled(it) }
+        }
+        val deArrowTitle = stringResource(R.string.settings_dearrow_title)
+        val deArrowLine = stringResource(R.string.settings_dearrow_line)
+        row(deArrowTitle, deArrowLine) {
+            ToggleRow(SfIcons.Label, deArrowTitle, deArrowLine, DeArrow.enabled) { DeArrow.updateEnabled(it) }
+        }
+        val muteTitle = stringResource(R.string.settings_mute_button_title)
+        val muteLine = stringResource(R.string.settings_mute_button_line)
+        row(muteTitle, muteLine) {
+            ToggleRow(SfIcons.VolumeOff, muteTitle, muteLine, Enhancers.showMute) { Enhancers.updateMuteButton(it) }
+        }
+        val loopTitle = stringResource(R.string.settings_loop_button_title)
+        val loopLine = stringResource(R.string.settings_loop_button_line)
+        row(loopTitle, loopLine) {
+            ToggleRow(YunoIcons.Repeat, loopTitle, loopLine, Enhancers.showLoop) { Enhancers.updateLoopButton(it) }
+        }
+        val copyTitle = stringResource(R.string.settings_copy_button_title)
+        val copyLine = stringResource(R.string.settings_copy_button_line)
+        row(copyTitle, copyLine) {
+            ToggleRow(SfIcons.ContentCopy, copyTitle, copyLine, Enhancers.showCopy) { Enhancers.updateCopyButtons(it) }
+        }
+        val sanitizeTitle = stringResource(R.string.settings_sanitize_title)
+        val sanitizeLine = stringResource(R.string.settings_sanitize_line)
+        row(sanitizeTitle, sanitizeLine) {
+            ToggleRow(SfIcons.WebAssetOff, sanitizeTitle, sanitizeLine, Enhancers.sanitizeLinks) { Enhancers.updateSanitizeLinks(it) }
+        }
+        // The decoder policy: software-only decoding, then Morphe's per-codec disables.
+        val softwareTitle = stringResource(R.string.settings_codecs_software_title)
+        val softwareLine = stringResource(R.string.settings_codecs_software_line)
+        row(softwareTitle, softwareLine) {
+            ToggleRow(SfIcons.Advanced, softwareTitle, softwareLine, CodecSettings.softwareOnly) { CodecSettings.updateSoftwareOnly(it) }
+        }
+        val syncTitle = stringResource(R.string.settings_codecs_sync_title)
+        val syncLine = stringResource(R.string.settings_codecs_sync_line)
+        row(syncTitle, syncLine) {
+            ToggleRow(SfIcons.Sliders, syncTitle, syncLine, CodecSettings.syncAdapters) { CodecSettings.updateSyncAdapters(it) }
+        }
+        val codecToggles = listOf(
+            "avc" to R.string.settings_codecs_avc_title,
+            "hevc" to R.string.settings_codecs_hevc_title,
+            "vp9" to R.string.settings_codecs_vp9_title,
+            "av1" to R.string.settings_codecs_av1_title,
+        )
+        codecToggles.forEach { (family, titleRes) ->
+            val title = stringResource(titleRes)
+            val line = stringResource(R.string.settings_codecs_disabled_line)
+            row(title, line) {
+                ToggleRow(SfIcons.Video, title, line, CodecSettings.isDisabled(family)) { CodecSettings.updateDisabled(family, it) }
             }
         }
     }

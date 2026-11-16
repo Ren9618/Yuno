@@ -1,0 +1,41 @@
+<resources>
+    <!-- Settings › Enhancements: the Morphe light set's community extras around the player. -->
+    <string name="settings_enhancers">拡張機能</string>
+    <!-- Return YouTube Dislike (returnyoutubedislikeapi.com). -->
+    <string name="settings_ryd_title">Return YouTube Dislike</string>
+    <string name="settings_ryd_line">低評価の数を Return YouTube Dislike コミュニティから取得します。あなた自身の低評価はこれまでどおり YouTube に送られます。</string>
+    <!-- DeArrow (dearrow.ajay.app). -->
+    <string name="settings_dearrow_title">DeArrow</string>
+    <string name="settings_dearrow_line">開いている動画のタイトルとサムネイルを、DeArrow コミュニティの評判の良いものがあれば置き換えます。なければクリエイターが設定したもののままです。</string>
+    <!-- The player\'s own buttons, only shown while their switch is on. -->
+    <string name="settings_mute_button_title">ミュートボタン</string>
+    <string name="settings_mute_button_line">動画の下に、消音と解除を切り替えるボタンを表示します</string>
+    <string name="settings_loop_button_title">ループボタン</string>
+    <string name="settings_loop_button_line">動画の下に、終わらずに繰り返し再生するボタンを表示します</string>
+    <string name="settings_copy_button_title">コピーボタン</string>
+    <string name="settings_copy_button_line">動画の下に、タイトル・概要欄・リンクをコピーするボタンを表示します。動画の長押しメニューにも「リンクをコピー」が追加されます</string>
+    <!-- Shared links lose the tracking parameters. -->
+    <string name="settings_sanitize_title">共有リンクをクリーンアップ</string>
+    <string name="settings_sanitize_line">共有するリンクから「si」など YouTube が付けるトラッキング用のパラメーターを取り除きます</string>
+
+    <!-- The decoder policy: software-only decoding, and per-codec disables (Morphe\'s codec switches). -->
+    <string name="settings_codecs_software_title">ソフトウェアデコーダのみ使用</string>
+    <string name="settings_codecs_software_line">ハードウェアデコーダを作らず、すべての映像と音声をソフトウェアでデコードします。ベンダーコーデックが壊れている端末向けです</string>
+    <string name="settings_codecs_avc_title">AVC (H.264) を無効化</string>
+    <string name="settings_codecs_hevc_title">HEVC (H.265) を無効化</string>
+    <string name="settings_codecs_vp9_title">VP9 を無効化</string>
+    <string name="settings_codecs_av1_title">AV1 を無効化</string>
+    <string name="settings_codecs_disabled_line">このコーデックの動画は使わず、別のコーデック(なければ音声のみ)で再生します</string>
+    <string name="settings_codecs_sync_title">同期的 MediaCodec</string>
+    <string name="settings_codecs_sync_line">MediaCodec を非同期コールバックなしで作成します。非同期でクラッシュする端末向けです</string>
+
+    <!-- The player\'s mute and loop pills. -->
+    <string name="player_mute">ミュート</string>
+    <string name="player_unmute">ミュート解除</string>
+    <string name="player_loop">ループ</string>
+    <!-- The copy pill\'s menu. -->
+    <string name="player_copy_title">タイトルをコピー</string>
+    <string name="player_copy_description">概要欄をコピー</string>
+    <string name="player_copy_link">リンクをコピー</string>
+    <string name="player_copied">コピーしました</string>
+</resources>

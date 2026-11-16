@@ -542,6 +542,7 @@ object StreamSelection {
         }
         val candidates = info.videoOnlyStreams
             .filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.height > 0 }
+            .filter(::allowed)
         val chosen = QualityPreference.height
         // A chosen height plays exactly if offered, else the nearest below it. Auto caps at 1080p.
         val ceiling = chosen ?: MAX_HEIGHT
@@ -564,6 +565,7 @@ object StreamSelection {
             .firstOrNull()
         val muxed = info.videoStreams
             .filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP }
+            .filter(::allowed)
             .maxByOrNull { it.height }
         return Picked(video, audio, muxed)
     }
@@ -575,12 +577,35 @@ object StreamSelection {
      * can sustain immediately and climbs, like YouTube.
      */
     fun autoLadder(info: StreamInfo): List<VideoStream> {
-        val usable = info.videoOnlyStreams.filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.height in 1..MAX_HEIGHT && it.itagItem != null }
+        var usable = info.videoOnlyStreams.filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.height in 1..MAX_HEIGHT && it.itagItem != null }
+        if (CodecSettings.hasDisabled) usable = usable.filter { familyOf(it)?.let(CodecSettings::isDisabled) != true }
         val family = usable.filter { it.codec?.startsWith("avc") == true }.ifEmpty { usable.filter { it.format == MediaFormat.WEBM } }
         return family.groupBy { it.height }
             .map { (_, sameHeight) -> sameHeight.maxBy { it.fps * 100_000L + it.bitrate } }
             .sortedBy { it.height }
     }
+
+    /** A codec family (avc/hevc/vp9/vp8/av1) a video stream belongs to, by its codec or container. */
+    internal fun familyOf(s: VideoStream): String? {
+        val codec = s.codec
+        if (!codec.isNullOrBlank()) return when {
+            codec.startsWith("avc") -> "avc"
+            codec.startsWith("hvc") || codec.startsWith("hev") -> "hevc"
+            codec.startsWith("vp9") || codec.startsWith("vp09") -> "vp9"
+            codec.startsWith("vp8") -> "vp8"
+            codec.startsWith("av01") || codec.startsWith("av1") -> "av1"
+            else -> null
+        }
+        return when (s.format) {
+            MediaFormat.MPEG_4 -> "avc"
+            MediaFormat.WEBM -> "vp9"
+            else -> null
+        }
+    }
+
+    /** Streams in a disabled codec family (CodecSettings) are never offered to the player. */
+    private fun allowed(s: VideoStream): Boolean =
+        !CodecSettings.hasDisabled || familyOf(s)?.let(CodecSettings::isDisabled) != true
 
     fun heights(info: StreamInfo): List<Int> = info.videoOnlyStreams
         .filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.height > 0 }

@@ -46,6 +46,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -748,14 +750,73 @@ private fun PlayerActions(state: PlayerState) {
     ) {
         AccountActions(state)
         val context = LocalContext.current
+        val clipboard = LocalClipboardManager.current
+        val copied = stringResource(R.string.player_copied)
         val item = state.current
+        // The Morphe light set's buttons, each switchable off in Settings › Enhancements.
+        if (Enhancers.showMute) {
+            val mute = stringResource(R.string.player_mute)
+            val unmute = stringResource(R.string.player_unmute)
+            ActionPill(
+                icon = if (state.muted) SfIcons.VolumeOff else SfIcons.VolumeUp,
+                label = null,
+                active = state.muted,
+                flourish = null,
+                shape = RoundedCornerShape(22.dp),
+                description = if (state.muted) unmute else mute,
+            ) { state.toggleMute() }
+        }
+        if (Enhancers.showLoop) {
+            val loop = stringResource(R.string.player_loop)
+            ActionPill(
+                icon = YunoIcons.Repeat,
+                label = null,
+                active = state.loop,
+                flourish = null,
+                shape = RoundedCornerShape(22.dp),
+                description = loop,
+            ) { state.toggleLoop() }
+        }
+        if (Enhancers.showCopy) {
+            var copyMenu by remember { mutableStateOf(false) }
+            val copyTitle = stringResource(R.string.player_copy_title)
+            val copyDescription = stringResource(R.string.player_copy_description)
+            val copyLink = stringResource(R.string.player_copy_link)
+            Box {
+                ActionPill(
+                    icon = SfIcons.ContentCopy,
+                    label = null,
+                    active = false,
+                    flourish = null,
+                    shape = RoundedCornerShape(22.dp),
+                    description = copyTitle,
+                ) { copyMenu = true }
+                DropdownMenu(expanded = copyMenu, onDismissRequest = { copyMenu = false }) {
+                    DropdownMenuItem(text = { Text(copyTitle) }, onClick = {
+                        copyMenu = false
+                        item?.let { clipboard?.setText(AnnotatedString(it.title)) }
+                        state.actionMessage = copied
+                    })
+                    DropdownMenuItem(text = { Text(copyDescription) }, onClick = {
+                        copyMenu = false
+                        state.details?.description?.takeIf { it.isNotBlank() }?.let { clipboard?.setText(AnnotatedString(it)) }
+                        state.actionMessage = copied
+                    })
+                    DropdownMenuItem(text = { Text(copyLink) }, onClick = {
+                        copyMenu = false
+                        item?.let { clipboard?.setText(AnnotatedString(Enhancers.link("https://youtu.be/${it.id}"))) }
+                        state.actionMessage = copied
+                    })
+                }
+            }
+        }
         ActionPill(
             icon = SfIcons.Share,
-            label = "Share",
+            label = stringResource(R.string.ui_share),
             active = false,
             flourish = null,
             shape = RoundedCornerShape(22.dp),
-            description = "Share",
+            description = stringResource(R.string.ui_share),
         ) { item?.let { shareLink(context, "https://youtu.be/${it.id}", it.title) } }
     }
 }
@@ -789,7 +850,8 @@ private fun AccountActions(state: PlayerState) {
         ) { state.setLike(LikeStatus.Like) }
         ActionPill(
             icon = if (like == LikeStatus.Dislike) SfIcons.ThumbDownFill else SfIcons.ThumbDown,
-            label = null,
+            // Return YouTube Dislike's estimate, once it has one (Enhancers).
+            label = state.displayDislikes?.takeIf { it >= 0 }?.let { formatCount(it) },
             active = like == LikeStatus.Dislike,
             flourish = Flourish.Droop,
             shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 22.dp, bottomEnd = 22.dp),

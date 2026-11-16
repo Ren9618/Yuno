@@ -27,10 +27,12 @@ import kotlin.math.roundToInt
 import androidx.media3.session.SessionToken
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * The UI's view of playback. Holds the MediaController plus everything the player
@@ -162,6 +164,70 @@ class PlayerState(private val scope: CoroutineScope) {
     /** A short message after an account action fails (shown briefly over the player). */
     var actionMessage by mutableStateOf<String?>(null)
 
+    // ── Community extras (Morphe's light set) ──
+    /** Return YouTube Dislike's estimate for the open video; null while loading or none. */
+    var displayDislikes by mutableStateOf<Long?>(null)
+        private set
+    /** DeArrow's branding for the open video (a replaced title/thumbnail) while enabled. */
+    private var branding by mutableStateOf<DeArrow.Branding?>(null)
+
+    /** The mute pill's state: the service player's volume rides on it. */
+    var muted by mutableStateOf(false)
+        private set
+    /** The loop pill's state: the current video repeats instead of ending. */
+    var loop by mutableStateOf(false)
+        private set
+
+    fun toggleMute() {
+        val player = controller ?: return
+        muted = !muted
+        player.volume = if (muted) 0f else 1f
+    }
+
+    fun toggleLoop() {
+        val player = controller ?: return
+        loop = !loop
+        player.repeatMode = if (loop) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+    }
+
+    /** The saved mute/loop, back on the player after the service reconnected. */
+    private fun applyPlaybackExtras(player: MediaController) {
+        player.volume = if (muted) 0f else 1f
+        player.repeatMode = if (loop) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
+    }
+
+    /** Puts DeArrow's community title/thumbnail on the video the screens show. */
+    private fun applyBranding() {
+        val b = branding ?: return
+        val shown = current ?: return
+        if (b.title == null && b.thumbnailUrl == null) return
+        if (shown.title == b.title && shown.thumbnail == b.thumbnailUrl) return
+        current = shown.copy(title = b.title ?: shown.title, thumbnail = b.thumbnailUrl ?: shown.thumbnail)
+    }
+
+    /** The community extras for [item]: dislike counts and (while enabled) DeArrow branding. */
+    private fun loadEnhancers(item: VideoItem) {
+        displayDislikes = null
+        branding = null
+        scope.launch {
+            if (ReturnYouTubeDislike.enabled) {
+                val dislikes = withContext(Dispatchers.IO) {
+                    runCatching { ReturnYouTubeDislike.fetch(item.id) }.getOrNull()?.dislikes
+                }
+                if (current?.id == item.id) displayDislikes = dislikes
+            }
+            if (DeArrow.enabled) {
+                val b = withContext(Dispatchers.IO) {
+                    runCatching { DeArrow.fetch(item.id) }.getOrNull()
+                }
+                if (current?.id == item.id) {
+                    branding = b
+                    applyBranding()
+                }
+            }
+        }
+    }
+
     private var loadJob: Job? = null
     /** A video picked before the service connection finished; started on connect. */
     private var pendingStart: VideoItem? = null
@@ -214,6 +280,7 @@ class PlayerState(private val scope: CoroutineScope) {
         captions.clear()
         accountState = null
         inWatchLater = false
+        loadEnhancers(item)
         // Local Library history (guest + signed-in backup); YouTube's own history still needs sign-in.
         WatchHistory.record(item)
         if (Account.signedIn) {
@@ -238,6 +305,8 @@ class PlayerState(private val scope: CoroutineScope) {
                     known[item.id] = d.item
                     // Refresh the history row with title/thumb/duration from details.
                     WatchHistory.record(d.item)
+                    // DeArrow's title beat the details' own to `current`; put it back on top.
+                    applyBranding()
                     if (!d.playable) error = "No playable stream was found for this video."
                     else if (startPlayback) startPlayback(d.item)
                 }
@@ -799,6 +868,7 @@ class PlayerState(private val scope: CoroutineScope) {
     internal fun onConnected() {
         syncFromPlayer()
         applyVideoTrack()
+        controller?.let(::applyPlaybackExtras)
         controller?.videoSize?.let(::takeVideoSize)
         pendingStart?.let { pendingStart = null; startPlayback(it); return }
         val player = controller ?: return

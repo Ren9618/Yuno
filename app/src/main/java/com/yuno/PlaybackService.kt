@@ -571,6 +571,8 @@ internal class YouTubeMediaSourceFactory(context: Context) : MediaSource.Factory
                 source(video, info.duration, mediaItem),
                 source(audio, info.duration, mediaItem),
             )
+            // Every video codec is disabled (CodecSettings) or missing: sound still plays.
+            audio != null -> source(audio, info.duration, mediaItem)
             picked.muxed != null -> source(picked.muxed, info.duration, mediaItem)
             // Nothing playable: let the default factory fail on the watch URL so the
             // player reports an error instead of hanging.

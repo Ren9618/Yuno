@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: the raw MediaCodec probe activity (DecoderTestActivity) exists to
+     pin down where this ROM's media stack faults, so it is never shipped. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <activity
+            android:name=".DecoderTestActivity"
+            android:exported="true"
+            android:label="Yuno decoder probe" />
+    </application>
+</manifest>

@@ -615,10 +615,10 @@ fun displayAge(age: String?): String? {
  */
 fun List<String>.joinDots(): String = joinToString(" · ") { "\u2068$it\u2069" }
 
-/** Android's share sheet for a link (a video, a short). */
+/** Android's share sheet for a link (a video, a short); tracking parameters are stripped first. */
 fun shareLink(context: android.content.Context, url: String, title: String) {
     val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
-        .putExtra(android.content.Intent.EXTRA_TEXT, url)
+        .putExtra(android.content.Intent.EXTRA_TEXT, Enhancers.link(url))
         .putExtra(android.content.Intent.EXTRA_SUBJECT, title)
     context.startActivity(android.content.Intent.createChooser(send, null))
 }
