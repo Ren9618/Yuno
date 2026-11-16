@@ -129,6 +129,33 @@ class CommentsState(private val scope: CoroutineScope) {
     /** Comments the account has liked: from YouTube, plus taps this session. */
     val liked = mutableStateMapOf<String, Boolean>()
 
+    // ── Translation (the fork's extra, Translate.kt) ──
+    /** Translations by comment id (kept after hiding, so reopening is instant). */
+    val translations = mutableStateMapOf<String, Translator.Translation>()
+    /** Comments showing their translation right now. */
+    val translatedOpen = mutableStateMapOf<String, Boolean>()
+    /** Comments whose translation is being fetched. */
+    val translating = mutableStateMapOf<String, Boolean>()
+    /** Comments whose last fetch failed; cleared on the next open so it retries. */
+    val translationFailed = mutableStateMapOf<String, Boolean>()
+
+    /** Shows a comment's translation (fetching it once, in the app's language) or hides it again. */
+    fun toggleTranslation(comment: Comment) {
+        if (translatedOpen[comment.id] == true) {
+            translatedOpen[comment.id] = false
+            return
+        }
+        translatedOpen[comment.id] = true
+        if (translations.containsKey(comment.id) || translating[comment.id] == true) return
+        translationFailed.remove(comment.id)
+        translating[comment.id] = true
+        scope.launch {
+            val answer = runCatching { Translator.translate(comment.text, AppLanguage.locale.language) }.getOrNull()
+            translating.remove(comment.id)
+            if (answer != null) translations[comment.id] = answer else translationFailed[comment.id] = true
+        }
+    }
+
     /** Optimistic like toggle; reverts with a note if YouTube refuses. */
     fun toggleLike(comment: Comment, onError: (String) -> Unit) {
         val id = videoId ?: return
@@ -149,6 +176,7 @@ class CommentsState(private val scope: CoroutineScope) {
         videoId = id
         comments = emptyList(); total = -1; disabled = false; error = null; next = null
         replies.clear(); repliesLoading.clear(); replyingTo = null; draft = ""; postError = null
+        translations.clear(); translatedOpen.clear(); translating.clear(); translationFailed.clear()
         loading = true
     }
 
@@ -165,6 +193,10 @@ class CommentsState(private val scope: CoroutineScope) {
         replies.clear()
         repliesLoading.clear()
         liked.clear()
+        translations.clear()
+        translatedOpen.clear()
+        translating.clear()
+        translationFailed.clear()
         loading = true
         job?.cancel()
         val startedAt = android.os.SystemClock.elapsedRealtime()
@@ -647,6 +679,37 @@ private fun CommentRow(comment: Comment, state: CommentsState, isReply: Boolean 
                         modifier = Modifier.pressable { state.startReply(comment) }.padding(vertical = 2.dp),
                     )
                 }
+                // Translation (the fork's extra): the comment in the app's language, shown below.
+                if (!comment.id.startsWith("local-")) {
+                    Spacer(Modifier.width(16.dp))
+                    Text(
+                        stringResource(if (state.translatedOpen[comment.id] == true) R.string.comments_show_original else R.string.comments_translate),
+                        color = c.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.pressable { state.toggleTranslation(comment) }.padding(vertical = 2.dp),
+                    )
+                }
+            }
+            // The translation sits under the original (like the web's own), collapsible.
+            if (state.translatedOpen[comment.id] == true) {
+                Spacer(Modifier.height(4.dp))
+                when {
+                    state.translating[comment.id] == true ->
+                        Text(stringResource(R.string.comments_translating), color = c.onSurfaceVariant, fontSize = 12.sp)
+                    state.translations[comment.id] != null -> {
+                        val translation = state.translations[comment.id]!!
+                        Text(translation.text, fontSize = 14.sp, lineHeight = 20.sp)
+                        translation.source?.let { source ->
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                stringResource(R.string.comments_translated_from, Translator.displaySource(source)),
+                                color = c.onSurfaceVariant, fontSize = 11.sp,
+                            )
+                        }
+                    }
+                    state.translationFailed[comment.id] == true ->
+                        Text(stringResource(R.string.comments_translation_failed), color = c.error, fontSize = 12.sp)
+                }
+                Spacer(Modifier.height(6.dp))
             }
             if (!isReply && comment.replyCount > 0 && comment.repliesToken != null) {
                 val open = state.replies.containsKey(comment.id)

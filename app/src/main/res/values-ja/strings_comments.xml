@@ -29,6 +29,13 @@
     <string name="comments_hearted">クリエイターがハートを付けました</string>
     <!-- Small text button under a comment, keep short. -->
     <string name="comments_reply">返信</string>
+    <!-- The fork\'s comment translation (Translate.kt): the small button under a comment and the states under it. -->
+    <string name="comments_translate">翻訳</string>
+    <string name="comments_show_original">原文を表示</string>
+    <string name="comments_translating">翻訳中…</string>
+    <string name="comments_translation_failed">このコメントを翻訳できませんでした。</string>
+    <!-- Note under a translation. %1$s = the source language\'s name in the app\'s language ("English"). -->
+    <string name="comments_translated_from">%1$sから翻訳</string>
     <!-- Text button that folds a comment's replies away. -->
     <string name="comments_hide_replies">返信を非表示</string>
     <!-- Text button that opens a comment's replies. %1$s = how many. -->

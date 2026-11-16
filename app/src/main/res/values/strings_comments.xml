@@ -29,6 +29,13 @@
     <string name="comments_hearted">Hearted by creator</string>
     <!-- Small text button under a comment, keep short. -->
     <string name="comments_reply">Reply</string>
+    <!-- The fork\'s comment translation (Translate.kt): the small button under a comment and the states under it. -->
+    <string name="comments_translate">Translate</string>
+    <string name="comments_show_original">Show original</string>
+    <string name="comments_translating">Translating…</string>
+    <string name="comments_translation_failed">Couldn\'t translate this comment.</string>
+    <!-- Note under a translation. %1$s = the source language\'s name in the app\'s language ("English"). -->
+    <string name="comments_translated_from">Translated from %1$s</string>
     <!-- Text button that folds a comment's replies away. -->
     <string name="comments_hide_replies">Hide replies</string>
     <!-- Text button that opens a comment's replies. %1$s = how many. -->
