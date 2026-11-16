@@ -456,13 +456,17 @@ private fun SponsorBlockBody(search: SettingsSearch) {
  */
 @Composable
 private fun EnhancersBody(search: SettingsSearch) {
-    SearchableSettingsGroup(search, header = stringResource(R.string.settings_enhancers)) {
+    // Grouped (the fork's tidying): extraction, community APIs, the player's own buttons,
+    // sharing, and the decoder policy — each with its own heading on the page.
+    SearchableSettingsGroup(search, header = stringResource(R.string.settings_enhancers_group_extraction)) {
         // The signed-in session rides the extractor's player requests (the bot check's fix).
         val sessionTitle = stringResource(R.string.settings_session_extraction_title)
         val sessionLine = stringResource(R.string.settings_session_extraction_line)
         row(sessionTitle, sessionLine) {
             ToggleRow(SfIcons.Person, sessionTitle, sessionLine, Enhancers.sessionExtraction) { Enhancers.updateSessionExtraction(it) }
         }
+    }
+    SearchableSettingsGroup(search, header = stringResource(R.string.settings_enhancers_group_community)) {
         val rydTitle = stringResource(R.string.settings_ryd_title)
         val rydLine = stringResource(R.string.settings_ryd_line)
         row(rydTitle, rydLine) {
@@ -473,6 +477,8 @@ private fun EnhancersBody(search: SettingsSearch) {
         row(deArrowTitle, deArrowLine) {
             ToggleRow(SfIcons.Label, deArrowTitle, deArrowLine, DeArrow.enabled) { DeArrow.updateEnabled(it) }
         }
+    }
+    SearchableSettingsGroup(search, header = stringResource(R.string.settings_enhancers_group_buttons)) {
         val muteTitle = stringResource(R.string.settings_mute_button_title)
         val muteLine = stringResource(R.string.settings_mute_button_line)
         row(muteTitle, muteLine) {
@@ -488,11 +494,15 @@ private fun EnhancersBody(search: SettingsSearch) {
         row(copyTitle, copyLine) {
             ToggleRow(SfIcons.ContentCopy, copyTitle, copyLine, Enhancers.showCopy) { Enhancers.updateCopyButtons(it) }
         }
+    }
+    SearchableSettingsGroup(search, header = stringResource(R.string.settings_enhancers_group_sharing)) {
         val sanitizeTitle = stringResource(R.string.settings_sanitize_title)
         val sanitizeLine = stringResource(R.string.settings_sanitize_line)
         row(sanitizeTitle, sanitizeLine) {
             ToggleRow(SfIcons.WebAssetOff, sanitizeTitle, sanitizeLine, Enhancers.sanitizeLinks) { Enhancers.updateSanitizeLinks(it) }
         }
+    }
+    SearchableSettingsGroup(search, header = stringResource(R.string.settings_enhancers_group_decoders)) {
         // The decoder policy: software-only decoding, then Morphe's per-codec disables.
         val softwareTitle = stringResource(R.string.settings_codecs_software_title)
         val softwareLine = stringResource(R.string.settings_codecs_software_line)

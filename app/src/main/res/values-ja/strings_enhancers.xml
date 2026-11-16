@@ -1,6 +1,12 @@
 <resources>
     <!-- Settings › Enhancements: the Morphe light set's community extras around the player. -->
     <string name="settings_enhancers">拡張機能</string>
+    <!-- Group labels on the Enhancements page. -->
+    <string name="settings_enhancers_group_extraction">取り込み</string>
+    <string name="settings_enhancers_group_community">コミュニティ</string>
+    <string name="settings_enhancers_group_buttons">プレイヤーのボタン</string>
+    <string name="settings_enhancers_group_sharing">共有</string>
+    <string name="settings_enhancers_group_decoders">デコーダー</string>
     <!-- The signed-in session rides the player requests (SessionExtraction, the yt-dlp cookie approach). -->
     <string name="settings_session_extraction_title">抽出にサインイン セッションを使用</string>
     <string name="settings_session_extraction_line">サインイン中、動画の取得リクエストを Google セッションで署名します(yt-dlp の Cookie と同じ方式)。YouTube はサインイン済みのリクエストとして扱うため、ロボット確認はほぼ出なくなります。ストリームやその他の動作は変わりません</string>
