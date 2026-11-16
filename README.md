@@ -1,3 +1,25 @@
+> ## About this fork
+>
+> This is a personal fork of [Yuno](https://github.com/danielkanan/Yuno) by Ren9618, created to experiment with and showcase additional features.
+> It is **not an official release**: no APK is distributed from this repository and it is not supported.
+>
+> ### Added in this fork
+> - **YouTube in the app's language** — a content-language setting that makes YouTube answer in the language the app runs in, so feed rows, chips, view counts, ages and descriptions come back localized (Japanese verified on device).
+> - **Multiple Google accounts and brand channels** — keep several Google accounts signed in side by side with quick switching, and act as one of the brand channels each account manages.
+> - **The Enhancements page** — Return YouTube Dislike on the like pill, DeArrow, the player's mute, loop and copy buttons, tracking-parameter-free share links, and a per-codec decoder policy, gathered on one settings page.
+> - **An adjustable tab bar** — reorder, hide and show the bottom bar's tabs in Settings › Appearance › Tab bar (Home always stays).
+> - **Empty states** — a feed that loads with no videos shows an empty state with a retry, and a signed-in Home with nothing of its own falls back to the guest recommendations for the session.
+>
+> ### Technical notes
+> - The content language rides through the InnerTube requests (`hl`/`gl`), so YouTube answers with localized strings the existing parsers read; counts and ages fall back to a locale-aware number parser when YouTube answers in Japanese.
+> - Each Google account is its own cookie session kept AES-GCM encrypted; switching swaps the active session, and a brand channel rides its account's session under the channel's identity.
+> - The codec policy filters video streams before playback picks one, and a debug-only DecoderTestActivity exercises every MediaCodec on a device.
+> - Full notes: [docs/fork-notes-enhancements.md](docs/fork-notes-enhancements.md)
+>
+> ![The Enhancements settings page added in this fork](docs/images/fork-enhancements.png)
+>
+> Upstream: https://github.com/danielkanan/Yuno (GPL-3.0 — see LICENSE and Credits below)
+
 <div align="center">
 
 <br/>
@@ -53,6 +75,7 @@
 - **Queue** — long-press any video for Play next / Add to queue.
 - **Playback speed** (0.5×–3×, optional “remember for every video”) and **audio-only** mode.
 - **SponsorBlock** — per category Skip / Ask / Show / Off, with audio-fade skips and Undo.
+- **Enhancements page** — Return YouTube Dislike on the like pill, DeArrow, the player's mute, loop and copy buttons, tracking-parameter-free share links, and a per-codec decoder policy. *(added in this fork)*
 
 #### Player bar
 - While a video is open, the tab bar becomes the **player bar** (−10 · play · +10 · tools): quality, PiP, fullscreen, speed, chapters, and scrub with storyboard preview.
@@ -61,12 +84,16 @@
     <td width="50%" valign="top">
 
 #### Shorts & feeds
+- **YouTube in the app's language** — a content-language setting that makes YouTube answer in the language the app runs in: feed rows, chips, view counts, ages and descriptions come back localized. *(added in this fork)*
+- **Tab bar you can arrange** — reorder, hide and show the bottom bar's tabs in Settings › Appearance › Tab bar; Home always stays in it. *(added in this fork)*
+- **Empty states** — a feed that loads with no videos shows an empty state with a retry, and a signed-in Home with nothing of its own falls back to the guest recommendations for the session. *(added in this fork)*
 - **Shorts tab** — vertical feed (personalized when signed in). Frosted-glass bar with Like, Comments, Share, and channel subscribe.
 - **Shorts bank** — the next 10 unseen shorts are cached on disk (~100–150 MB) so they start instantly; seen shorts are forgotten and refilled in the background.
 - **Home & Subscriptions** when signed in; **Library** for history, playlists, Watch later, and liked videos.
 
 #### Account & community
 - **Optional Google sign-in** — full sync: recommendations, subscriptions, history, likes, subscribes, Save, Watch later, watch history, and **comment/reply posting**.
+- **Multiple Google accounts and brand channels** — keep several Google accounts signed in side by side with quick switching, and act as one of the brand channels each account manages. *(added in this fork)*
 - Session cookies stored **AES-GCM encrypted** (Android Keystore).
 - **Comments** with avatars, replies, and likes (signed in).
 - **Self-update** from GitHub releases when a newer APK is published.

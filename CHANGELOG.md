@@ -8,6 +8,13 @@ Add every change someone would notice under **Unreleased**, under `### New`, `##
 `### Fixed`. Publishing renames Unreleased to the version. Leave out under-the-hood work unless it
 changes something people see or feel (faster, fewer errors); then say that.
 
+## Fork changes (unreleased)
+- Add YouTube in the app's language: a content-language setting that makes YouTube answer in the language the app runs in, so feeds, chips, view counts, ages and descriptions come back localized.
+- Add multiple Google accounts and brand channels: several Google accounts signed in side by side with quick switching, each acting as one of the brand channels it manages.
+- Add the Enhancements page: Return YouTube Dislike, DeArrow, the player's mute, loop and copy buttons, tracking-parameter-free share links, and a per-codec decoder policy on one settings page.
+- Add an adjustable tab bar: reorder, hide and show the bottom bar's tabs in Settings › Appearance › Tab bar.
+- Add empty states: empty feeds show an empty state with a retry, and a signed-in Home with nothing of its own falls back to the guest recommendations for the session.
+
 ## Unreleased
 
 ## 1.0.0
