@@ -1643,7 +1643,24 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                 window.foldX != null -> Modifier.fillMaxWidth().padding(start = videoWidth + 28.dp, end = 28.dp, bottom = overlayBottom + 8.dp)
                 else -> Modifier.width(videoStart).padding(start = 32.dp, end = 32.dp, bottom = 40.dp)
             }
-            Column(Modifier.align(Alignment.BottomStart).then(textPlace).graphicsLayer { alpha = 1f - swell }) {
+            // The fork's TikTok-style 概要欄: a short that has one offers it under its title.
+            // The toggle lives up here so the whole block can shade itself while it's open: a
+            // gradient from clear at the top to dark at the bottom keeps the words readable
+            // over whatever the short shows behind them.
+            val description = details.description.takeIf { it.isNotBlank() }
+            var open by remember(details.item.id) { mutableStateOf(false) }
+            val scrim = Brush.verticalGradient(
+                0f to Color.Transparent,
+                0.4f to Color.Black.copy(alpha = 0.32f),
+                1f to Color.Black.copy(alpha = 0.74f),
+            )
+            Column(
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .then(if (open) Modifier.background(scrim) else Modifier)
+                    .then(textPlace)
+                    .graphicsLayer { alpha = 1f - swell }
+            ) {
                 Text(details.item.channel, color = Ink, fontWeight = FontWeight.SemiBold, fontSize = if (wide) 16.sp else 14.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, style = shade)
                 if (details.item.title.isNotBlank()) {
                     Spacer(Modifier.height(6.dp))
@@ -1652,10 +1669,8 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                         fontWeight = if (wide) FontWeight.Bold else null, maxLines = if (wide) 5 else 3, overflow = TextOverflow.Ellipsis, style = shade,
                     )
                 }
-                // The fork's TikTok-style 概要欄: a short that has one offers it under its title.
-                val description = details.description.takeIf { it.isNotBlank() }
+                // The fork's 概要欄: opens under the title (the toggle is hoisted above the column).
                 if (description != null) {
-                    var open by remember(details.item.id) { mutableStateOf(false) }
                     Spacer(Modifier.height(4.dp))
                     if (open) {
                         Text(description, color = Ink, fontSize = if (wide) 16.sp else 13.sp, lineHeight = if (wide) 21.sp else 17.sp, style = shade)
