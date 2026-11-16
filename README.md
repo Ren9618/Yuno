@@ -10,11 +10,13 @@
 > - **An adjustable tab bar** — reorder, hide and show the bottom bar's tabs in Settings › Appearance › Tab bar (Home always stays).
 > - **Empty states** — a feed that loads with no videos shows an empty state with a retry, and a signed-in Home with nothing of its own falls back to the guest recommendations for the session.
 > - **Self-recovering bot check** — when YouTube's "confirm you're not a bot" refuses the streams, Yuno keeps waiting it out in the background (and again the moment the network changes), then opens the video by itself: the error panel needs no manual retry, and a video playing its 360p fallback swaps to the real streams.
+> - **Signed-in extraction** — while signed in, the video's player requests ride the Google session the way yt-dlp uses cookies, so YouTube reads them as signed-in ones and the bot check rarely comes up at all (a toggle in Settings › Enhancements, on by default).
 > - **Skip silence** — long quiet stretches in a video are fast-forwarded while it plays (a toggle in Settings › Playback, off by default).
 >
 > ### Technical notes
 > - The content language rides through the InnerTube requests (`hl`/`gl`), so YouTube answers with localized strings the existing parsers read; counts and ages fall back to a locale-aware number parser when YouTube answers in Japanese.
 > - Each Google account is its own cookie session kept AES-GCM encrypted; switching swaps the active session, and a brand channel rides its account's session under the channel's identity.
+> - The signed-in extraction sends the session's cookies and the SAPISIDHASH signature youtube.com's own pages sign with, and the web origin follows the request's own host — YouTube rejects a web origin on the wrong host with "Origin doesn't match Host". Only the player requests ride it; feeds, search and comments stay anonymous.
 > - The codec policy filters video streams before playback picks one, and a debug-only DecoderTestActivity exercises every MediaCodec on a device.
 > - Full notes: [docs/fork-notes-enhancements.md](docs/fork-notes-enhancements.md)
 >
