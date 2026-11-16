@@ -31,4 +31,8 @@
     <!-- Accessibility labels of the channel card's bell button. -->
     <string name="shorts_bell_on">通知オン: すべての新しい動画。タップでオフ</string>
     <string name="shorts_bell_off">通知: 新しい動画ごとに通知を受け取る</string>
+
+    <!-- The fork\'s 概要欄 over a short: the title\'s "more" (TikTok\'s), opened and folded again. -->
+    <string name="shorts_description_more">もっと見る</string>
+    <string name="shorts_description_less">折りたたむ</string>
 </resources>

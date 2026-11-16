@@ -31,4 +31,8 @@
     <!-- Accessibility labels of the channel card's bell button. -->
     <string name="shorts_bell_on">Bell on: every new video. Tap to turn off</string>
     <string name="shorts_bell_off">Bell: get a notification for every new video</string>
+
+    <!-- The fork\'s 概要欄 over a short: the title\'s "more" (TikTok\'s), opened and folded again. -->
+    <string name="shorts_description_more">More</string>
+    <string name="shorts_description_less">Show less</string>
 </resources>

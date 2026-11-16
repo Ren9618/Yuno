@@ -613,6 +613,13 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
         current?.id?.let { id ->
             viewed.add(id)
             CommentFeed.prefetch(id)
+            // A banked short's details came off disk with no words in them: ask for the real
+            // ones while it's on screen, so its 概要欄 (the fork's "more") can show.
+            if (details[id]?.description?.isEmpty() == true) {
+                scope.launch {
+                    runCatching { YouTube.details(id, wait = false) }.getOrNull()?.let { details[id] = it }
+                }
+            }
         }
         onScreenAt = SystemClock.elapsedRealtime()
         startLogged = false
@@ -1506,6 +1513,27 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                         fontWeight = if (wide) FontWeight.Bold else null, maxLines = if (wide) 5 else 3, overflow = TextOverflow.Ellipsis, style = shade,
                     )
                 }
+                // The fork's TikTok-style 概要欄: a short that has one offers it under its title.
+                val description = details.description.takeIf { it.isNotBlank() }
+                if (description != null) {
+                    var open by remember(details.item.id) { mutableStateOf(false) }
+                    Spacer(Modifier.height(4.dp))
+                    if (open) {
+                        Text(description, color = Ink, fontSize = if (wide) 16.sp else 13.sp, lineHeight = if (wide) 21.sp else 17.sp, style = shade)
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            stringResource(R.string.shorts_description_less),
+                            color = Ink.copy(alpha = 0.75f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, style = shade,
+                            modifier = Modifier.pressable { open = false },
+                        )
+                    } else {
+                        Text(
+                            stringResource(R.string.shorts_description_more),
+                            color = Ink.copy(alpha = 0.75f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, style = shade,
+                            modifier = Modifier.pressable { open = true },
+                        )
+                    }
+                }
             }
         }
         // The fork's hold-to-2×: the pill while the finger holds (top centre, like the videos' own).
@@ -1645,9 +1673,15 @@ private fun Modifier.shortTaps(
                     // A race between the finger leaving (a tap), a past-slop travel (the pager's
                     // swipe, which takes over untouched), and the long-press timeout (the hold).
                     var up: PointerInputChange? = null
+                    var stolen = false
                     withTimeoutOrNull(holdMs) {
                         while (true) {
                             val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: return@withTimeoutOrNull
+                            if (change.isConsumed) {
+                                // A control (a button, the scrub line) took the gesture: not ours.
+                                stolen = true
+                                return@withTimeoutOrNull
+                            }
                             if (change.pressed) {
                                 if ((change.position - down.position).getDistance() >= slop) return@withTimeoutOrNull
                             } else {
@@ -1659,7 +1693,7 @@ private fun Modifier.shortTaps(
                     val upChange = up
                     if (upChange == null) {
                         // Held past the timeout: 2× while the finger stays, nothing at all otherwise.
-                        if (onHoldFast()) {
+                        if (!stolen && onHoldFast()) {
                             while (true) {
                                 val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
                                 if (!change.pressed) break
