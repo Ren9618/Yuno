@@ -12,6 +12,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.mutableStateListOf
@@ -33,6 +34,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
@@ -101,6 +104,7 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
@@ -1677,6 +1681,9 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                         // The fork's links: a tapped url opens in the browser; the page's own tap
                         // stands down because the link consumes the touch before the page feels it.
                         val context = LocalContext.current
+                        // A long description scrolls inside itself (capped at about half the
+                        // screen) instead of running off the top; folded again, it starts over.
+                        val screenH = LocalConfiguration.current.screenHeightDp.dp
                         Text(
                             linkifiedDescription(description, DescriptionLinkBlue) { url ->
                                 try {
@@ -1689,6 +1696,9 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                                 }
                             },
                             color = Ink, fontSize = if (wide) 16.sp else 13.sp, lineHeight = if (wide) 21.sp else 17.sp, style = shade,
+                            modifier = Modifier
+                                .heightIn(max = screenH * 0.5f)
+                                .verticalScroll(rememberScrollState()),
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
