@@ -1845,16 +1845,25 @@ private fun Modifier.shortTaps(
                     // swipe, which takes over untouched), and the long-press timeout (the hold).
                     var up: PointerInputChange? = null
                     var stolen = false
+                    var travelled = false
                     withTimeoutOrNull(holdMs) {
                         while (true) {
-                            val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: return@withTimeoutOrNull
+                            val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id }
+                            if (change == null) {
+                                // The pointer's gone (a cancelled gesture): nothing to hold.
+                                travelled = true
+                                return@withTimeoutOrNull
+                            }
                             if (change.isConsumed) {
                                 // A control (a button, the scrub line) took the gesture: not ours.
                                 stolen = true
                                 return@withTimeoutOrNull
                             }
                             if (change.pressed) {
-                                if ((change.position - down.position).getDistance() >= slop) return@withTimeoutOrNull
+                                if ((change.position - down.position).getDistance() >= slop) {
+                                    travelled = true
+                                    return@withTimeoutOrNull
+                                }
                             } else {
                                 up = change
                                 return@withTimeoutOrNull
@@ -1863,8 +1872,9 @@ private fun Modifier.shortTaps(
                     }
                     val upChange = up
                     if (upChange == null) {
-                        // Held past the timeout: 2× while the finger stays, nothing at all otherwise.
-                        if (!stolen && onHoldFast()) {
+                        // Held past the timeout: 2× while the finger stays. A travel past the
+                        // slop is the pager's swipe — not a hold, so it stays silent.
+                        if (!stolen && !travelled && onHoldFast()) {
                             while (true) {
                                 val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
                                 if (!change.pressed) break
