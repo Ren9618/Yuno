@@ -48,6 +48,7 @@ class YunoApplication : Application(), ImageLoaderFactory {
         ReturnYouTubeDislike.init(this)
         DeArrow.init(this)
         ShortsSetting.init(this)
+        ShortsRatio.init(this)
         NavTabs.init(this)
         ShortsBank.init(this)
         AppUpdate.init(this)

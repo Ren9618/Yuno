@@ -81,4 +81,10 @@
     <string name="settings_accounts_switch_error">アカウントを切り替えられませんでした。もう一度お試しください。</string>
     <string name="settings_accounts_personal">個人チャンネル</string>
     <string name="settings_accounts_brand">ブランド アカウント</string>
+
+    <!-- ── The fork's Shorts switches (Settings › Shorts) ─────────────────── -->
+    <!-- Shorts at their own ratio instead of blown up to fill the screen (black bars over the crop). -->
+    <string name="settings_shorts_ratio_title">ショートを元の比率で表示</string>
+    <string name="settings_shorts_ratio_on">動画は自分の形のまま表示され、引き伸ばして画面を埋めません。余りは黒帯になります</string>
+    <string name="settings_shorts_ratio_off">縦型ショートを画面いっぱいに拡大して表示します(左右がわずかに切り取られます)</string>
 </resources>

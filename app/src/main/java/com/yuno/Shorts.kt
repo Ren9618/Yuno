@@ -220,6 +220,31 @@ object ShortsSetting {
 }
 
 /**
+ * Shorts at their own ratio (the fork's): a vertical short keeps its shape and gets black
+ * bars where the screen is taller, instead of being blown up until its sides are cut off
+ * (the screen-filling crop a short narrower than the screen had). On by default; a switch
+ * in Settings › Shorts brings the crop back for people who liked the fill.
+ */
+object ShortsRatio {
+    private const val KEY = "shorts_original_ratio"
+    private var prefs: android.content.SharedPreferences? = null
+
+    var original by mutableStateOf(true)
+        private set
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        original = prefs?.getBoolean(KEY, true) != false
+    }
+
+    fun set(context: Context, on: Boolean) {
+        if (on == original) return
+        original = on
+        prefs?.edit()?.putBoolean(KEY, on)?.apply()
+    }
+}
+
+/**
  * The Shorts feed and its playback.
  *
  * Feed: [InnerTube.shorts] (the reel sequence; signed out it's a generic one). Each short's
@@ -1365,12 +1390,13 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
         }
         Box(Modifier.fillMaxSize().clipToBounds()) {
             // Vertical shorts fill a phone's screen (a little cropped at the sides); wider ones fit its width.
+            // The fork's switch ([ShortsRatio]): at their own ratio, nothing is cropped — black bars instead.
             Box(
                 Modifier
                     .padding(start = videoStart)
                     .width(videoWidth)
                     .fillMaxHeight()
-                    .aspectFit(aspect, cover = !wide && aspect < 0.7f)
+                    .aspectFit(aspect, cover = !wide && aspect < 0.7f && !ShortsRatio.original)
                     .onGloballyPositioned { shorts.videoRects[page] = Rect(it.positionInRoot(), it.size.toSize()) },
             ) {
                 AsyncImage(model = item.thumbnail, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())

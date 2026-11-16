@@ -96,4 +96,10 @@
     <string name="settings_accounts_switch_error">Couldn\'t switch accounts. Try again.</string>
     <string name="settings_accounts_personal">Personal channel</string>
     <string name="settings_accounts_brand">Brand channel</string>
+
+    <!-- ── The fork's Shorts switches (Settings › Shorts) ─────────────────── -->
+    <!-- Shorts at their own ratio instead of blown up to fill the screen (black bars over the crop). -->
+    <string name="settings_shorts_ratio_title">Shorts at their own ratio</string>
+    <string name="settings_shorts_ratio_on">A short keeps its shape and is never cropped; black bars fill what\'s left of the screen</string>
+    <string name="settings_shorts_ratio_off">Vertical Shorts are blown up to fill the screen; their sides are cut off a little</string>
 </resources>

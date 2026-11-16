@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.CallSplit
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.CropPortrait
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Headphones
@@ -498,6 +499,13 @@ private fun ShortsBody(search: SettingsSearch) {
         val line = stringResource(if (ShortsSetting.enabled) R.string.ui_shorts_on_line else R.string.ui_shorts_off_line)
         row(title, line) {
             ToggleRow(SfIcons.Shorts, title, line, ShortsSetting.enabled) { ShortsSetting.set(context, it) }
+        }
+        if (ShortsSetting.enabled) {
+            val ratioTitle = stringResource(R.string.settings_shorts_ratio_title)
+            val ratioLine = stringResource(if (ShortsRatio.original) R.string.settings_shorts_ratio_on else R.string.settings_shorts_ratio_off)
+            row(ratioTitle, ratioLine) {
+                ToggleRow(Icons.Rounded.CropPortrait, ratioTitle, ratioLine, ShortsRatio.original) { ShortsRatio.set(context, it) }
+            }
         }
     }
 }
