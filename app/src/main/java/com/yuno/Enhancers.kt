@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Return YouTube Dislike's dislike counts, DeArrow's community titles/thumbnails,
  * and sharing links without tracking parameters. The mute, loop and copy buttons
  * belong to the player and are only shown while their switches here are on.
+ * The session-extraction switch is the fork's own anti-bot measure ([SessionExtraction]).
  *
  * The lookups send just the video id, exactly what YouTube itself already knows.
  */
@@ -24,6 +25,7 @@ object Enhancers {
     private const val KEY_MUTE = "mute_button"
     private const val KEY_LOOP = "loop_button"
     private const val KEY_COPY = "copy_buttons"
+    private const val KEY_SESSION_EXTRACTION = "session_extraction"
 
     private var prefs: SharedPreferences? = null
 
@@ -39,6 +41,12 @@ object Enhancers {
     /** The player's copy pill (title, description, link). */
     var showCopy by mutableStateOf(true)
         private set
+    /**
+     * The player requests the extractor makes ride the signed-in Google session
+     * ([SessionExtraction], the yt-dlp cookie approach), so the bot check stops hitting.
+     */
+    var sessionExtraction by mutableStateOf(true)
+        private set
 
     fun init(context: Context) {
         val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).also { prefs = it }
@@ -46,6 +54,7 @@ object Enhancers {
         showMute = p.getBoolean(KEY_MUTE, true)
         showLoop = p.getBoolean(KEY_LOOP, true)
         showCopy = p.getBoolean(KEY_COPY, true)
+        sessionExtraction = p.getBoolean(KEY_SESSION_EXTRACTION, true)
     }
 
     fun updateSanitizeLinks(on: Boolean) {
@@ -66,6 +75,13 @@ object Enhancers {
     fun updateCopyButtons(on: Boolean) {
         showCopy = on
         prefs?.edit()?.putBoolean(KEY_COPY, on)?.apply()
+    }
+
+    fun updateSessionExtraction(on: Boolean) {
+        sessionExtraction = on
+        prefs?.edit()?.putBoolean(KEY_SESSION_EXTRACTION, on)?.apply()
+        // The cached stream pages were fetched as whichever session the switch came from.
+        StreamCache.invalidateAll()
     }
 
     /**

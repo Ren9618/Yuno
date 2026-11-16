@@ -1,6 +1,9 @@
 <resources>
     <!-- Settings › Enhancements: the Morphe light set's community extras around the player. -->
     <string name="settings_enhancers">Enhancements</string>
+    <!-- The signed-in session rides the player requests (SessionExtraction, the yt-dlp cookie approach). -->
+    <string name="settings_session_extraction_title">Use the signed-in session for extraction</string>
+    <string name="settings_session_extraction_line">While signed in, the video requests are signed by your Google session, the way yt-dlp uses cookies — YouTube reads them as signed-in ones and the bot check rarely comes up. Streams and everything else are untouched</string>
     <!-- Return YouTube Dislike (returnyoutubedislikeapi.com). -->
     <string name="settings_ryd_title">Return YouTube Dislike</string>
     <string name="settings_ryd_line">The dislike count comes from the Return YouTube Dislike community. Your own dislike still goes to YouTube.</string>

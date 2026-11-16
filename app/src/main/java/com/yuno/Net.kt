@@ -1,5 +1,6 @@
 package com.yuno
 
+import android.util.Log
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -49,6 +50,33 @@ object Net {
 class NewPipeDownloader private constructor(private val client: OkHttpClient) : Downloader() {
 
     override fun execute(request: Request): Response {
+        val injection = SessionExtraction.headersFor(request.url(), request)
+        val response = send(request, injection)
+        // A session YouTube won't take (a stale login, a hiccup) must not break playback:
+        // anonymous is how this request went before — fall back to that, once.
+        val answer = if (injection != null && response.code in 400..499) {
+            // The first bytes of the answer say what YouTube didn't like (JSON, one line).
+            val why = runCatching { response.peekBody(400).string() }.getOrNull()?.replace('\n', ' ')?.ifBlank { null }
+            Log.w(TAG, "the signed-in session didn't take on the player request (${response.code}): $why")
+            response.close()
+            send(request, null)
+        } else response
+        answer.use { r ->
+            // YouTube answers rate-limited clients with 429 + a captcha page.
+            if (r.code == 429) throw ReCaptchaException("reCaptcha challenge requested", request.url())
+            if (injection != null) Account.absorbSetCookies(r.headers("Set-Cookie"))
+            val text = r.body?.string()
+            return Response(
+                r.code,
+                r.message,
+                r.headers.toMultimap(),
+                if (PlayerFallback.handles(request.url())) PlayerFallback.substitute(request.url(), request.dataToSend(), text) else text,
+                r.request.url.toString(),
+            )
+        }
+    }
+
+    private fun send(request: Request, injection: Map<String, String>?): okhttp3.Response {
         val body = request.dataToSend()?.toRequestBody()
         val builder = okhttp3.Request.Builder()
             .method(request.httpMethod(), body)
@@ -58,21 +86,13 @@ class NewPipeDownloader private constructor(private val client: OkHttpClient) : 
             builder.removeHeader(name)
             values.forEach { builder.addHeader(name, it) }
         }
-        client.newCall(builder.build()).execute().use { response ->
-            // YouTube answers rate-limited clients with 429 + a captcha page.
-            if (response.code == 429) throw ReCaptchaException("reCaptcha challenge requested", request.url())
-            val text = response.body?.string()
-            return Response(
-                response.code,
-                response.message,
-                response.headers.toMultimap(),
-                if (PlayerFallback.handles(request.url())) PlayerFallback.substitute(request.url(), request.dataToSend(), text) else text,
-                response.request.url.toString(),
-            )
-        }
+        injection?.forEach { (name, value) -> builder.header(name, value) }
+        return client.newCall(builder.build()).execute()
     }
 
     companion object {
+        private const val TAG = "Yuno"
+
         val instance: NewPipeDownloader by lazy { NewPipeDownloader(Net.client) }
     }
 }

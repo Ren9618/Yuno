@@ -575,11 +575,12 @@ object Account {
 
     private fun persistCookies() = saveActive()
 
-    private fun parseCookieHeader(header: String, into: MutableMap<String, String>) {
+    internal fun parseCookieHeader(header: String, into: MutableMap<String, String> = linkedMapOf()): MutableMap<String, String> {
         header.split(';').forEach { part ->
             val name = part.substringBefore('=').trim()
             if (name.isNotEmpty()) into[name] = part.substringAfter('=', "").trim()
         }
+        return into
     }
 
     const val ORIGIN = "https://www.youtube.com"

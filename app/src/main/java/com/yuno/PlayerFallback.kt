@@ -25,7 +25,9 @@ import org.json.JSONObject
  * TVHTML5_SIMPLY and MWEB still answer, but only with signed links whose n parameter needs
  * YouTube's player JavaScript, which extractor 0.26.5 can no longer run (dev neither, without
  * an external JS engine); WEB is SABR-only and ANDROID_VR links 403 past the first chunk.
- * [BotCheck] waits it out instead; the check comes and goes within minutes.
+ * [BotCheck] waits it out instead; the check comes and goes within minutes. While someone
+ * is signed in, the player requests ride that session ([SessionExtraction], the yt-dlp
+ * cookie approach) and the refusal rarely comes up at all.
  */
 object PlayerFallback {
     private const val CLIENT_NAME = "VISIONOS"
@@ -125,6 +127,18 @@ object PlayerFallback {
             .header("X-YouTube-Client-Version", CLIENT_VERSION)
             .apply { if (visitorData.isNotEmpty()) header("X-Goog-Visitor-Id", visitorData) }
             .build()
+        // The re-ask rides the signed-in session too (SessionExtraction): with a session
+        // YouTube rarely refuses at all, and a session it won't take falls back to the
+        // anonymous re-ask this always was.
+        val session = SessionExtraction.headersForPlayerReAsk()
+        if (session != null) {
+            Net.client.newCall(request.newBuilder().apply { session.forEach { (name, value) -> header(name, value) } }.build())
+                .execute().use { response ->
+                    if (response.isSuccessful) return JSONObject(response.body!!.string())
+                    val why = runCatching { response.peekBody(400).string() }.getOrNull()?.replace('\n', ' ')
+                    Log.w("Yuno", "the session didn't take on the VISIONOS re-ask (${response.code}): $why")
+                }
+        }
         Net.client.newCall(request).execute().use { response ->
             check(response.isSuccessful) { "HTTP ${response.code}" }
             return JSONObject(response.body!!.string())

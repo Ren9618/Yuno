@@ -1,6 +1,9 @@
 <resources>
     <!-- Settings › Enhancements: the Morphe light set's community extras around the player. -->
     <string name="settings_enhancers">拡張機能</string>
+    <!-- The signed-in session rides the player requests (SessionExtraction, the yt-dlp cookie approach). -->
+    <string name="settings_session_extraction_title">抽出にサインイン セッションを使用</string>
+    <string name="settings_session_extraction_line">サインイン中、動画の取得リクエストを Google セッションで署名します(yt-dlp の Cookie と同じ方式)。YouTube はサインイン済みのリクエストとして扱うため、ロボット確認はほぼ出なくなります。ストリームやその他の動作は変わりません</string>
     <!-- Return YouTube Dislike (returnyoutubedislikeapi.com). -->
     <string name="settings_ryd_title">Return YouTube Dislike</string>
     <string name="settings_ryd_line">低評価の数を Return YouTube Dislike コミュニティから取得します。あなた自身の低評価はこれまでどおり YouTube に送られます。</string>

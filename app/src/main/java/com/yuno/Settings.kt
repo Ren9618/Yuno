@@ -418,12 +418,20 @@ private fun SponsorBlockBody(search: SettingsSearch) {
 
 /**
  * The Morphe light set's switches (Enhancers.kt): the community extras around the player.
- * Return YouTube Dislike and DeArrow go out to their sites' own APIs; the mute, loop and
- * copy rows only show or hide the player's own buttons.
+ * The first row is the fork's own: the signed-in session rides the player requests
+ * (SessionExtraction), which is what the bot check is about. Return YouTube Dislike and
+ * DeArrow go out to their sites' own APIs; the mute, loop and copy rows only show or hide
+ * the player's own buttons.
  */
 @Composable
 private fun EnhancersBody(search: SettingsSearch) {
     SearchableSettingsGroup(search, header = stringResource(R.string.settings_enhancers)) {
+        // The signed-in session rides the extractor's player requests (the bot check's fix).
+        val sessionTitle = stringResource(R.string.settings_session_extraction_title)
+        val sessionLine = stringResource(R.string.settings_session_extraction_line)
+        row(sessionTitle, sessionLine) {
+            ToggleRow(SfIcons.Person, sessionTitle, sessionLine, Enhancers.sessionExtraction) { Enhancers.updateSessionExtraction(it) }
+        }
         val rydTitle = stringResource(R.string.settings_ryd_title)
         val rydLine = stringResource(R.string.settings_ryd_line)
         row(rydTitle, rydLine) {
