@@ -25,6 +25,8 @@
     <!-- Channel card over a short (228 dp wide card, one line each). -->
     <string name="shorts_subscribe">チャンネル登録</string>
     <string name="shorts_unsubscribe">登録解除</string>
+    <!-- The ✓ badge on the channel card's avatar while subscribed. -->
+    <string name="shorts_subscribed">登録済み</string>
     <string name="shorts_go_to_channel">チャンネルに移動</string>
     <!-- Accessibility labels of the channel card's bell button. -->
     <string name="shorts_bell_on">通知オン: すべての新しい動画。タップでオフ</string>

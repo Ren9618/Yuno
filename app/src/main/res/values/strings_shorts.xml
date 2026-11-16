@@ -25,6 +25,8 @@
     <!-- Channel card over a short (228 dp wide card, one line each). -->
     <string name="shorts_subscribe">Subscribe</string>
     <string name="shorts_unsubscribe">Unsubscribe</string>
+    <!-- The ✓ badge on the channel card's avatar while subscribed. -->
+    <string name="shorts_subscribed">Subscribed</string>
     <string name="shorts_go_to_channel">Go to channel</string>
     <!-- Accessibility labels of the channel card's bell button. -->
     <string name="shorts_bell_on">Bell on: every new video. Tap to turn off</string>
