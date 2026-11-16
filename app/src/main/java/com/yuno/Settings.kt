@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.MusicNote
@@ -302,6 +303,11 @@ private fun PlaybackBody(player: PlayerState, search: SettingsSearch) {
         val audioLine = stringResource(R.string.settings_audio_only_line)
         row(audioTitle, audioLine) {
             ToggleRow(Icons.Rounded.Headphones, audioTitle, audioLine, AudioOnly.enabled) { player.setAudioOnly(it) }
+        }
+        val silenceTitle = stringResource(R.string.settings_skip_silence_title)
+        val silenceLine = stringResource(R.string.settings_skip_silence_line)
+        row(silenceTitle, silenceLine, "silence", "quiet") {
+            ToggleRow(Icons.Rounded.GraphicEq, silenceTitle, silenceLine, SkipSilence.on) { SkipSilence.set(it) }
         }
     }
 }

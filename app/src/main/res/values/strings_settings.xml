@@ -77,6 +77,8 @@
     <string name="settings_seek_step_line">How far a double tap on the video and the −/⁠+ buttons jump</string>
     <string name="settings_seconds_short">%1$s s</string>
     <string name="settings_seek_step_summary">Skips %1$s s</string>
+    <string name="settings_skip_silence_title">Skip silence</string>
+    <string name="settings_skip_silence_line">Long quiet stretches in a video are fast-forwarded while it plays</string>
     <string name="settings_music_normal_title">Music at normal speed</string>
     <string name="settings_music_normal_line">Songs always play at 1×, even with a speed kept for every video</string>
     <string name="settings_chapters_open_title">Keep chapters open</string>

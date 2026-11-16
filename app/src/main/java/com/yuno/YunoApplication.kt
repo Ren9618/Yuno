@@ -34,6 +34,7 @@ class YunoApplication : Application(), ImageLoaderFactory {
         SeekStep.init(this)
         ChaptersStayOpen.init(this)
         AutoPip.init(this)
+        SkipSilence.init(this)
         CaptionSettings.init(this)
         CaptionTranslator.refresh()
         SearchHistory.init(this)

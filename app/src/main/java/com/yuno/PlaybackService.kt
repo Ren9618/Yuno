@@ -120,6 +120,14 @@ class PlaybackService : MediaSessionService() {
                 .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, true)
                 .build()
         }
+        // Skip silence is app-wide and kept, and it's a setting on the player itself (the UI's
+        // MediaController can't reach it), so this is the one place it's applied from.
+        Log.i("Yuno", "skip silence ${if (SkipSilence.on) "on" else "off"}")
+        player.skipSilenceEnabled = SkipSilence.on
+        SkipSilence.onChanged = { on ->
+            Log.i("Yuno", "skip silence ${if (on) "on" else "off"}")
+            player.skipSilenceEnabled = on
+        }
         // Before the session's own listener: the UI must see the recovery when the error reaches it.
         val recoverer = StreamRecoverer(player, sources, resolver)
         player.addListener(recoverer)
@@ -159,6 +167,7 @@ class PlaybackService : MediaSessionService() {
     private var recoveredListener: ((String) -> Unit)? = null
 
     override fun onDestroy() {
+        SkipSilence.onChanged = null
         recoveredListener?.let(BotCheckRecovery::removeListener)
         recoveredListener = null
         resumeSaver?.saveNow()

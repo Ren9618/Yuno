@@ -227,3 +227,32 @@ object FullscreenZoom {
         prefs?.edit()?.putBoolean(KEY, on)?.apply()
     }
 }
+
+/**
+ * Skip silence (Morphe's patch of the same name): long quiet stretches in a video are fast-forwarded
+ * while it plays, by ExoPlayer's built-in silence skipping. One switch for the whole app
+ * (Settings › Playback), off by default. It's a setting on the service's player itself (the UI's
+ * MediaController can't reach it), so the service applies [on] when it starts and follows changes
+ * through [onChanged] while it runs.
+ */
+object SkipSilence {
+    private const val KEY = "skip_silence"
+    private var prefs: SharedPreferences? = null
+
+    var on by mutableStateOf(false)
+        private set
+
+    /** Set from [PlaybackService.onCreate]; followed while the service's player lives. */
+    var onChanged: ((Boolean) -> Unit)? = null
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        on = prefs?.getBoolean(KEY, false) == true
+    }
+
+    fun set(value: Boolean) {
+        on = value
+        prefs?.edit()?.putBoolean(KEY, value)?.apply()
+        onChanged?.invoke(value)
+    }
+}
