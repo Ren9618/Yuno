@@ -1572,6 +1572,8 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
     val window = LocalWindowLayout.current
     // Thumbs thrown by double taps, each where its tap landed (GitHub #47).
     val thumbs = remember { mutableStateListOf<TapThumb>() }
+    // Haptics answer to the page's own gestures (the scrub line's tick, the hold-to-2×'s start).
+    val view = LocalView.current
     BoxWithConstraints(
         Modifier
             .fillMaxSize()
@@ -1582,7 +1584,11 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                 onDoubleTap = { at ->
                     if (ShortsGestures.doubleTapLike && shorts.index == page && shorts.likeFromTap()) thumbs += TapThumb(at)
                 },
-                onHoldFast = { shorts.index == page && shorts.beginHoldFast() },
+                onHoldFast = {
+                    val held = shorts.index == page && shorts.beginHoldFast()
+                    if (held) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    held
+                },
                 onHoldFastEnd = { shorts.endHoldFast() },
             ),
     ) {
@@ -1672,7 +1678,7 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
         // The fork's hold-to-2×: the pill while the finger holds (top centre, like the videos' own).
         if (onScreen && shorts.holdFast) {
             Text(
-                "2×",
+                str(R.string.shorts_hold_2x),
                 color = Ink,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Black,
@@ -1689,7 +1695,6 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
         val lineStart = if (wide) videoStart + LineInset else LineInset
         val lineWidth = (if (wide) videoWidth else maxWidth) - LineInset * 2 - (if (wide) 0.dp else 56.dp)
         val lineCentre = if (wide) LineWideBottom else overlayBottom - LineOverBar
-        val view = LocalView.current
         if (scrubbing || swell > 0f) {
             val at = shorts.scrub ?: shorts.progress
             val length = shorts.durationMs

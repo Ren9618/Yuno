@@ -39,4 +39,7 @@
     <!-- The fork\'s dislike on a short (a real dislike, and the channel stops being offered). -->
     <string name="shorts_dislike">低く評価</string>
     <string name="shorts_not_interested">%1$s をおすすめしないようにしました。</string>
+
+    <!-- The fork's hold-to-2× pill (top centre while the finger holds). -->
+    <string name="shorts_hold_2x">2倍速</string>
 </resources>

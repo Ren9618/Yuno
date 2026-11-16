@@ -39,4 +39,7 @@
     <!-- The fork\'s dislike on a short (a real dislike, and the channel stops being offered). -->
     <string name="shorts_dislike">Dislike</string>
     <string name="shorts_not_interested">We\'ll stop showing Shorts from %1$s.</string>
+
+    <!-- The fork's hold-to-2× pill (top centre while the finger holds). -->
+    <string name="shorts_hold_2x">2×</string>
 </resources>
