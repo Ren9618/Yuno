@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import android.content.Context
 import androidx.compose.runtime.snapshotFlow
+import com.yuno.icons.SfIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -215,8 +216,25 @@ class FeedState(
  */
 @Stable
 class LibraryData(scope: CoroutineScope, context: Context) {
+    /**
+     * The signed-in Home fell back to the guest recommendations (stuck for the session,
+     * undone by [reset]): a Google account that has never used YouTube gets an empty feed
+     * of its own — nothing to recommend from — and an empty Home used to be a blank page.
+     * Stuck, so the fallback's own "load more" keeps paging the same source.
+     */
+    private var homeOnGuest = false
     val home = FeedState(scope, prefetchTop = 2, freshOnRefresh = true) { next ->
-        if (Account.signedIn) InnerTube.home(next) else InnerTube.guestHome(next)
+        if (!Account.signedIn || homeOnGuest) {
+            InnerTube.guestHome(next)
+        } else {
+            val page = InnerTube.home(next)
+            if (next == null && page.videos.isEmpty()) {
+                homeOnGuest = true
+                InnerTube.guestHome(null)
+            } else {
+                page
+            }
+        }
     }
     val subscriptions = FeedState(scope, prefetchTop = 2) { InnerTube.subscriptionsFeed(it) }
     val history = FeedState(scope) { InnerTube.history(it) }
@@ -270,6 +288,7 @@ class LibraryData(scope: CoroutineScope, context: Context) {
 
     fun reset() {
         home.reset(); subscriptions.reset(); history.reset()
+        homeOnGuest = false
         channelsJob?.cancel(); channelsJob = null; subscriptionsShown = false
         channels = emptyList(); playlists = emptyList()
         prefs.edit().remove(KEY_CHANNELS).apply()
@@ -428,6 +447,17 @@ fun FeedList(
                     icon = Icons.Rounded.CloudOff,
                     title = stringResource(R.string.ui_feed_error_title),
                     body = feed.error.orEmpty(),
+                    action = { PillButton(stringResource(R.string.ui_try_again), { feed.refresh() }) },
+                )
+            }
+            // Loaded, and YouTube sent no videos at all (a Google account that has never
+            // used YouTube has nothing to recommend from; so has an account with no
+            // subscriptions). A state of its own — otherwise the page is just blank.
+            feed.loadedEmpty && listVideos.isEmpty() -> item {
+                EmptyState(
+                    icon = SfIcons.PlayCircle,
+                    title = stringResource(R.string.ui_feed_empty_title),
+                    body = stringResource(R.string.ui_feed_empty_body),
                     action = { PillButton(stringResource(R.string.ui_try_again), { feed.refresh() }) },
                 )
             }

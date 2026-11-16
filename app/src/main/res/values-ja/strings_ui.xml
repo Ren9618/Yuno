@@ -149,6 +149,9 @@
     <string name="ui_signed_out_error">ログアウトしています。</string>
     <string name="ui_chip_empty_title">何もありません</string>
     <string name="ui_chip_empty_body">YouTube から「%1$s」の動画は届きませんでした。</string>
+    <!-- フィードに動画が 1 件も届かなかったとき: YouTube を使ったことのない Google アカウント、登録チャンネルのないアカウント。 -->
+    <string name="ui_feed_empty_title">動画はまだありません</string>
+    <string name="ui_feed_empty_body">このフィードに表示する動画がまだありません。後でもう一度お試しください。</string>
     <string name="ui_not_interested">興味なし</string>
     <string name="ui_dont_recommend_channel">チャンネルをおすすめに表示しない</string>
     <plurals name="ui_seek_back">

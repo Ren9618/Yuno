@@ -155,6 +155,10 @@
     <!-- Home, a category chip whose page had no videos. %1$s = the chip's name. -->
     <string name="ui_chip_empty_title">Nothing here</string>
     <string name="ui_chip_empty_body">YouTube sent no videos for “%1$s”.</string>
+    <!-- A feed that loaded with no videos at all: a Google account that has never used
+         YouTube (nothing to recommend from), an account with no subscriptions. -->
+    <string name="ui_feed_empty_title">No videos yet</string>
+    <string name="ui_feed_empty_body">Nothing to show in this feed yet. Try again later.</string>
     <string name="ui_not_interested">Not interested</string>
     <string name="ui_dont_recommend_channel">Don\'t recommend channel</string>
     <plurals name="ui_seek_back">
