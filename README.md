@@ -77,6 +77,7 @@
 - **Playback speed** (0.5×–3×, optional “remember for every video”) and **audio-only** mode.
 - **SponsorBlock** — per category Skip / Ask / Show / Off, with audio-fade skips and Undo.
 - **Enhancements page** — Return YouTube Dislike on the like pill, DeArrow, the player's mute, loop and copy buttons, tracking-parameter-free share links, and a per-codec decoder policy. *(added in this fork)*
+- **Self-recovering bot check** — when YouTube's "confirm you're not a bot" check blocks the streams, Yuno keeps trying in the background and retries the moment the network changes, then opens the video by itself. *(added in this fork)*
 
 #### Player bar
 - While a video is open, the tab bar becomes the **player bar** (−10 · play · +10 · tools): quality, PiP, fullscreen, speed, chapters, and scrub with storyboard preview.
