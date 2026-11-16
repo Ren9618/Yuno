@@ -11,6 +11,8 @@
 > - **Empty states** — a feed that loads with no videos shows an empty state with a retry, and a signed-in Home with nothing of its own falls back to the guest recommendations for the session.
 > - **Self-recovering bot check** — when YouTube's "confirm you're not a bot" refuses the streams, Yuno keeps waiting it out in the background (and again the moment the network changes), then opens the video by itself: the error panel needs no manual retry, and a video playing its 360p fallback swaps to the real streams.
 > - **Signed-in extraction** — while signed in, the video's player requests ride the Google session the way yt-dlp uses cookies, so YouTube reads them as signed-in ones and the bot check rarely comes up at all (a toggle in Settings › Enhancements, on by default).
+> - **Comment translation** — a Translate button under every comment turns it into the app's language, the original one tap away.
+> - **The fork, labelled** — Settings › About shows this fork's own version and maintainer next to Yuno's, and the player's Save / Playlist pills speak the app's language.
 > - **Skip silence** — long quiet stretches in a video are fast-forwarded while it plays (a toggle in Settings › Playback, off by default).
 >
 > ### Technical notes
@@ -102,6 +104,7 @@
 - **Multiple Google accounts and brand channels** — keep several Google accounts signed in side by side with quick switching, and act as one of the brand channels each account manages. *(added in this fork)*
 - Session cookies stored **AES-GCM encrypted** (Android Keystore).
 - **Comments** with avatars, replies, and likes (signed in).
+- **Comment translation** — a Translate button under every comment turns it into the app's language, the original one tap away. *(added in this fork)*
 - **Self-update** from GitHub releases when a newer APK is published.
 
     </td>

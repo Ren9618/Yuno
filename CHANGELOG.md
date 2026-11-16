@@ -16,6 +16,9 @@ changes something people see or feel (faster, fewer errors); then say that.
 - Add empty states: empty feeds show an empty state with a retry, and a signed-in Home with nothing of its own falls back to the guest recommendations for the session.
 - Add a self-recovering bot check: when YouTube's "confirm you're not a bot" refuses the streams, Yuno keeps waiting it out in the background and retries when the network changes, then opens the video by itself — and a video playing its 360p fallback swaps to the real streams.
 - Add signed-in extraction: while signed in, the video's player requests ride the Google session the way yt-dlp uses cookies, so YouTube reads them as signed-in ones and the bot check rarely comes up (a toggle in Settings › Enhancements, on by default).
+- Add comment translation: a Translate button under every comment turns it into the app's language, and the original is one tap away.
+- Show the fork's own version and maintainer in Settings › About.
+- The player's Save and Playlist pills follow the app's language instead of staying English.
 - Add skip silence: long quiet stretches in a video are fast-forwarded while it plays (a toggle in Settings › Playback, off by default).
 
 ## Unreleased
