@@ -252,6 +252,7 @@ private fun AccountRow(search: SettingsSearch, onOpen: (SettingsPage) -> Unit) {
 @Composable
 private fun PlaybackBody(player: PlayerState, search: SettingsSearch) {
     val pipSupported = LocalPictureInPicture.current?.supported != false
+    val context = LocalContext.current
     SearchableSettingsGroup(search, header = stringResource(R.string.settings_playback)) {
         val seekTitle = stringResource(R.string.settings_seek_step_title)
         val seekLine = stringResource(R.string.settings_seek_step_line)
@@ -300,6 +301,11 @@ private fun PlaybackBody(player: PlayerState, search: SettingsSearch) {
         val zoomLine = stringResource(if (FullscreenZoom.fill) R.string.settings_zoom_fill_on else R.string.settings_zoom_fill_off)
         row(zoomTitle, zoomLine, "pinch", "fullscreen") {
             ToggleRow(Icons.Rounded.ZoomOutMap, zoomTitle, zoomLine, FullscreenZoom.fill) { player.setZoomFillSetting(it) }
+        }
+        val sideTitle = stringResource(R.string.settings_side_sliders_title)
+        val sideLine = stringResource(R.string.settings_side_sliders_line)
+        row(sideTitle, sideLine, "brightness", "volume") {
+            ToggleRow(SfIcons.BrightnessMedium, sideTitle, sideLine, SideSliders.on) { SideSliders.set(context, it) }
         }
         val audioTitle = stringResource(R.string.bar_audio_only)
         val audioLine = stringResource(R.string.settings_audio_only_line)

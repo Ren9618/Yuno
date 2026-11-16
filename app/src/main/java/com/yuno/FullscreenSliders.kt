@@ -145,6 +145,30 @@ class FullscreenSliders(context: Context, playerWindow: android.view.Window? = n
     }
 }
 
+/**
+ * The side drags can be turned off (the fork's): a switch in Settings › Playback. Off, a
+ * vertical drag on a fullscreen video's sides does nothing — brightness and volume are
+ * Android's while it plays, and only the middle still swipes down to leave fullscreen.
+ */
+object SideSliders {
+    private const val KEY = "side_sliders"
+    private var prefs: android.content.SharedPreferences? = null
+
+    var on by mutableStateOf(true)
+        private set
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        on = prefs?.getBoolean(KEY, true) != false
+    }
+
+    fun set(context: Context, value: Boolean) {
+        if (value == on) return
+        on = value
+        prefs?.edit()?.putBoolean(KEY, value)?.apply()
+    }
+}
+
 private fun Context.findActivity(): Activity? {
     var current: Context = this
     while (true) {
@@ -219,7 +243,10 @@ fun Modifier.fullscreenGestures(sliders: FullscreenSliders, onPull: (Float) -> U
         var over = 0f
         val start = awaitVerticalTouchSlopOrCancellation(down.id) { change, overSlop -> change.consume(); over = overSlop } ?: return@awaitEachGesture
         val range = (size.height * SwipeRangeShare).coerceAtLeast(1f)
-        if (kind != null && sliders.begin(kind)) {
+        if (kind != null && !SideSliders.on) {
+            // The side drags are switched off: swallowed, so they aren't the middle's swipe down.
+            verticalDrag(start.id) { change -> change.consume() }
+        } else if (kind != null && sliders.begin(kind)) {
             sliders.move(-over / range)
             try {
                 verticalDrag(start.id) { change -> sliders.move(-change.positionChange().y / range); change.consume() }

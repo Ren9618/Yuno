@@ -102,4 +102,8 @@
     <string name="settings_shorts_ratio_title">Shorts at their own ratio</string>
     <string name="settings_shorts_ratio_on">A short keeps its shape and is never cropped; black bars fill what\'s left of the screen</string>
     <string name="settings_shorts_ratio_off">Vertical Shorts are blown up to fill the screen; their sides are cut off a little</string>
+
+    <!-- The fork's fullscreen side drags (Settings › Playback): brightness and volume by drag, switchable. -->
+    <string name="settings_side_sliders_title">Fullscreen side sliders</string>
+    <string name="settings_side_sliders_line">A vertical drag on a fullscreen video\'s sides sets brightness and volume. Off, those drags do nothing</string>
 </resources>

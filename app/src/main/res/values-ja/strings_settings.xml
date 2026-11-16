@@ -87,4 +87,8 @@
     <string name="settings_shorts_ratio_title">ショートを元の比率で表示</string>
     <string name="settings_shorts_ratio_on">動画は自分の形のまま表示され、引き伸ばして画面を埋めません。余りは黒帯になります</string>
     <string name="settings_shorts_ratio_off">縦型ショートを画面いっぱいに拡大して表示します(左右がわずかに切り取られます)</string>
+
+    <!-- The fork's fullscreen side drags (Settings › Playback): brightness and volume by drag, switchable. -->
+    <string name="settings_side_sliders_title">全画面の左右スワイプ調整</string>
+    <string name="settings_side_sliders_line">全画面中に動画の左右を上下にドラッグして明るさと音量を調整します。オフにすると何も起きません</string>
 </resources>

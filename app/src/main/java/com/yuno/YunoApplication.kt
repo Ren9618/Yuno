@@ -31,6 +31,7 @@ class YunoApplication : Application(), ImageLoaderFactory {
         CodecSettings.init(this)
         PlayerControls.init(this)
         FullscreenZoom.init(this)
+        SideSliders.init(this)
         SeekStep.init(this)
         ChaptersStayOpen.init(this)
         AutoPip.init(this)
