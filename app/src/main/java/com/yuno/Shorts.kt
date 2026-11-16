@@ -282,6 +282,34 @@ object ShortsGestures {
 }
 
 /**
+ * Channels the fork stops offering Shorts from: YouTube's "このチャンネルをおすすめしない",
+ * behind the dislike button on a short (a dislike there also tells YouTube itself). Kept on
+ * disk, so a channel stays quiet across launches. The suppression is the app's own view —
+ * YouTube's own feed answers to the dislike it received, not to this list.
+ */
+object ShortsNotInterested {
+    private const val KEY = "shorts_muted_channels"
+    private var prefs: android.content.SharedPreferences? = null
+
+    var muted by mutableStateOf<Set<String>>(emptySet())
+        private set
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        muted = prefs?.getStringSet(KEY, emptySet()).orEmpty()
+    }
+
+    /** [channel] is a channel id ("UC…") or, when the id isn't known yet, its name. */
+    fun mute(context: Context, channel: String) {
+        if (channel.isBlank() || channel in muted) return
+        muted = muted + channel
+        prefs?.edit()?.putStringSet(KEY, muted)?.apply()
+    }
+
+    fun isMuted(channel: String): Boolean = channel.isNotBlank() && channel in muted
+}
+
+/**
  * The Shorts feed and its playback.
  *
  * Feed: [InnerTube.shorts] (the reel sequence; signed out it's a generic one). Each short's
@@ -344,6 +372,15 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
     private val detailJobs = HashMap<String, Job>()
     /** Width / height of the frames actually decoded (better than the stream's numbers). */
     val aspects = mutableStateMapOf<String, Float>()
+
+    // ── Counts (the fork's) ──
+    /** Return YouTube Dislike's votes for the shorts shown (likes and estimated dislikes). */
+    val votes = mutableStateMapOf<String, ReturnYouTubeDislike.Votes>()
+    /** Comment counts, from the comments' first page (prefetched as a short comes on screen). */
+    val commentCounts = mutableStateMapOf<String, Int>()
+    /** Bumped when a short should leave the screen for the next one ("not interested"). */
+    var skipRequest by mutableIntStateOf(0)
+        private set
 
     // ── Account (signed in) ──
     val accountStates = mutableStateMapOf<String, VideoAccountState>()
@@ -620,6 +657,22 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
                     runCatching { YouTube.details(id, wait = false) }.getOrNull()?.let { details[id] = it }
                 }
             }
+            // The fork's counts: RYD's votes (likes and estimated dislikes) for the rail, and
+            // the comment total riding the comments' first page the prefetch just started.
+            if (ReturnYouTubeDislike.enabled && votes[id] == null) {
+                scope.launch(Dispatchers.IO) {
+                    runCatching { ReturnYouTubeDislike.fetch(id) }.getOrNull()?.let { votes[id] = it }
+                }
+            }
+            if (commentCounts[id] == null) {
+                scope.launch {
+                    runCatching { CommentFeed.first(id) }.getOrNull()?.total
+                        ?.takeIf { it > 0 }
+                        ?.let { commentCounts[id] = it }
+                }
+            }
+            // A short this fork stopped offering ("not interested") doesn't stop on sight.
+            if (channelKeyOf(id)?.let(ShortsNotInterested::isMuted) == true) requestSkip()
         }
         onScreenAt = SystemClock.elapsedRealtime()
         startLogged = false
@@ -834,7 +887,11 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
             val id = e.item.id
             if (id in viewed && pool.none { it.id == id && !it.prepared }) ShortsBank.forget(id)
         }
-        val upcoming = list.drop(index).filter { it.id !in viewed && it.id !in bankFailed && !failed.containsKey(it.id) }.take(ShortsBank.Size)
+        val upcoming = list.drop(index).filter {
+            it.id !in viewed && it.id !in bankFailed && !failed.containsKey(it.id) &&
+                // The fork's "not interested": a channel that's on the list doesn't get banked either.
+                channelKeyOf(it.id)?.let(ShortsNotInterested::isMuted) != true
+        }.take(ShortsBank.Size)
         if (upcoming.size < ShortsBank.Size) loadMore()
         val busy = if (active) !bankMay else mainBusy()
         val running = bankJob?.isActive == true
@@ -1006,6 +1063,50 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
         if (!holdFast) return
         holdFast = false
         assigned[index]?.exo?.let { it.playbackParameters = PlaybackParameters(1f) }
+    }
+
+    // ── Not interested (the fork's dislike) ──
+
+    /** A short's channel, the way [ShortsNotInterested] knows it: the id if there is one, else the name. */
+    private fun channelKeyOf(id: String): String? {
+        val item = details[id]?.item ?: items.firstOrNull { it.id == id } ?: return null
+        return item.channelUrl?.substringAfter("/channel/", "")?.takeIf { it.startsWith("UC") }
+            ?: item.channel.takeIf { it.isNotBlank() }
+    }
+
+    /** The next short, please: the pager reads this and animates one page forward. */
+    private fun requestSkip() {
+        skipRequest++
+    }
+
+    /**
+     * The rail's dislike button: a real dislike to YouTube ([InnerTube.setLike]), and — as on
+     * YouTube's own "not interested" — this fork stops offering the channel's Shorts. Tapping
+     * it again only takes the dislike back; the channel stays quiet until the list is cleared.
+     */
+    fun toggleDislike() {
+        val id = current?.id ?: return
+        if (!Account.signedIn) { onMessage(str(R.string.shorts_sign_in_to_like)); return }
+        val before = accountStates[id] ?: VideoAccountState(LikeStatus.None, subscribed = null, channelId = null)
+        val next = if (before.like == LikeStatus.Dislike) LikeStatus.None else LikeStatus.Dislike
+        accountStates[id] = before.copy(like = next)
+        scope.launch {
+            runCatching { InnerTube.setLike(id, next) }
+                .onFailure {
+                    if (it is CancellationException) throw it
+                    accountStates[id]?.let { s -> accountStates[id] = s.copy(like = before.like) }
+                    onMessage(str(R.string.shorts_like_failed))
+                }
+        }
+        if (next == LikeStatus.Dislike) {
+            val channel = channelKeyOf(id)
+            val name = details[id]?.item?.channel.orEmpty()
+            if (!channel.isNullOrBlank()) {
+                ShortsNotInterested.mute(app, channel)
+                onMessage(str(R.string.shorts_not_interested, name.ifBlank { channel }))
+            }
+            requestSkip()
+        }
     }
 
     /**
@@ -1366,15 +1467,30 @@ private fun ShortsRail(shorts: ShortsState, page: Int, enabled: Boolean, modifie
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         RailButton(enabled, str(R.string.shorts_like), onClick = shorts::toggleLike) {
-            key(item.id, account != null) {
-                FlourishIcon(
-                    if (liked) SfIcons.ThumbUpFill else SfIcons.ThumbUp,
-                    null, active = liked, kind = Flourish.Pop, tint = Ink, size = 30.dp,
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                key(item.id, account != null) {
+                    FlourishIcon(
+                        if (liked) SfIcons.ThumbUpFill else SfIcons.ThumbUp,
+                        null, active = liked, kind = Flourish.Pop, tint = Ink, size = 28.dp,
+                    )
+                }
+                RailCount(votesFor(shorts, item)?.likes?.takeIf { it > 0 })
+            }
+        }
+        RailButton(enabled, str(R.string.shorts_dislike), onClick = shorts::toggleDislike) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    if (account?.like == LikeStatus.Dislike) SfIcons.ThumbDownFill else SfIcons.ThumbDown,
+                    contentDescription = null, tint = Ink, modifier = Modifier.size(28.dp),
                 )
+                RailCount(votesFor(shorts, item)?.dislikes?.takeIf { it > 0 })
             }
         }
         RailButton(enabled, str(R.string.shorts_comments), onClick = shorts::openComments) {
-            Icon(YunoIcons.Lyrics, contentDescription = null, tint = Ink, modifier = Modifier.size(28.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(YunoIcons.Lyrics, contentDescription = null, tint = Ink, modifier = Modifier.size(28.dp))
+                RailCount(shorts.commentCounts[item.id]?.takeIf { it > 0 }?.toLong())
+            }
         }
         RailButton(enabled, str(R.string.shorts_share), onClick = {
             shareLink(context, "https://youtube.com/shorts/${item.id}", details?.item?.title ?: "")
@@ -1413,10 +1529,27 @@ private fun RailButton(enabled: Boolean, label: String, onClick: () -> Unit, con
     ) { content() }
 }
 
+/** A count under a rail button, when the fork knows one (RYD's votes, the comments' first page). */
+@Composable
+private fun RailCount(count: Long?) {
+    if (count == null) return
+    Text(formatCount(count), color = Ink, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+}
+
+/** RYD's votes for [item], when the community counts are switched on. */
+private fun votesFor(shorts: ShortsState, item: VideoItem): ReturnYouTubeDislike.Votes? =
+    if (ReturnYouTubeDislike.enabled) shorts.votes[item.id] else null
+
 @Composable
 private fun ShortsPager(shorts: ShortsState, overlayBottom: Dp, barProgress: () -> Float) {
     val pager = rememberPagerState(initialPage = shorts.index.coerceIn(0, (shorts.items.size - 1).coerceAtLeast(0))) { shorts.items.size }
     LaunchedEffect(pager) { snapshotFlow { pager.settledPage }.collect { shorts.select(it) } }
+    // The fork's "not interested": the short steps aside for the next one (a swipe forward).
+    LaunchedEffect(pager, shorts.skipRequest) {
+        if (shorts.skipRequest > 0 && pager.settledPage < shorts.items.size - 1) {
+            pager.animateScrollToPage(pager.settledPage + 1)
+        }
+    }
     VerticalPager(
         state = pager,
         modifier = Modifier.fillMaxSize(),

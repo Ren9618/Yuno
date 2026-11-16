@@ -52,6 +52,7 @@ class YunoApplication : Application(), ImageLoaderFactory {
         ShortsSetting.init(this)
         ShortsRatio.init(this)
         ShortsGestures.init(this)
+        ShortsNotInterested.init(this)
         NavTabs.init(this)
         ShortsBank.init(this)
         AppUpdate.init(this)

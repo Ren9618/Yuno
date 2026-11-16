@@ -35,4 +35,8 @@
     <!-- The fork\'s 概要欄 over a short: the title\'s "more" (TikTok\'s), opened and folded again. -->
     <string name="shorts_description_more">もっと見る</string>
     <string name="shorts_description_less">折りたたむ</string>
+
+    <!-- The fork\'s dislike on a short (a real dislike, and the channel stops being offered). -->
+    <string name="shorts_dislike">低く評価</string>
+    <string name="shorts_not_interested">%1$s をおすすめしないようにしました。</string>
 </resources>
