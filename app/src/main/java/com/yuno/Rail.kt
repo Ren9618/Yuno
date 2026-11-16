@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,7 +39,7 @@ import androidx.compose.ui.unit.sp
 internal val RailWidth = 84.dp
 
 /**
- * Wide windows (Rail 3): the five tabs stand in a rail down the left instead of the floating pill.
+ * Wide windows (Rail 3): the tabs stand in a rail down the left instead of the floating pill.
  * Same tabs, same rules: the selected one in full primary, a re-tap scrolls its list to the top.
  */
 @Composable
@@ -81,7 +82,7 @@ private fun RailTab(tab: Tab, selected: Boolean, onClick: () -> Unit) {
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            tab.label,
+            stringResource(tab.labelRes),
             fontSize = 11.5.sp,
             fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
             color = if (selected) c.onSurface else c.onSurfaceVariant,

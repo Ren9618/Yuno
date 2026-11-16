@@ -56,6 +56,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -506,6 +507,81 @@ private fun AppearanceBody(search: SettingsSearch) {
                 ToggleRow(SfIcons.Appearance, glassTitle, glassLine, LiquidGlassSetting.enabled, onCheckedChange = LiquidGlassSetting::set)
             }
         }
+    }
+    TabBarBody(search)
+}
+
+/**
+ * Settings › Appearance › Tab bar: which tabs the bottom bar shows and in what order
+ * ([NavTabs]). Up and down reorder a tab, the switch adds or removes it. Home is always
+ * in the bar (the app's floor), and Shorts additionally answers to its own switch
+ * (Settings › Shorts) — while that is off, this row's switch stands down.
+ */
+@Composable
+private fun TabBarBody(search: SettingsSearch) {
+    SearchableSettingsGroup(
+        search,
+        header = stringResource(R.string.settings_tabs),
+        footer = stringResource(R.string.settings_tabs_line),
+    ) {
+        NavTabs.order.forEachIndexed { index, tab ->
+            val title = stringResource(tab.labelRes)
+            val home = tab == Tab.Home
+            val shortsMasterOff = tab == Tab.Shorts && !ShortsSetting.enabled
+            val hidden = NavTabs.isHidden(tab)
+            val subtitle = when {
+                home -> stringResource(R.string.settings_tabs_home_always)
+                shortsMasterOff -> stringResource(R.string.settings_tabs_shorts_master_off)
+                hidden -> stringResource(R.string.settings_tabs_hidden)
+                else -> stringResource(R.string.settings_tabs_shown)
+            }
+            row(title, "tab", "tabs", "bar") {
+                SettingsRow(
+                    icon = tab.icon,
+                    title = title,
+                    subtitle = subtitle,
+                    onClick = if (!home && !shortsMasterOff) {
+                        { if (hidden) NavTabs.show(tab) else NavTabs.hide(tab) }
+                    } else null,
+                    trailing = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            ReorderButton(SfIcons.ChevronUp, index > 0, stringResource(R.string.settings_tabs_move_up)) {
+                                NavTabs.move(tab, -1)
+                            }
+                            ReorderButton(SfIcons.ChevronDown, index < NavTabs.order.lastIndex, stringResource(R.string.settings_tabs_move_down)) {
+                                NavTabs.move(tab, 1)
+                            }
+                            IosSwitch(
+                                checked = home || !hidden,
+                                onCheckedChange = { on -> if (on) NavTabs.show(tab) else NavTabs.hide(tab) },
+                                enabled = !home && !shortsMasterOff,
+                            )
+                        }
+                    },
+                )
+            }
+        }
+        row(stringResource(R.string.settings_tabs_reset), "reset", "default") {
+            DestructiveRow(stringResource(R.string.settings_tabs_reset)) { NavTabs.reset() }
+        }
+    }
+}
+
+/** A tab row's small up/down chevron, dead once the tab is at that end of the order. */
+@Composable
+private fun ReorderButton(icon: ImageVector, enabled: Boolean, description: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(30.dp)
+            .pressable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            icon,
+            contentDescription = description,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp).alpha(if (enabled) 1f else 0.35f),
+        )
     }
 }
 

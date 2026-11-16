@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
@@ -186,7 +187,7 @@ private fun GlassTabRow(
     val c = MaterialTheme.colorScheme
     val view = LocalView.current
     val density = LocalDensity.current
-    val shown = Tab.entries.filter { it != Tab.Shorts || ShortsSetting.enabled }
+    val shown = NavTabs.shown()
     val selectedIndex = shown.indexOf(selected).coerceAtLeast(0)
     val glassSpec: AnimationSpec<Float> = if (reduced) snap() else GlassSpring
     val glassOn = LocalLiquidGlassEnabled.current
@@ -304,7 +305,7 @@ private fun GlassTabRow(
                 ) {
                     Icon(
                         t.icon,
-                        contentDescription = t.label,
+                        contentDescription = stringResource(t.labelRes),
                         tint = tint,
                         modifier = Modifier.size(TabIconSize).graphicsLayer {
                             scaleX = scale * t.iconScale
@@ -313,7 +314,7 @@ private fun GlassTabRow(
                     )
                     Spacer(Modifier.height(TabIconLabelGap))
                     Text(
-                        t.label,
+                        stringResource(t.labelRes),
                         style = tabLabelStyle(),
                         color = tint,
                         maxLines = 1,

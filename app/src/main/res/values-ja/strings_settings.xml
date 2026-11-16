@@ -20,6 +20,17 @@
     <string name="settings_audio_only_line">すべての動画で映像なしの音声のみ。プレーヤーのバーにもあります。</string>
     <string name="settings_sb_summary">%1$s 件をスキップ、%2$s 件は確認</string>
     <string name="settings_mode">モード</string>
+    <!-- 設定 › 外観: 下部タブバーのタブとその並び順 (NavTabs)。 -->
+    <string name="settings_tabs">タブバー</string>
+    <string name="settings_tabs_line">下部バーのタブの表示と並び順を選べます。ホームは常に表示されます。</string>
+    <string name="settings_tabs_shown">表示中</string>
+    <string name="settings_tabs_hidden">非表示</string>
+    <string name="settings_tabs_home_always">ホームは常に表示されます</string>
+    <string name="settings_tabs_shorts_master_off">ショートがオフになっています(設定 › ショート)</string>
+    <string name="settings_tabs_reset">デフォルトに戻す</string>
+    <!-- タブ行の上下移動ボタンのアクセシビリティ ラベル。 -->
+    <string name="settings_tabs_move_up">上へ移動</string>
+    <string name="settings_tabs_move_down">下へ移動</string>
     <string name="settings_theme">テーマ</string>
     <plurals name="settings_bells_count">
         <item quantity="other">ベルがオンのチャンネル %1$s 件</item>

@@ -47,6 +47,7 @@ class YunoApplication : Application(), ImageLoaderFactory {
         ReturnYouTubeDislike.init(this)
         DeArrow.init(this)
         ShortsSetting.init(this)
+        NavTabs.init(this)
         ShortsBank.init(this)
         AppUpdate.init(this)
         // Stream URLs are bound to the network they were fetched on: forget them on a switch.

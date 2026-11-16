@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import java.lang.ref.WeakReference
 import androidx.activity.ComponentActivity
+import androidx.annotation.StringRes
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -154,16 +155,16 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * The four tabs. Each glyph fills a different share of its box - [YunoIcons.Home]
- * covers about half of it, while the SF Symbols and font-drawn
- * [YunoIcons.TabLibrary] cover three quarters - so [iconScale] shrinks the
- * other three to Home's optical area instead of letting them run to the edges.
+ * The four tabs (their set and order are the user's, [NavTabs]). Each glyph fills a different
+ * share of its box - [YunoIcons.Home] covers about half of it, while the SF Symbols and
+ * font-drawn [YunoIcons.TabLibrary] cover three quarters - so [iconScale] shrinks the other
+ * three to Home's optical area instead of letting them run to the edges.
  */
-enum class Tab(val label: String, val icon: ImageVector, val selectedIcon: ImageVector, val iconScale: Float = 1f) {
-    Home("Home", YunoIcons.Home, YunoIcons.Home),
-    Shorts("Shorts", SfIcons.Shorts, SfIcons.Shorts, 0.85f),
-    Subscriptions("Subscriptions", SfIcons.Subscriptions, SfIcons.Subscriptions, 1.08f),
-    Library("Library", YunoIcons.TabLibrary, YunoIcons.TabLibrary, 0.84f),
+enum class Tab(@StringRes val labelRes: Int, val icon: ImageVector, val selectedIcon: ImageVector, val iconScale: Float = 1f) {
+    Home(R.string.app_tab_home, YunoIcons.Home, YunoIcons.Home),
+    Shorts(R.string.app_tab_shorts, SfIcons.Shorts, SfIcons.Shorts, 0.85f),
+    Subscriptions(R.string.app_tab_subscriptions, SfIcons.Subscriptions, SfIcons.Subscriptions, 1.08f),
+    Library(R.string.app_tab_library, YunoIcons.TabLibrary, YunoIcons.TabLibrary, 0.84f),
 }
 
 /** Backdrop the nav samples for liquid glass. */
@@ -406,6 +407,13 @@ fun YunoApp() {
     }
     // Shorts turned off (account sheet) while it was the tab: back to where it was opened from.
     LaunchedEffect(ShortsSetting.enabled) { if (!ShortsSetting.enabled && tab == Tab.Shorts) tab = shortsFrom }
+    // A tab hidden in Settings (NavTabs) while it was on screen: to where it's still shown.
+    // Shorts hidden by its own switch is the effect above; this only handles the rest.
+    LaunchedEffect(NavTabs.shown()) {
+        if (tab in NavTabs.shown()) return@LaunchedEffect
+        if (tab == Tab.Shorts && !ShortsSetting.enabled) return@LaunchedEffect
+        tab = if (tab == Tab.Shorts && shortsFrom in NavTabs.shown()) shortsFrom else NavTabs.shown().first()
+    }
     LaunchedEffect(tab == Tab.Shorts) {
         if (tab == Tab.Shorts) shortsMorph.animateTo(1f, if (reduced) snap() else tween(ShortsEnterMs, easing = androidx.compose.animation.core.LinearEasing))
         else shortsMorph.animateTo(0f, if (reduced) snap() else tween(ShortsExitMs, easing = ShortsExitEasing))
@@ -595,7 +603,7 @@ fun YunoApp() {
         if (showRail) {
             NavRail(
                 selected = tab,
-                tabs = Tab.entries.filter { it != Tab.Shorts || ShortsSetting.enabled },
+                tabs = NavTabs.shown(),
                 onSelect = { t ->
                     player.expanded = false
                     showNowPlaying = false
@@ -672,7 +680,7 @@ fun YunoApp() {
                 }
             }
         }
-        val shownTabs = Tab.entries.filter { it != Tab.Shorts || ShortsSetting.enabled }
+        val shownTabs = NavTabs.shown()
         val glassChrome = glassOn && !wide
         if (glassChrome) {
             GlassNavBar(

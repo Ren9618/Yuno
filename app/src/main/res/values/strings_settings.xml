@@ -31,6 +31,17 @@
     <string name="settings_mode">Mode</string>
     <string name="settings_liquid_glass">Liquid Glass</string>
     <string name="settings_liquid_glass_line">Frosted, refractive bar that samples the page behind it</string>
+    <!-- Settings › Appearance: the bottom tab bar's tabs and their order (NavTabs). -->
+    <string name="settings_tabs">Tab bar</string>
+    <string name="settings_tabs_line">Choose which tabs the bottom bar shows and in what order. Home is always in it.</string>
+    <string name="settings_tabs_shown">In the bar</string>
+    <string name="settings_tabs_hidden">Hidden</string>
+    <string name="settings_tabs_home_always">Home is always in the bar</string>
+    <string name="settings_tabs_shorts_master_off">Shorts is off in Settings › Shorts</string>
+    <string name="settings_tabs_reset">Reset to default</string>
+    <!-- Accessibility labels of a tab row's up/down reorder buttons. -->
+    <string name="settings_tabs_move_up">Move up</string>
+    <string name="settings_tabs_move_down">Move down</string>
     <string name="settings_theme">Theme</string>
     <plurals name="settings_bells_count">
         <item quantity="one">%1$s channel with the bell on</item>
