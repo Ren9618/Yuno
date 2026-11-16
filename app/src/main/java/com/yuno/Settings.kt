@@ -458,6 +458,10 @@ private fun SponsorBlockBody(search: SettingsSearch) {
 private fun EnhancersBody(search: SettingsSearch) {
     // Grouped (the fork's tidying): extraction, community APIs, the player's own buttons,
     // sharing, and the decoder policy — each with its own heading on the page.
+    // This page carries five groups, so its headings belong on screen: the page chrome
+    // otherwise hides a group's heading while the page bar is taken to name the one group
+    // (inPage). A fresh non-page search draws every heading and keeps every row.
+    val search = SettingsSearch("", inPage = false)
     SearchableSettingsGroup(search, header = stringResource(R.string.settings_enhancers_group_extraction)) {
         // The signed-in session rides the extractor's player requests (the bot check's fix).
         val sessionTitle = stringResource(R.string.settings_session_extraction_title)
