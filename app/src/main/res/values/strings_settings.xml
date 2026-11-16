@@ -106,4 +106,10 @@
     <!-- The fork's fullscreen side drags (Settings › Playback): brightness and volume by drag, switchable. -->
     <string name="settings_side_sliders_title">Fullscreen side sliders</string>
     <string name="settings_side_sliders_line">A vertical drag on a fullscreen video\'s sides sets brightness and volume. Off, those drags do nothing</string>
+
+    <!-- The fork's Shorts gestures (Settings › Shorts). -->
+    <string name="settings_shorts_double_tap_title">Double-tap to like</string>
+    <string name="settings_shorts_double_tap_line">Two quick taps on a short give it a like. Off, they do nothing</string>
+    <string name="settings_shorts_hold_fast_title">Hold a short for 2×</string>
+    <string name="settings_shorts_hold_fast_line">Pressing and holding a short fasts it forward; letting go returns to normal speed</string>
 </resources>

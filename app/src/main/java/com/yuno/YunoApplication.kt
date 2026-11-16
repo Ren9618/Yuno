@@ -50,6 +50,7 @@ class YunoApplication : Application(), ImageLoaderFactory {
         DeArrow.init(this)
         ShortsSetting.init(this)
         ShortsRatio.init(this)
+        ShortsGestures.init(this)
         NavTabs.init(this)
         ShortsBank.init(this)
         AppUpdate.init(this)

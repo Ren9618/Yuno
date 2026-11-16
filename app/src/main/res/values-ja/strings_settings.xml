@@ -91,4 +91,10 @@
     <!-- The fork's fullscreen side drags (Settings › Playback): brightness and volume by drag, switchable. -->
     <string name="settings_side_sliders_title">全画面の左右スワイプ調整</string>
     <string name="settings_side_sliders_line">全画面中に動画の左右を上下にドラッグして明るさと音量を調整します。オフにすると何も起きません</string>
+
+    <!-- The fork's Shorts gestures (Settings › Shorts). -->
+    <string name="settings_shorts_double_tap_title">ダブルタップで高評価</string>
+    <string name="settings_shorts_double_tap_line">ショートを素早く 2 回タップして高く評価します。オフにすると何も起きません</string>
+    <string name="settings_shorts_hold_fast_title">長押しで 2 倍速</string>
+    <string name="settings_shorts_hold_fast_line">ショートを長押しすると 2 倍速で再生し、離すと元の速度に戻ります</string>
 </resources>

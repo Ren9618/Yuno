@@ -512,6 +512,16 @@ private fun ShortsBody(search: SettingsSearch) {
             row(ratioTitle, ratioLine) {
                 ToggleRow(Icons.Rounded.CropPortrait, ratioTitle, ratioLine, ShortsRatio.original) { ShortsRatio.set(context, it) }
             }
+            val tapTitle = stringResource(R.string.settings_shorts_double_tap_title)
+            val tapLine = stringResource(R.string.settings_shorts_double_tap_line)
+            row(tapTitle, tapLine) {
+                ToggleRow(SfIcons.ThumbUp, tapTitle, tapLine, ShortsGestures.doubleTapLike) { ShortsGestures.setDoubleTapLike(context, it) }
+            }
+            val holdTitle = stringResource(R.string.settings_shorts_hold_fast_title)
+            val holdLine = stringResource(R.string.settings_shorts_hold_fast_line)
+            row(holdTitle, holdLine) {
+                ToggleRow(Icons.Rounded.Speed, holdTitle, holdLine, ShortsGestures.holdFast) { ShortsGestures.setHoldFast(context, it) }
+            }
         }
     }
 }

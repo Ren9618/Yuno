@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.positionChange
@@ -95,6 +96,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -118,6 +120,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
@@ -245,6 +248,40 @@ object ShortsRatio {
 }
 
 /**
+ * The fork's Shorts gestures, each switchable in Settings › Shorts: the double-tap like
+ * (YouTube's own, off for people who kept throwing thumbs away) and the hold-to-2×
+ * (press and hold a short to fast it, like the videos' long-press fast-forward).
+ */
+object ShortsGestures {
+    private const val KEY_DOUBLE_TAP = "shorts_double_tap_like"
+    private const val KEY_HOLD_FAST = "shorts_hold_fast"
+    private var prefs: android.content.SharedPreferences? = null
+
+    var doubleTapLike by mutableStateOf(true)
+        private set
+    var holdFast by mutableStateOf(true)
+        private set
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        doubleTapLike = prefs?.getBoolean(KEY_DOUBLE_TAP, true) != false
+        holdFast = prefs?.getBoolean(KEY_HOLD_FAST, true) != false
+    }
+
+    fun setDoubleTapLike(context: Context, on: Boolean) {
+        if (on == doubleTapLike) return
+        doubleTapLike = on
+        prefs?.edit()?.putBoolean(KEY_DOUBLE_TAP, on)?.apply()
+    }
+
+    fun setHoldFast(context: Context, on: Boolean) {
+        if (on == holdFast) return
+        holdFast = on
+        prefs?.edit()?.putBoolean(KEY_HOLD_FAST, on)?.apply()
+    }
+}
+
+/**
  * The Shorts feed and its playback.
  *
  * Feed: [InnerTube.shorts] (the reel sequence; signed out it's a generic one). Each short's
@@ -334,6 +371,9 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
         private set
     var playing by mutableStateOf(false)
         private set
+    /** The finger's hold is fast-forwarding the short on screen at 2× (the fork's gesture). */
+    var holdFast by mutableStateOf(false)
+        private set
     var buffering by mutableStateOf(false)
         private set
     /** How far into the short on screen, 0..1. */
@@ -388,6 +428,7 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
         if (active) return
         bankJob?.cancel()
         pageJob?.cancel()
+        endHoldFast()
         loading = false
         pendingFresh = false
         releasePlayers()
@@ -554,6 +595,7 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
     /** The pager settled on [page]. The short left behind rewinds, ready to play again. */
     fun select(page: Int) {
         if (page == index) return
+        endHoldFast()
         assigned[index]?.exo?.let { it.playWhenReady = false; it.setSeekParameters(SeekParameters.EXACT); it.seekTo(0) }
         scrub = null
         index = page
@@ -935,6 +977,28 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
         if (!Account.signedIn) { onMessage(str(R.string.shorts_sign_in_to_like)); return false }
         if (accountStates[id]?.like != LikeStatus.Like) toggleLike()
         return true
+    }
+
+    // ── Hold to 2× (the fork's) ──
+
+    /**
+     * A press held past the long-press timeout fasts the short on screen forward at 2× while
+     * the finger stays (like the videos' long-press fast-forward). False when the switch is
+     * off or no player is there, so the page treats the press as nothing.
+     */
+    fun beginHoldFast(): Boolean {
+        if (!ShortsGestures.holdFast || holdFast) return false
+        val exo = assigned[index]?.exo ?: return false
+        holdFast = true
+        exo.playbackParameters = PlaybackParameters(2f)
+        return true
+    }
+
+    /** The finger left: back to the short's own speed. */
+    fun endHoldFast() {
+        if (!holdFast) return
+        holdFast = false
+        assigned[index]?.exo?.let { it.playbackParameters = PlaybackParameters(1f) }
     }
 
     /**
@@ -1375,7 +1439,11 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
             .shortTaps(
                 page,
                 onTap = { if (shorts.index == page) shorts.togglePause() },
-                onDoubleTap = { at -> if (shorts.index == page && shorts.likeFromTap()) thumbs += TapThumb(at) },
+                onDoubleTap = { at ->
+                    if (ShortsGestures.doubleTapLike && shorts.index == page && shorts.likeFromTap()) thumbs += TapThumb(at)
+                },
+                onHoldFast = { shorts.index == page && shorts.beginHoldFast() },
+                onHoldFastEnd = { shorts.endHoldFast() },
             ),
     ) {
         val wide = window.wide
@@ -1439,6 +1507,21 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                     )
                 }
             }
+        }
+        // The fork's hold-to-2×: the pill while the finger holds (top centre, like the videos' own).
+        if (onScreen && shorts.holdFast) {
+            Text(
+                "2×",
+                color = Ink,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Black,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 14.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.55f))
+                    .padding(horizontal = 14.dp, vertical = 5.dp),
+            )
         }
         // How far in (#48): a line between the words and the glass bar (on a wide window, along the
         // short's own bottom); drag along it, or tap it, to go anywhere in the short (#44).
@@ -1538,28 +1621,60 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
  * down, and a quick flick then came out as a tap that paused instead of a swipe), and a touch
  * that travels past touch slop is no tap. A lone tap waits out the double-tap timeout; a second
  * one within it is [onDoubleTap], and so is every further tap that follows as quickly (a run of
- * thumbs, as on YouTube) — none of them pause.
+ * thumbs, as on YouTube) — none of them pause. A press held past the long-press timeout calls
+ * [onHoldFast] instead (the fork's 2×) until the finger leaves ([onHoldFastEnd]).
  */
-private fun Modifier.shortTaps(key: Any, onTap: () -> Unit, onDoubleTap: (Offset) -> Unit) =
+private fun Modifier.shortTaps(
+    key: Any,
+    onTap: () -> Unit,
+    onDoubleTap: (Offset) -> Unit,
+    onHoldFast: () -> Boolean,
+    onHoldFastEnd: () -> Unit,
+) =
     this.then(
         Modifier.pointerInput(key) {
             val doubleTapMs = viewConfiguration.doubleTapTimeoutMillis
+            val holdMs = viewConfiguration.longPressTimeoutMillis
             coroutineScope {
                 var pendingTap: Job? = null
                 var lastUp = Long.MIN_VALUE / 2
                 var liking = false
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
-                    val up = waitForUpOrCancellation() ?: return@awaitEachGesture
-                    if ((up.position - down.position).getDistance() >= viewConfiguration.touchSlop ||
-                        up.uptimeMillis - down.uptimeMillis >= viewConfiguration.longPressTimeoutMillis
-                    ) return@awaitEachGesture
+                    val slop = viewConfiguration.touchSlop
+                    // A race between the finger leaving (a tap), a past-slop travel (the pager's
+                    // swipe, which takes over untouched), and the long-press timeout (the hold).
+                    var up: PointerInputChange? = null
+                    withTimeoutOrNull(holdMs) {
+                        while (true) {
+                            val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: return@withTimeoutOrNull
+                            if (change.pressed) {
+                                if ((change.position - down.position).getDistance() >= slop) return@withTimeoutOrNull
+                            } else {
+                                up = change
+                                return@withTimeoutOrNull
+                            }
+                        }
+                    }
+                    val upChange = up
+                    if (upChange == null) {
+                        // Held past the timeout: 2× while the finger stays, nothing at all otherwise.
+                        if (onHoldFast()) {
+                            while (true) {
+                                val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                                if (!change.pressed) break
+                            }
+                            onHoldFastEnd()
+                        }
+                        return@awaitEachGesture
+                    }
+                    if ((upChange.position - down.position).getDistance() >= slop) return@awaitEachGesture
                     val follows = down.uptimeMillis - lastUp < (if (liking) ThumbRunWindowMs else doubleTapMs)
-                    lastUp = up.uptimeMillis
+                    lastUp = upChange.uptimeMillis
                     pendingTap?.cancel()
                     if (follows) {
                         liking = true
-                        onDoubleTap(up.position)
+                        onDoubleTap(upChange.position)
                     } else {
                         liking = false
                         pendingTap = launch { delay(doubleTapMs); onTap() }
