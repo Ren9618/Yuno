@@ -50,10 +50,31 @@ data class FeedChip(val title: String, val token: String?)
 data class PlaylistPage(val playlists: List<PlaylistRef>, val next: String?)
 
 /**
- * The channel page's tabs Skipii shows (GitHub #53), by YouTube's English titles. Posts, Store,
- * Playables, Live and the rest hold nothing Skipii plays.
+ * The channel page's tabs Skipii shows (GitHub #53), by YouTube's titles. Posts, Store,
+ * Playables, Live and the rest hold nothing Skipii plays. YouTube answers in the app's
+ * language now, so both its English and Japanese names are recognised.
  */
-enum class ChannelTab(val title: String) { Home("Home"), Videos("Videos"), Shorts("Shorts"), Playlists("Playlists") }
+enum class ChannelTab(val title: String) {
+    Home("Home"),
+    Videos("Videos"),
+    Shorts("Shorts"),
+    Playlists("Playlists"),
+    ;
+
+    companion object {
+        fun ofTitle(text: String?): ChannelTab? {
+            val t = text?.trim()?.ifBlank { null } ?: return null
+            entries.firstOrNull { it.title.equals(t, ignoreCase = true) }?.let { return it }
+            return when (t) {
+                "ホーム" -> Home
+                "動画" -> Videos
+                "ショート", "ショートパンツ" -> Shorts
+                "プレイリスト" -> Playlists
+                else -> null
+            }
+        }
+    }
+}
 
 /** Where a channel shelf's "See all" goes: one of the channel's tabs, or a playlist page. */
 sealed interface ShelfLink {
@@ -184,7 +205,7 @@ object Account {
     /** youtube.com embeds the current web client version; requests with a stale one get odd results. */
     private fun refreshClientConfig() {
         runCatching {
-            val request = Request.Builder().url("https://www.youtube.com/?hl=en")
+            val request = Request.Builder().url("https://www.youtube.com/?hl=${ContentLanguage.hl}")
                 .header("User-Agent", Net.USER_AGENT)
                 .apply { val cookie = cookieHeader(); if (cookie.isNotEmpty()) header("Cookie", cookie) }
                 .build()
@@ -334,6 +355,42 @@ object InnerTube {
     }
 
     /**
+     * Search results, in the content language ([ContentLanguage]): the Search tab would otherwise
+     * get NewPipeExtractor's English page. Shorts, live streams and movies are dropped by [parseFeed].
+     */
+    suspend fun search(query: String): FeedPage = withContext(Dispatchers.IO) {
+        if (!Account.signedIn) Account.ensureVisitor()
+        parseFeed(postAny("search", JSONObject().put("query", query)))
+    }
+
+    /**
+     * The video's description as YouTube words it for the content language (the watch page's
+     * `next` answer). NewPipeExtractor's stream extraction stays English (see [ContentLanguage]),
+     * so this is what puts a Japanese 概要欄 under a Japanese user's video.
+     */
+    suspend fun videoDescription(videoId: String): String? = withContext(Dispatchers.IO) {
+        val key = ContentLanguage.hl + ":" + videoId
+        descriptions.get(key)?.let { return@withContext it }
+        val secondary = postAny("next", JSONObject().put("videoId", videoId)).findObject("videoSecondaryInfoRenderer")
+            ?: return@withContext null
+        var text: String? = null
+        secondary.walk { key2, obj ->
+            if (text != null) return@walk
+            if (key2 == "attributedDescription") {
+                text = obj.optString("content").ifBlank { null }
+            } else if (key2 == "description") {
+                text = obj.optString("content").ifBlank { null }
+                    ?: obj.optJSONArray("runs")?.let { runs ->
+                        (0 until runs.length()).joinToString("") { runs.optJSONObject(it)?.optString("text").orEmpty() }
+                    }?.ifBlank { null }
+            }
+        }
+        text?.trim()?.ifBlank { null }?.also { descriptions.put(key, it) }
+    }
+
+    private val descriptions = android.util.LruCache<String, String>(80)
+
+    /**
      * Guest Home. Anonymous `FEwhat_to_watch` is an empty "history is off" wall, and Trending
      * is consent-blocked the same way — anonymous search still returns real videos.
      */
@@ -468,7 +525,7 @@ object InnerTube {
                 id = id,
                 title = meta?.optJSONObject("title")?.optString("content").orEmpty(),
                 thumbnail = obj.firstImageSource(),
-                subtitle = obj.collectStrings("text").firstOrNull { it.contains("video", ignoreCase = true) },
+                subtitle = obj.collectStrings("text").firstOrNull { it.contains("video", ignoreCase = true) || it.contains("動画") },
             )
         }
         else -> null
@@ -813,7 +870,7 @@ object InnerTube {
             if (key != "richShelfRenderer" && key != "shelfRenderer") return@walk
             val title = shelf.text("title") ?: shelf.optJSONObject("header")?.collectStrings("content")?.firstOrNull()
             // Emptied in place: walk() goes into it next and finds nothing.
-            if (title?.trim().equals(MOST_RELEVANT, ignoreCase = true)) shelf.keys().asSequence().toList().forEach(shelf::remove)
+            if (MOST_RELEVANT.any { title?.contains(it, ignoreCase = true) == true }) shelf.keys().asSequence().toList().forEach(shelf::remove)
         }
         val page = parseFeed(root)
         var last = 0L
@@ -821,7 +878,7 @@ object InnerTube {
         return page.copy(videos = page.videos.sortedBy { ages[it.id] })
     }
 
-    private const val MOST_RELEVANT = "Most relevant"
+    private val MOST_RELEVANT = listOf("Most relevant", "関連性の高い順", "関連性が高い")
 
     /**
      * Home's category chips: `feedFilterChipBarRenderer` (the grid's header) → `chipCloudChipRenderer`
@@ -836,7 +893,7 @@ object InnerTube {
         val out = mutableListOf<FeedChip>()
         fun add(title: String?, selected: Boolean, token: String?) {
             val name = title?.trim()?.ifBlank { null } ?: return
-            if (SKIPPED_CHIPS.any { it.equals(name, ignoreCase = true) }) return
+            if (SKIPPED_CHIPS.any { name.contains(it, ignoreCase = true) }) return
             if (out.any { it.title == name }) return
             when {
                 selected -> out += FeedChip(name, null)
@@ -860,10 +917,11 @@ object InnerTube {
     }
 
     /**
-     * Home chips Skipii can't fill: "Your custom feed" is a prompt box with no videos (Derek,
-     * 6632.png), and "Live" is all live streams, which aren't played (6633.png).
+     * Home chips Skipii can't fill: "Your custom feed" / "カスタムフィード" is a prompt box with
+     * no videos (Derek, 6632.png), and "Live" / "ライブ" is all live streams, which aren't played
+     * (6633.png).
      */
-    private val SKIPPED_CHIPS = listOf("Your custom feed", "Live")
+    private val SKIPPED_CHIPS = listOf("Your custom feed", "カスタムフィード", "Live", "ライブ")
 
     /**
      * A channel page (its Home tab selected): `twoColumnBrowseResultsRenderer.tabs[].tabRenderer`
@@ -878,7 +936,7 @@ object InnerTube {
         val list = root.optJSONObject("contents")?.optJSONObject("twoColumnBrowseResultsRenderer")?.optJSONArray("tabs")
         for (i in 0 until (list?.length() ?: 0)) {
             val tab = list?.optJSONObject(i)?.optJSONObject("tabRenderer") ?: continue
-            val kind = ChannelTab.entries.firstOrNull { it.title.equals(tab.optString("title"), ignoreCase = true) } ?: continue
+            val kind = ChannelTab.ofTitle(tab.optString("title")) ?: continue
             val params = tab.optJSONObject("endpoint")?.optJSONObject("browseEndpoint")?.optString("params")?.ifBlank { null } ?: continue
             tabs.putIfAbsent(kind, params)
             if (kind == ChannelTab.Home) homeContent = tab.optJSONObject("content")
@@ -995,7 +1053,9 @@ object InnerTube {
         if (o.collectStrings("style").any { it == "BADGE_STYLE_TYPE_LIVE_NOW" || it == "LIVE" || it == "UPCOMING" }) return true
         val image = o.optJSONObject("contentImage") ?: return false
         return image.collectStrings("badgeStyle").any { it == "THUMBNAIL_OVERLAY_BADGE_STYLE_LIVE" } ||
-            image.collectStrings("text").any { it.equals("UPCOMING", ignoreCase = true) }
+            image.collectStrings("text").any {
+                it.equals("UPCOMING", ignoreCase = true) || it == "配信中" || it == "開始予定" || it == "待機中"
+            }
     }
 
     /** YouTube's "Members only" badge: BADGE_MEMBERS_ONLY (lockups) / BADGE_STYLE_TYPE_MEMBERS_ONLY (older renderers). */
@@ -1017,7 +1077,8 @@ object InnerTube {
             if (key != "badgeViewModel") return@walk
             val text = badge.optString("badgeText")
             if (CONTENT_RATING.matches(text) ||
-                (badge.optString("badgeStyle") == "BADGE_COMMERCE" && !text.equals("Fundraiser", ignoreCase = true))
+                (badge.optString("badgeStyle") == "BADGE_COMMERCE" &&
+                    !text.equals("Fundraiser", ignoreCase = true) && text != "募金" && text != "ファンドレイザー")
             ) movie = true
         }
         return movie
@@ -1050,8 +1111,8 @@ object InnerTube {
             thumbnail = sharpenFeedThumbnail("https://i.ytimg.com/vi/$id/hqdefault.jpg", id),
             avatar = avatar?.let(::absoluteUrl),
             durationSec = parseDuration(duration),
-            views = parseViews(o.text("viewCountText") ?: o.text("shortViewCountText") ?: infoRuns.firstOrNull { it.contains("view") }),
-            uploaded = o.text("publishedTimeText") ?: infoRuns.firstOrNull { it.contains("ago") },
+            views = parseViews(o.text("viewCountText") ?: o.text("shortViewCountText") ?: infoRuns.firstOrNull { looksLikeViews(it) }),
+            uploaded = o.text("publishedTimeText") ?: infoRuns.firstOrNull { looksLikeAge(it) },
             feedback = feedbackOf(o),
         )
     }
@@ -1073,13 +1134,13 @@ object InnerTube {
         return VideoItem(
             id = id,
             title = title,
-            channel = parts.firstOrNull { !it.contains("view") && !it.contains("ago") }.orEmpty(),
+            channel = parts.firstOrNull { !looksLikeViews(it) && !looksLikeAge(it) }.orEmpty(),
             channelUrl = o.collectStrings("browseId").firstOrNull { it.startsWith("UC") }?.let { "https://www.youtube.com/channel/$it" },
             thumbnail = sharpenFeedThumbnail("https://i.ytimg.com/vi/$id/hqdefault.jpg", id),
             avatar = avatar?.let(::absoluteUrl),
             durationSec = parseDuration(duration),
-            views = parseViews(parts.firstOrNull { it.contains("view") }),
-            uploaded = parts.firstOrNull { it.contains("ago") },
+            views = parseViews(parts.firstOrNull { looksLikeViews(it) }),
+            uploaded = parts.firstOrNull { looksLikeAge(it) },
             feedback = feedbackOf(o),
         )
     }
@@ -1114,8 +1175,10 @@ object InnerTube {
             val token = endpoint?.optString("feedbackToken")?.ifBlank { null } ?: return@walk
             val words = label.orEmpty().replace('\u2019', '\'')
             when {
-                icon == "NOT_INTERESTED" || words.equals("Not interested", ignoreCase = true) -> if (notInterested == null) notInterested = token
-                icon == "REMOVE" || words.startsWith("Don't recommend", ignoreCase = true) -> if (dontRecommend == null) dontRecommend = token
+                icon == "NOT_INTERESTED" || words.equals("Not interested", ignoreCase = true) ||
+                    words == "興味なし" || words == "興味がありません" -> if (notInterested == null) notInterested = token
+                icon == "REMOVE" || words.startsWith("Don't recommend", ignoreCase = true) ||
+                    words.contains("おすすめしない") || words.contains("お勧めしません") -> if (dontRecommend == null) dontRecommend = token
             }
         }
         return if (notInterested == null && dontRecommend == null) null else CardFeedback(notInterested, dontRecommend)
@@ -1142,14 +1205,48 @@ object InnerTube {
         return t.split(':').fold(0L) { acc, part -> acc * 60 + (part.toLongOrNull() ?: 0) }
     }
 
-    /** "1,234,567 views", "1.2M views", "No views" → count, or -1 when unknown. */
+    /** "1,234,567 views", "1.2M views", "1.2万回視聴", "No views" → count, or -1 when unknown. */
     internal fun parseViews(text: String?): Long {
-        val t = text?.lowercase()?.replace(",", "")?.trim() ?: return -1
-        if (t.startsWith("no ")) return 0
-        val m = Regex("([\\d.]+)\\s*([kmb]?)").find(t) ?: return -1
+        val t = text?.trim() ?: return -1
+        if (t.isEmpty()) return -1
+        val lower = t.lowercase().replace(",", "")
+        // "No views", "視聴回数はありません", "再生回数なし".
+        if (lower.startsWith("no ") || t.contains("視聴回数はありません") || t.contains("再生回数なし") || t.contains("視聴なし")) return 0
+        // Japanese compact counts count in 万 (10^4) and 億 (10^8), sometimes in one text
+        // ("1億2345万回視聴"): sum every "number + unit" pair.
+        if (t.contains('万') || t.contains('億')) {
+            var total = 0.0
+            Regex("([0-9]+(?:[.][0-9]+)?)\\s*(億|万)?").findAll(lower).forEach { m ->
+                val n = m.groupValues[1].toDoubleOrNull() ?: return@forEach
+                total += n * when (m.groupValues[2]) {
+                    "億" -> 1e8
+                    "万" -> 1e4
+                    else -> 1.0
+                }
+            }
+            return total.toLong().takeIf { it > 0 } ?: -1
+        }
+        val m = Regex("([\\d.]+)\\s*([kmb]?)").find(lower) ?: return -1
         val n = m.groupValues[1].toDoubleOrNull() ?: return -1
         val mult = when (m.groupValues[2]) { "k" -> 1e3; "m" -> 1e6; "b" -> 1e9; else -> 1.0 }
         return (n * mult).toLong()
+    }
+
+    /**
+     * Whether a metadata line says how many views there are, in English or Japanese. Used to pick
+     * the channel / views / age out of a lockup whose parts carry no labels.
+     */
+    internal fun looksLikeViews(text: String?): Boolean {
+        val t = text?.trim() ?: return false
+        return t.contains("view", ignoreCase = true) || t.contains("視聴") || t.contains("再生")
+    }
+
+    /** Whether a metadata line is an age ("3 days ago", "3 時間前"), in English or Japanese. */
+    internal fun looksLikeAge(text: String?): Boolean {
+        val t = text?.trim() ?: return false
+        if (t.contains("ago", ignoreCase = true)) return true
+        if (t == "just now" || t == "たった今" || t == "今") return true
+        return Regex("[0-9０-９]+\\s*(秒|分|時間|日|週間|か月|ヶ月|年)前").containsMatchIn(t)
     }
 
     private fun absoluteUrl(url: String) = if (url.startsWith("//")) "https:$url" else url

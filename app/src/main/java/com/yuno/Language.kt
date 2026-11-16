@@ -20,8 +20,10 @@ import java.util.Locale
  * itself (per-app language, also in Settings › Apps › Yuno › Language) and recreates the window; older
  * phones keep it in prefs "language" and every window is wrapped in it ([wrap]).
  *
- * YouTube is always asked in English (`hl=en`): the parsers, the movie / members-only filters and the
- * bot-check detection read its English words. Yuno shows everything in the app's language itself
+ * YouTube is asked in the app's language too ([ContentLanguage]): its Home, channel pages and
+ * search come back as a Japanese user sees them. NewPipeExtractor's stream extraction stays on
+ * English there, because the movie / members-only filters and the bot-check detection read
+ * YouTube's English words; Yuno still shows everything in the app's language itself
  * ([formatCount], [displayAge], [plural]); the sign-in page follows the app's language ([webTag]).
  */
 object AppLanguage {
@@ -69,6 +71,7 @@ object AppLanguage {
             app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_TAG, "").orEmpty()
         }
         applyBelow33()
+        ContentLanguage.refresh()
     }
 
     /** Picks [tag] ("" = the phone's) and rebuilds [activity] in it. */
@@ -84,6 +87,7 @@ object AppLanguage {
             applyBelow33()
             activity.recreate()
         }
+        ContentLanguage.refresh()
     }
 
     /** The picked tag if it's one of [choices] ("pt-BR" → "pt"), else "" (the phone's). */

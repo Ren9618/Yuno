@@ -175,6 +175,10 @@ object YouTube {
     fun watchUrl(id: String) = "https://www.youtube.com/watch?v=$id"
 
     suspend fun search(query: String): List<VideoItem> = withContext(Dispatchers.IO) {
+        // The Search tab reads InnerTube so results come back in the content language (Japanese
+        // for a Japanese user). The extractor stays as the fallback when YouTube returns nothing.
+        val local = runCatching { InnerTube.search(query).videos }.getOrNull().orEmpty()
+        if (local.isNotEmpty()) return@withContext local
         val handler = service.searchQHFactory.fromQuery(query, listOf(YoutubeSearchQueryHandlerFactory.VIDEOS), "")
         SearchInfo.getInfo(service, handler).relatedItems
             .filterIsInstance<StreamInfoItem>()
@@ -193,15 +197,23 @@ object YouTube {
      */
     /**
      * Music (#35: it plays at 1× even with a speed remembered): YouTube's own category, or a channel
-     * YouTube makes for an artist's tracks ("Artist - Topic"). Categories come in English (hl=en).
+     * YouTube makes for an artist's tracks ("Artist - Topic"). YouTube answers in the app's
+     * language, so its category is "音楽" for a Japanese user.
      */
     fun isMusic(info: StreamInfo): Boolean =
-        runCatching { info.category }.getOrNull().equals("Music", ignoreCase = true) ||
+        runCatching { info.category }.getOrNull()?.let { it.equals("Music", ignoreCase = true) || it == "音楽" } == true ||
             info.uploaderName.orEmpty().endsWith(" - Topic")
 
     suspend fun details(id: String, wait: Boolean = true): VideoDetails = withContext(Dispatchers.IO) {
         val info = if (wait) BotCheck.retrying(id) { StreamCache.getOrLoad(id) } else BotCheck.withoutWaiting(id) { StreamCache.getOrLoad(id) }
         val picked = StreamSelection.pick(info)
+        val fromExtractor = info.description?.let { d ->
+            if (d.type == Description.HTML) HtmlCompat.fromHtml(d.content, HtmlCompat.FROM_HTML_MODE_COMPACT).toString().trim()
+            else d.content.trim()
+        }.orEmpty()
+        // The 概要欄 in the user's language: the extractor page stays English, InnerTube is asked
+        // in ContentLanguage (a failure keeps the extractor's text).
+        val description = runCatching { InnerTube.videoDescription(id) }.getOrNull() ?: fromExtractor
         VideoDetails(
             item = VideoItem(
                 id = id,
@@ -214,10 +226,7 @@ object YouTube {
                 views = info.viewCount,
                 uploaded = uploadedText(info.textualUploadDate, info.uploadDate),
             ),
-            description = info.description?.let { d ->
-                if (d.type == Description.HTML) HtmlCompat.fromHtml(d.content, HtmlCompat.FROM_HTML_MODE_COMPACT).toString().trim()
-                else d.content.trim()
-            }.orEmpty(),
+            description = description,
             likes = info.likeCount,
             subscribers = info.uploaderSubscriberCount,
             related = info.relatedItems.filterIsInstance<StreamInfoItem>().mapNotNull { it.toVideoItem() },
@@ -294,7 +303,7 @@ object YouTube {
     fun relativeTime(then: Instant, now: Instant = Instant.now()): String {
         val s = Duration.between(then, now).seconds.coerceAtLeast(0)
         fun ago(n: Long, unit: String) = "$n $unit${if (n == 1L) "" else "s"} ago"
-        return when {
+        val english = when {
             s < 60 -> "just now"
             s < 3_600 -> ago(s / 60, "minute")
             s < 86_400 -> ago(s / 3_600, "hour")
@@ -303,6 +312,8 @@ object YouTube {
             s < 365 * 86_400 -> ago(s / (30 * 86_400), "month")
             else -> ago(s / (365 * 86_400), "year")
         }
+        // Written in English above, then put into the app's language ([displayAge] reads both).
+        return displayAge(english) ?: english
     }
 
     /** Turns extractor failures into a sentence a person can act on. */

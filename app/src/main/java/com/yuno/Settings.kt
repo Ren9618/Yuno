@@ -27,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
 import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.DarkMode
@@ -451,16 +452,48 @@ private fun LanguageBody(search: SettingsSearch) {
             label = { it.second },
             footer = stringResource(R.string.language_line),
         ) { (tag, _) -> context.findActivity()?.let { AppLanguage.pick(it, tag) } }
-        return
+    } else {
+        SearchableSettingsGroup(search, header = stringResource(R.string.language_title)) {
+            options.forEach { (tag, label) ->
+                row(label, stringResource(R.string.language_title)) {
+                    SettingsRow(
+                        icon = SfIcons.Language,
+                        title = label,
+                        showChevron = false,
+                        onClick = { context.findActivity()?.let { AppLanguage.pick(it, tag) } },
+                    )
+                }
+            }
+        }
     }
-    SearchableSettingsGroup(search, header = stringResource(R.string.language_title)) {
+    ContentLanguageBody(search)
+}
+
+/** Settings › Language › YouTube content: the language YouTube itself answers in. */
+@Composable
+private fun ContentLanguageBody(search: SettingsSearch) {
+    val autoName = stringResource(R.string.language_youtube_auto)
+    val appName = AppLanguage.choices.firstOrNull { it.tag == AppLanguage.pickedChoice }?.name
+        ?: AppLanguage.choices.firstOrNull { it.tag == AppLanguage.locale.language }?.name
+    val autoLabel = if (appName != null) stringResource(R.string.language_youtube_follow_named, appName) else autoName
+    val options = listOf("" to autoLabel) + ContentLanguage.choices.map { it.tag to it.name }
+    SearchableSettingsGroup(
+        search,
+        header = stringResource(R.string.language_youtube_title),
+        footer = stringResource(R.string.language_youtube_line),
+    ) {
         options.forEach { (tag, label) ->
-            row(label, stringResource(R.string.language_title)) {
+            row(label, stringResource(R.string.language_youtube_title)) {
                 SettingsRow(
                     icon = SfIcons.Language,
                     title = label,
                     showChevron = false,
-                    onClick = { context.findActivity()?.let { AppLanguage.pick(it, tag) } },
+                    trailing = {
+                        if (ContentLanguage.picked == tag) {
+                            Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary)
+                        }
+                    },
+                    onClick = { ContentLanguage.pick(tag) },
                 )
             }
         }

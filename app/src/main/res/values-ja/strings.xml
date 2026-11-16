@@ -15,6 +15,9 @@
     <plurals name="subscribers_count">
         <item quantity="other">チャンネル登録者数 %1$s人</item>
     </plurals>
+    <plurals name="videos_count">
+        <item quantity="other">動画 %1$s本</item>
+    </plurals>
 
     <!-- Ages (displayAge). %1$s is a relative time already in the app's language ("3 days ago"). -->
     <string name="age_just_now">たった今</string>
@@ -27,4 +30,10 @@
     <!-- %1$s is the language's own name ("Español"). -->
     <string name="language_phone_named">スマートフォンの言語（%1$s）</string>
     <string name="language_line">アプリ自体の表示言語です。動画、タイトル、コメントはクリエイターが書いたままの言語で表示されます。</string>
+    <!-- Settings › Language › YouTube content: the language YouTube itself answers in. -->
+    <string name="language_youtube_title">YouTube のコンテンツ</string>
+    <string name="language_youtube_line">タブ、チップ、視聴回数、概要欄などを YouTube から取得する言語です。動画そのものはクリエイターが書いた言葉のままです。</string>
+    <string name="language_youtube_auto">アプリの言語に合わせる</string>
+    <!-- %1$s is the app language\'s own name ("日本語"). -->
+    <string name="language_youtube_follow_named">アプリの言語に合わせる（%1$s）</string>
 </resources>

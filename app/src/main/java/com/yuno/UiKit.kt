@@ -380,7 +380,7 @@ fun VideoRow(video: VideoItem, onClick: () -> Unit, trailing: (@Composable () ->
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                listOfNotNull(video.channel.ifBlank { null }, video.views.takeIf { it >= 0 }?.let { "${formatCount(it)} views" }).joinDots(),
+                listOfNotNull(video.channel.ifBlank { null }, video.views.takeIf { it >= 0 }?.let { viewsLine(it) }).joinDots(),
                 color = c.onSurfaceVariant,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -467,6 +467,10 @@ fun formatDuration(ms: Long): String {
 }
 
 fun formatCount(n: Long): String = when {
+    // Japanese counts in units of 10,000 (万) and 100,000,000 (億), and says "1.2万" where
+    // English says "12K": use its own units when the app is Japanese (the strings exist for it).
+    AppLanguage.locale.language == "ja" && n >= 100_000_000 -> str(R.string.count_hundred_millions, trimmed(n / 100_000_000.0))
+    AppLanguage.locale.language == "ja" && n >= 10_000 -> str(R.string.count_ten_thousands, trimmed(n / 10_000.0))
     n < 1_000 -> n.toString()
     n < 1_000_000 -> trimmed(n / 1_000.0) + "K"
     n < 1_000_000_000 -> trimmed(n / 1_000_000.0) + "M"
@@ -480,6 +484,9 @@ fun compactQuantity(n: Long): Long = when {
 }
 
 fun viewsLine(views: Long): String = plural(R.plurals.views_count, compactQuantity(views), formatCount(views))
+
+/** "1.2M likes" in the app's language. */
+fun likesLine(likes: Long): String = plural(R.plurals.player_likes, compactQuantity(likes), formatCount(likes))
 
 fun subscribersLine(subscribers: Long): String = plural(R.plurals.subscribers_count, compactQuantity(subscribers), formatCount(subscribers))
 
@@ -521,8 +528,8 @@ fun ChannelNameWithBadge(
 }
 
 fun channelStatLine(subscribers: Long, videoCount: Long): String = listOfNotNull(
-    subscribers.takeIf { it > 0 }?.let { "${formatStatCount(it)} subscribers" },
-    videoCount.takeIf { it > 0 }?.let { "${formatStatCount(it)} videos" },
+    subscribers.takeIf { it > 0 }?.let { subscribersLine(it) },
+    videoCount.takeIf { it > 0 }?.let { plural(R.plurals.videos_count, compactQuantity(it), formatCount(it)) },
 ).joinToString(" · ")
 
 private fun trimmed(v: Double): String =
@@ -540,40 +547,64 @@ private fun statCompact(v: Double, suffix: String): String {
 fun metaLine(channel: String, views: Long, uploaded: String?): String =
     listOfNotNull(
         channel.ifBlank { null },
-        views.takeIf { it >= 0 }?.let { "${formatCount(it)} views" },
+        views.takeIf { it >= 0 }?.let { viewsLine(it) },
         displayAge(uploaded)?.ifBlank { null },
     ).joinDots()
 
-private val ENGLISH_AGE = Regex("^(?:(streamed(?: live)?|premiered)\\s+)?(\\d+)\\s+(second|minute|hour|day|week|month|year)s?\\s+ago$", RegexOption.IGNORE_CASE)
+private val ENGLISH_AGE =
+    Regex("^(?:(streamed(?: live)?|premiered)\\s+)?(\\d+)\\s+(second|minute|hour|day|week|month|year)s?\\s+ago$", RegexOption.IGNORE_CASE)
+private val JAPANESE_AGE = Regex("^([0-9]+)\\s*(秒|分|時間|日|週間|か月|ヶ月|年)前$")
 
 private fun latinDigits(locale: Locale): android.icu.util.ULocale =
     android.icu.util.ULocale.forLocale(locale).setKeywordValue("numbers", "latn")
 
 /**
- * An age as YouTube writes it in English ("3 days ago", "Streamed 2 hours ago", "just now") in the
- * app's language. Anything else (a date) is shown as it came.
+ * An age as YouTube writes it ("3 days ago", "Streamed 2 hours ago", "3 時間前", "たった今")
+ * in the app's language. An age already in the app's language is returned as it came; anything
+ * else (a date) is shown unchanged.
  */
-fun displayAge(english: String?): String? {
-    if (english == null) return null
-    val text = english.trim()
-    if (AppLanguage.locale.language == "en") return text
-    if (text.equals("just now", ignoreCase = true)) return str(R.string.age_just_now)
-    val m = ENGLISH_AGE.matchEntire(text) ?: return text
-    val unit = when (m.groupValues[3].lowercase()) {
-        "second" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.SECONDS
-        "minute" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.MINUTES
-        "hour" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.HOURS
-        "day" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.DAYS
-        "week" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.WEEKS
-        "month" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.MONTHS
-        else -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.YEARS
+fun displayAge(age: String?): String? {
+    val text = age?.trim()?.ifBlank { null } ?: return null
+    val language = AppLanguage.locale.language
+    if (text.equals("just now", ignoreCase = true) || text == "たった今" || text == "今") {
+        return str(R.string.age_just_now)
     }
-    val age = android.icu.text.RelativeDateTimeFormatter.getInstance(latinDigits(AppLanguage.locale))
-        .format(m.groupValues[2].toDouble(), android.icu.text.RelativeDateTimeFormatter.Direction.LAST, unit)
+    val english = ENGLISH_AGE.matchEntire(text)
+    val japanese = JAPANESE_AGE.matchEntire(text)
+    if (english == null && japanese == null) return text
+    if ((english != null && language == "en") || (japanese != null && language == "ja")) return text
+    val count: String
+    val unit: android.icu.text.RelativeDateTimeFormatter.RelativeUnit
+    if (english != null) {
+        count = english.groupValues[2]
+        unit = when (english.groupValues[3].lowercase()) {
+            "second" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.SECONDS
+            "minute" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.MINUTES
+            "hour" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.HOURS
+            "day" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.DAYS
+            "week" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.WEEKS
+            "month" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.MONTHS
+            else -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.YEARS
+        }
+    } else {
+        count = japanese!!.groupValues[1]
+        unit = when (japanese.groupValues[2]) {
+            "秒" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.SECONDS
+            "分" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.MINUTES
+            "時間" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.HOURS
+            "日" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.DAYS
+            "週間" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.WEEKS
+            "か月", "ヶ月" -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.MONTHS
+            else -> android.icu.text.RelativeDateTimeFormatter.RelativeUnit.YEARS
+        }
+    }
+    val formatted = android.icu.text.RelativeDateTimeFormatter.getInstance(latinDigits(AppLanguage.locale))
+        .format(count.toDouble(), android.icu.text.RelativeDateTimeFormatter.Direction.LAST, unit)
+    val prefix = english?.groupValues?.get(1).orEmpty()
     return when {
-        m.groupValues[1].startsWith("streamed", ignoreCase = true) -> str(R.string.age_streamed, age)
-        m.groupValues[1].isNotEmpty() -> str(R.string.age_premiered, age)
-        else -> age
+        prefix.startsWith("streamed", ignoreCase = true) -> str(R.string.age_streamed, formatted)
+        prefix.isNotEmpty() -> str(R.string.age_premiered, formatted)
+        else -> formatted
     }
 }
 

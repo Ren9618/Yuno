@@ -106,6 +106,7 @@
     <!-- Section title in Library: videos watched. -->
     <string name="ui_history">History</string>
     <string name="ui_history_empty">Nothing watched yet.</string>
+    <string name="ui_history_signed_out">Videos you watch on this phone show up here.</string>
     <!-- Section title in Library. -->
     <string name="ui_playlists">Playlists</string>
     <string name="ui_playlist_empty_title">Nothing here yet</string>

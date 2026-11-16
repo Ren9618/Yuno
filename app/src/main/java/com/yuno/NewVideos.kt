@@ -152,18 +152,34 @@ object NewVideos {
     }
 
     private val AGE = Regex("(\\d+)\\s*(second|minute|hour|day|week|month|year)s?\\s+ago")
+    private val JA_AGE = Regex("([0-9]+)\\s*(秒|分|時間|日|週間|か月|ヶ月|年)前")
 
-    /** "3 hours ago", "Streamed 2 days ago" → how long ago in ms; null if it doesn't say. */
+    /** "3 hours ago", "Streamed 2 days ago", "3 時間前" → how long ago in ms; null if it doesn't say. */
     internal fun ageMs(text: String?): Long? {
-        val m = AGE.find(text?.lowercase() ?: return null) ?: return null
+        val raw = text?.trim() ?: return null
+        if (raw == "just now" || raw == "たった今" || raw == "今") return 0
+        AGE.find(raw.lowercase())?.let { m ->
+            val n = m.groupValues[1].toLong()
+            val unit = when (m.groupValues[2]) {
+                "second" -> 1_000L
+                "minute" -> 60_000L
+                "hour" -> 3_600_000L
+                "day" -> 86_400_000L
+                "week" -> 7 * 86_400_000L
+                "month" -> 30 * 86_400_000L
+                else -> 365 * 86_400_000L
+            }
+            return n * unit
+        }
+        val m = JA_AGE.find(raw) ?: return null
         val n = m.groupValues[1].toLong()
         val unit = when (m.groupValues[2]) {
-            "second" -> 1_000L
-            "minute" -> 60_000L
-            "hour" -> 3_600_000L
-            "day" -> 86_400_000L
-            "week" -> 7 * 86_400_000L
-            "month" -> 30 * 86_400_000L
+            "秒" -> 1_000L
+            "分" -> 60_000L
+            "時間" -> 3_600_000L
+            "日" -> 86_400_000L
+            "週間" -> 7 * 86_400_000L
+            "か月", "ヶ月" -> 30 * 86_400_000L
             else -> 365 * 86_400_000L
         }
         return n * unit

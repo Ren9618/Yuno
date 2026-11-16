@@ -105,6 +105,7 @@
     <!-- Section title in Library: videos watched. -->
     <string name="ui_history">履歴</string>
     <string name="ui_history_empty">まだ何も視聴していません。</string>
+    <string name="ui_history_signed_out">このスマホで視聴した動画がここに表示されます。</string>
     <!-- Section title in Library. -->
     <string name="ui_playlists">再生リスト</string>
     <string name="ui_playlist_empty_title">まだ何もありません</string>

@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
@@ -160,13 +161,13 @@ fun SubscriptionsScreen(
     if (!signedIn) {
         Box(Modifier.fillMaxSize()) {
             LazyColumn(state = listState, contentPadding = contentPadding.withTop(top)) {
-                item { LargePageTitle("Subscriptions", fontSize = LargePageTitleCompactFontSize) }
+                item { LargePageTitle(stringResource(R.string.ui_subscriptions_title), fontSize = LargePageTitleCompactFontSize) }
                 item {
                     EmptyState(
                         icon = SfIcons.Subscriptions,
-                        title = "Your subscriptions",
-                        body = "Sign in with Google to see new videos from the channels you follow.",
-                        action = { PillButton("Sign in with Google", onSignIn) },
+                        title = stringResource(R.string.ui_subscriptions_signed_out_title),
+                        body = stringResource(R.string.ui_subscriptions_signed_out_body),
+                        action = { PillButton(stringResource(R.string.ui_sign_in_with_google), onSignIn) },
                     )
                 }
             }
@@ -181,7 +182,7 @@ fun SubscriptionsScreen(
                 contentPadding.withTop(top),
                 onOpen,
                 header = {
-                    item(key = "page-title") { LargePageTitle("Subscriptions", fontSize = LargePageTitleCompactFontSize) }
+                    item(key = "page-title") { LargePageTitle(stringResource(R.string.ui_subscriptions_title), fontSize = LargePageTitleCompactFontSize) }
                     if (showStrip) {
                         item(key = "channels") {
                             SubscriptionsChannelStrip(channels = lib.channels) { ch ->
@@ -358,6 +359,11 @@ fun LibraryScreen(
 ) {
     val signedIn = Account.signedIn
     val localHistory = WatchHistory.videos
+    val historyTitle = stringResource(R.string.ui_history)
+    val playlistsTitle = stringResource(R.string.ui_playlists)
+    val watchLaterTitle = stringResource(R.string.ui_watch_later)
+    val likedVideosTitle = stringResource(R.string.ui_liked_videos)
+    val libraryTitle = stringResource(R.string.ui_library_title)
     LaunchedEffect(signedIn) {
         if (signedIn) {
             lib.history.ensureLoaded()
@@ -371,8 +377,8 @@ fun LibraryScreen(
             state = rememberScrollToTop(scrollToTop, listState),
             contentPadding = contentPadding.withTop(pageContentTop()),
         ) {
-            item(key = "page-title") { LargePageTitle("Library", fontSize = LargePageTitleCompactFontSize) }
-            item(key = "historyTitle") { SectionTitle("History") }
+            item(key = "page-title") { LargePageTitle(libraryTitle, fontSize = LargePageTitleCompactFontSize) }
+            item(key = "historyTitle") { SectionTitle(historyTitle) }
             item(key = "history") {
                 val history = if (signedIn) lib.history.videos else localHistory
                 when {
@@ -384,18 +390,18 @@ fun LibraryScreen(
                     }
                     signedIn && lib.history.loading -> HistorySkeletons()
                     else -> Text(
-                        if (signedIn) lib.history.error ?: "Nothing watched yet."
-                        else "Videos you watch on this phone show up here.",
+                        if (signedIn) lib.history.error ?: stringResource(R.string.ui_history_empty)
+                        else stringResource(R.string.ui_history_signed_out),
                         color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp,
                         modifier = Modifier.padding(horizontal = PageGutter),
                     )
                 }
             }
             if (signedIn) {
-                item(key = "playlistsTitle") { SectionTitle("Playlists") }
+                item(key = "playlistsTitle") { SectionTitle(playlistsTitle) }
                 val pinned = listOf(
-                    PlaylistRef("WL", "Watch later", null, null),
-                    PlaylistRef("LL", "Liked videos", null, null),
+                    PlaylistRef("WL", watchLaterTitle, null, null),
+                    PlaylistRef("LL", likedVideosTitle, null, null),
                 )
                 items((pinned + lib.playlists).chunked(2), key = { row -> row.joinToString { it.id } }) { row ->
                     Row(Modifier.padding(horizontal = PageGutter, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -407,13 +413,13 @@ fun LibraryScreen(
                 item(key = "signInNudge") {
                     Column(Modifier.padding(horizontal = PageGutter, vertical = 16.dp)) {
                         Text(
-                            "Sign in for Watch later, liked videos and playlists.",
+                            stringResource(R.string.ui_library_signed_out_body),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Spacer(Modifier.height(12.dp))
-                        PillButton("Sign in with Google", onSignIn)
+                        PillButton(stringResource(R.string.ui_sign_in_with_google), onSignIn)
                     }
                 }
             }

@@ -75,6 +75,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -270,9 +273,9 @@ fun PlayerScreen(
                         )
                         Spacer(Modifier.height(6.dp))
                         val stats = listOfNotNull(
-                            item.views.takeIf { it >= 0 }?.let { "${formatCount(it)} views" },
-                            item.uploaded?.ifBlank { null },
-                            details?.likes?.takeIf { it > 0 }?.let { "${formatCount(it)} likes" },
+                            item.views.takeIf { it >= 0 }?.let { viewsLine(it) },
+                            item.uploaded?.ifBlank { null }?.let { displayAge(it) },
+                            details?.likes?.takeIf { it > 0 }?.let { likesLine(it) },
                         ).joinDots()
                         val hasDescription = !details?.description.isNullOrBlank()
                         Row(
@@ -281,7 +284,7 @@ fun PlayerScreen(
                             Text(stats, color = c.onSurfaceVariant, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                             if (hasDescription) {
                                 Text(
-                                    if (descriptionOpen) "  less" else "  …more",
+                                    (if (descriptionOpen) stringResource(R.string.player_description_less) else stringResource(R.string.player_description_more)).let { "  $it" },
                                     color = c.onSurface,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.ExtraBold,
@@ -312,7 +315,7 @@ fun PlayerScreen(
                             Column(Modifier.weight(1f)) {
                                 Text(item.channel, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 details?.subscribers?.takeIf { it > 0 }?.let {
-                                    Text("${formatCount(it)} subscribers", color = c.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(subscribersLine(it), color = c.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                             }
@@ -345,7 +348,7 @@ fun PlayerScreen(
                 }
                 val related = details?.related.orEmpty()
                 if (related.isNotEmpty()) {
-                    item(key = "moreTitle") { SectionTitle("More videos") }
+                    item(key = "moreTitle") { SectionTitle(stringResource(R.string.player_more_videos)) }
                     items(related, key = { "rel-" + it.id }) { video ->
                         Box(Modifier.padding(horizontal = PageGutter)) { VideoRow(video, onClick = { onOpen(video) }) }
                     }

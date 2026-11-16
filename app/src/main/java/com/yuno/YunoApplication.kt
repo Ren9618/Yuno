@@ -17,6 +17,8 @@ class YunoApplication : Application(), ImageLoaderFactory {
         CrashLog.install(this)
         // First: everything below may already word something (str()).
         AppLanguage.init(this)
+        // Which language YouTube itself answers in (the app's unless picked).
+        ContentLanguage.init(this)
         NewPipe.init(NewPipeDownloader.instance)
         // The iOS client only adds HLS livestream formats; Yuno plays VOD, so skip that request.
         org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeStreamExtractor.setFetchIosClient(false)

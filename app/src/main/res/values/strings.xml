@@ -18,6 +18,10 @@
         <item quantity="one">%1$s subscriber</item>
         <item quantity="other">%1$s subscribers</item>
     </plurals>
+    <plurals name="videos_count">
+        <item quantity="one">%1$s video</item>
+        <item quantity="other">%1$s videos</item>
+    </plurals>
 
     <!-- Ages (displayAge). %1$s is a relative time already in the app's language ("3 days ago"). -->
     <string name="age_just_now">just now</string>
@@ -30,4 +34,10 @@
     <!-- %1$s is the language's own name ("Español"). -->
     <string name="language_phone_named">Phone\'s language (%1$s)</string>
     <string name="language_line">The app\'s own words. Videos, titles and comments stay as their creators wrote them.</string>
+    <!-- Settings › Language › YouTube content: the language YouTube itself answers in. -->
+    <string name="language_youtube_title">YouTube content</string>
+    <string name="language_youtube_line">Tabs, chips, view counts and descriptions come from YouTube in this language. A video keeps its creator\'s own words.</string>
+    <string name="language_youtube_auto">Follow the app\'s language</string>
+    <!-- %1$s is the app language\'s own name ("日本語"). -->
+    <string name="language_youtube_follow_named">Follow the app\'s language (%1$s)</string>
 </resources>
