@@ -57,6 +57,7 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -470,7 +471,7 @@ fun VideoContent(
             SeekBurstPill(burstSide, burstSeconds, burstTaps, burstActive, fullscreen)
         }
         if (state.holdSpeedActive) {
-            HoldSpeedPill(Modifier.align(Alignment.TopCenter).padding(top = 12.dp).graphicsLayer { alpha = controlsAlpha() })
+            HoldSpeedPill(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 8.dp).graphicsLayer { alpha = controlsAlpha() })
         }
 
         val error = state.error
@@ -930,7 +931,7 @@ private fun HoldSpeedPill(modifier: Modifier = Modifier) {
         lineHeight = 13.sp,
         modifier = modifier
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.55f))
+            .background(Color.Black.copy(alpha = 0.68f))
             .padding(horizontal = 12.dp, vertical = 4.dp),
     )
 }

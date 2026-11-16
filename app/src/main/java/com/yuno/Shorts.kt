@@ -12,6 +12,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.draw.blur
@@ -1705,7 +1706,8 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                 }
             }
         }
-        // The fork's hold-to-2×: the pill while the finger holds (top centre, like the videos' own).
+        // The fork's hold-to-2×: the pill while the finger holds (under the status bar, so the
+        // punch-hole camera never covers it; the dark pill reads over any picture).
         if (onScreen && shorts.holdFast) {
             Text(
                 str(R.string.shorts_hold_2x),
@@ -1714,9 +1716,10 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                 fontWeight = FontWeight.Black,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = 14.dp)
+                    .statusBarsPadding()
+                    .padding(top = 8.dp)
                     .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.55f))
+                    .background(Color.Black.copy(alpha = 0.68f))
                     .padding(horizontal = 14.dp, vertical = 5.dp),
             )
         }
