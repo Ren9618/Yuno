@@ -846,7 +846,7 @@ private fun AccountActions(state: PlayerState) {
             flourish = Flourish.Pop,
             labelRollsUp = rising,
             shape = RoundedCornerShape(topStart = 22.dp, bottomStart = 22.dp, topEnd = 8.dp, bottomEnd = 8.dp),
-            description = "Like",
+            description = stringResource(R.string.player_like),
         ) { state.setLike(LikeStatus.Like) }
         ActionPill(
             icon = if (like == LikeStatus.Dislike) SfIcons.ThumbDownFill else SfIcons.ThumbDown,
@@ -855,25 +855,25 @@ private fun AccountActions(state: PlayerState) {
             active = like == LikeStatus.Dislike,
             flourish = Flourish.Droop,
             shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 22.dp, bottomEnd = 22.dp),
-            description = "Dislike",
+            description = stringResource(R.string.player_dislike),
         ) { state.setLike(LikeStatus.Dislike) }
     }
     ActionPill(
         icon = if (state.inWatchLater) SfIcons.Clock else YunoIcons.Clock,
-        label = if (state.inWatchLater) "Saved" else "Save",
+        label = stringResource(if (state.inWatchLater) R.string.ui_saved else R.string.player_save),
         active = state.inWatchLater,
         flourish = Flourish.Drop,
         shape = RoundedCornerShape(22.dp),
-        description = "Save to Watch later",
+        description = stringResource(R.string.ui_save_to_watch_later),
     ) { state.toggleWatchLater() }
     // Any of the account's playlists (GitHub issue #12).
     ActionPill(
         icon = SfIcons.LibraryAdd,
-        label = "Playlist",
+        label = stringResource(R.string.player_playlist),
         active = false,
         flourish = null,
         shape = RoundedCornerShape(22.dp),
-        description = "Save to playlist",
+        description = stringResource(R.string.player_save_to_playlist),
     ) { state.current?.let(state::openPlaylists) }
 }
 

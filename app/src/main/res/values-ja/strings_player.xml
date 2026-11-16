@@ -16,7 +16,9 @@
     <string name="player_transcript">文字起こし</string>
     <!-- Pill button in the player's action row: opens the "Save to playlist" sheet. Keep short. -->
     <string name="player_playlist">再生リスト</string>
-    <!-- Accessibility labels of the action row's buttons. -->
+    <!-- Pill button in the player's action row: saves the video to Watch later (the saved state uses ui_saved). Keep short. -->
+    <string name="player_save">保存</string>
+    <!-- Accessibility labels of the action row\'s buttons. -->
     <string name="player_like">高く評価</string>
     <string name="player_dislike">低く評価</string>
     <string name="player_save_to_playlist">再生リストに保存</string>

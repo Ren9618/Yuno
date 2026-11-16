@@ -17,7 +17,9 @@
     <string name="player_transcript">Transcript</string>
     <!-- Pill button in the player's action row: opens the "Save to playlist" sheet. Keep short. -->
     <string name="player_playlist">Playlist</string>
-    <!-- Accessibility labels of the action row's buttons. -->
+    <!-- Pill button in the player's action row: saves the video to Watch later (the saved state uses ui_saved). Keep short. -->
+    <string name="player_save">Save</string>
+    <!-- Accessibility labels of the action row\'s buttons. -->
     <string name="player_like">Like</string>
     <string name="player_dislike">Dislike</string>
     <string name="player_save_to_playlist">Save to playlist</string>
