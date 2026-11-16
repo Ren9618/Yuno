@@ -62,6 +62,9 @@
     <string name="settings_update_available">Version %1$s is available</string>
     <string name="settings_source">Source code on GitHub</string>
     <string name="settings_source_line">Report a problem or ask for a feature</string>
+    <!-- The fork\'s own identity (Fork.kt), shown next to Yuno\'s version row. -->
+    <string name="settings_fork_title">This fork</string>
+    <string name="settings_fork_line">Version %1$s, maintained by %2$s. Adds features on top of Yuno — not an official release</string>
 <!-- Settings › About: the crash report (GitHub #55), shared to paste into an issue. -->
     <string name="settings_crash_title">Crash report</string>
     <string name="settings_crash_saved">Saved from the last crash. Share it and paste it into a GitHub issue</string>

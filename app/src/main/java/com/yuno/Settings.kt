@@ -27,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
 import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.CallSplit
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ClosedCaption
 import androidx.compose.material.icons.rounded.Code
@@ -735,6 +736,14 @@ private fun AboutBody(player: PlayerState, search: SettingsSearch) {
         row(sourceTitle, sourceLine, "github") {
             SettingsRow(icon = Icons.Rounded.Code, title = sourceTitle, subtitle = sourceLine, onClick = {
                 context.openOrSay(Intent(Intent.ACTION_VIEW, Uri.parse(SourceUrl))) { player.actionMessage = it }
+            })
+        }
+        // The fork's own identity, next to (not instead of) Yuno's version row above.
+        val forkTitle = stringResource(R.string.settings_fork_title)
+        val forkLine = stringResource(R.string.settings_fork_line, Fork.VERSION, Fork.AUTHOR)
+        row(forkTitle, forkLine, "fork") {
+            SettingsRow(icon = Icons.Rounded.CallSplit, title = forkTitle, subtitle = forkLine, onClick = {
+                context.openOrSay(Intent(Intent.ACTION_VIEW, Uri.parse(Fork.URL))) { player.actionMessage = it }
             })
         }
     }

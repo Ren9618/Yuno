@@ -48,6 +48,9 @@
     <string name="settings_update_available">バージョン %1$s を利用できます</string>
     <string name="settings_source">GitHub のソースコード</string>
     <string name="settings_source_line">問題の報告や機能のリクエスト</string>
+    <!-- The fork\'s own identity (Fork.kt), shown next to Yuno\'s version row. -->
+    <string name="settings_fork_title">このフォーク</string>
+    <string name="settings_fork_line">バージョン %1$s · メンテナー %2$s。Yuno に機能を追加したフォークで、公式リリースではありません</string>
 <string name="settings_crash_title">クラッシュレポート</string>
     <string name="settings_crash_saved">前回のクラッシュから保存されました。共有して GitHub の issue に貼り付けてください</string>
     <string name="settings_crash_none">保存されたクラッシュはありません。Android が前回 Yuno を終了した理由を共有します（GitHub の issue 用）</string>
