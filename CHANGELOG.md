@@ -14,6 +14,7 @@ changes something people see or feel (faster, fewer errors); then say that.
 - Add the Enhancements page: Return YouTube Dislike, DeArrow, the player's mute, loop and copy buttons, tracking-parameter-free share links, and a per-codec decoder policy on one settings page.
 - Add an adjustable tab bar: reorder, hide and show the bottom bar's tabs in Settings › Appearance › Tab bar.
 - Add empty states: empty feeds show an empty state with a retry, and a signed-in Home with nothing of its own falls back to the guest recommendations for the session.
+- Add a self-recovering bot check: when YouTube's "confirm you're not a bot" refuses the streams, Yuno keeps waiting it out in the background and retries when the network changes, then opens the video by itself — and a video playing its 360p fallback swaps to the real streams.
 
 ## Unreleased
 
