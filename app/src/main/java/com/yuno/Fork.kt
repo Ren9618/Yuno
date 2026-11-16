@@ -6,7 +6,7 @@ package com.yuno
  * when a feature lands, and keep [AUTHOR]/[URL] honest with the repository's owner.
  */
 object Fork {
-    const val VERSION = "2026.11.16"
+    const val VERSION = "2026.11.17"
     const val AUTHOR = "Ren9618"
     const val URL = "https://github.com/Ren9618/Yuno"
 }
