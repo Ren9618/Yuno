@@ -595,22 +595,92 @@ private fun AccountBody(onSignIn: () -> Unit, onSignedOut: () -> Unit) {
         }
         return
     }
-    SettingsGroup(footer = stringResource(R.string.settings_sync_note), topSpacing = 0.dp) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ChannelAvatar(profile.avatar, profile.name, size = 52)
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Text(profile.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
-                profile.handle?.let {
-                    Spacer(Modifier.height(2.dp))
-                    Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-                }
-            }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf(false) }
+    val active = Account.activeSession
+    val sessions = Account.sessionProfiles
+
+    SettingsGroup(header = stringResource(R.string.settings_accounts_google), topSpacing = 0.dp) {
+        sessions.forEachIndexed { index, account ->
+            if (index > 0) RowDivider()
+            SettingsRow(
+                title = account.name,
+                subtitle = account.handle,
+                enabled = !busy,
+                iconContent = { ChannelAvatar(account.avatar, account.name, size = 38) },
+                showChevron = false,
+                trailing = {
+                    if (index == active) Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary)
+                },
+                onClick = if (index == active) null else {
+                    {
+                        // Switching replaces every YouTube answer on screen, so the window is rebuilt.
+                        scope.launch {
+                            busy = true
+                            val switched = runCatching { Account.switchTo(index) }.getOrDefault(false)
+                            busy = false
+                            if (switched) context.findActivity()?.recreate() else error = true
+                        }
+                    }
+                },
+            )
         }
         RowDivider()
+        SettingsRow(
+            icon = Icons.Rounded.Person,
+            title = stringResource(R.string.settings_accounts_add),
+            enabled = !busy,
+            onClick = onSignIn,
+        )
+    }
+
+    // The signed-in account's personal channel and brand channels (downloaded once per session).
+    LaunchedEffect(active) {
+        runCatching { Account.loadBrandAccounts() }
+    }
+    val channels = Account.brandAccounts
+    if (channels.isNotEmpty()) {
+        SettingsGroup(header = stringResource(R.string.settings_accounts_channels), footer = stringResource(R.string.settings_sync_note)) {
+            channels.forEachIndexed { index, channel ->
+                if (index > 0) RowDivider()
+                SettingsRow(
+                    title = channel.name,
+                    subtitle = channel.handle ?: stringResource(
+                        if (channel.pageId == null) R.string.settings_accounts_personal else R.string.settings_accounts_brand,
+                    ),
+                    enabled = !busy,
+                    iconContent = { ChannelAvatar(channel.avatar, channel.name, size = 38) },
+                    showChevron = false,
+                    trailing = {
+                        if (channel.selected) Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary)
+                    },
+                    onClick = if (channel.selected) null else {
+                        {
+                            scope.launch {
+                                busy = true
+                                val switched = runCatching { Account.switchBrand(channel) }.isSuccess
+                                busy = false
+                                if (switched) context.findActivity()?.recreate() else error = true
+                            }
+                        }
+                    },
+                )
+            }
+        }
+    }
+
+    if (error) {
+        Text(
+            stringResource(R.string.settings_accounts_switch_error),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(horizontal = GROUP_INSET + 4.dp, vertical = 8.dp),
+        )
+    }
+
+    SettingsGroup(topSpacing = 26.dp) {
         DestructiveRow(stringResource(R.string.ui_sign_out)) {
             Account.signOut()
             onSignedOut()

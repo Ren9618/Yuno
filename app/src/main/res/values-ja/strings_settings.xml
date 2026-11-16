@@ -57,4 +57,12 @@
     <string name="settings_chapters_open_line">チャプターを選んでもリストが開いたままなので、次々に移動できます</string>
     <string name="settings_auto_pip_title">アプリを離れたらピクチャー イン ピクチャー</string>
     <string name="settings_auto_pip_line">動画の再生中にホームへ戻ると、小さなウィンドウで再生が続きます</string>
+    <!-- Settings › Account: saved Google logins and the channels each one can act as. -->
+    <string name="settings_accounts_google">Google アカウント</string>
+    <string name="settings_accounts_add">アカウントを追加</string>
+    <string name="settings_accounts_channels">チャンネル</string>
+    <string name="settings_accounts_channel_line">このチャンネルとして操作する</string>
+    <string name="settings_accounts_switch_error">アカウントを切り替えられませんでした。もう一度お試しください。</string>
+    <string name="settings_accounts_personal">個人チャンネル</string>
+    <string name="settings_accounts_brand">ブランド アカウント</string>
 </resources>

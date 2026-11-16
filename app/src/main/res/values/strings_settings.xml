@@ -72,4 +72,12 @@
     <string name="settings_chapters_open_line">Picking a chapter leaves the list open, so you can go from one to the next</string>
     <string name="settings_auto_pip_title">Picture-in-picture when you leave</string>
     <string name="settings_auto_pip_line">Going home while a video plays keeps it playing in a small window</string>
+    <!-- Settings › Account: saved Google logins and the channels each one can act as. -->
+    <string name="settings_accounts_google">Google accounts</string>
+    <string name="settings_accounts_add">Add account</string>
+    <string name="settings_accounts_channels">Channels</string>
+    <string name="settings_accounts_channel_line">Act as this channel</string>
+    <string name="settings_accounts_switch_error">Couldn\'t switch accounts. Try again.</string>
+    <string name="settings_accounts_personal">Personal channel</string>
+    <string name="settings_accounts_brand">Brand channel</string>
 </resources>

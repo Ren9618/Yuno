@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +20,22 @@ import kotlin.random.Random
 
 @Immutable
 data class Profile(val name: String, val handle: String?, val avatar: String?)
+
+/**
+ * One channel the signed-in Google account can act as: its personal channel or a brand channel.
+ * [signinUrl] is YouTube's own account-switch URL (`accountSigninToken.signinUrl`); visiting it
+ * with the session's cookies re-points the session at this channel. [pageId] (youtube.com's
+ * `onBehalfOfUser`, 21 digits) is null for the personal channel.
+ */
+@Immutable
+data class BrandAccount(
+    val name: String,
+    val handle: String?,
+    val avatar: String?,
+    val selected: Boolean,
+    val pageId: String?,
+    val signinUrl: String?,
+)
 
 @Immutable
 data class PlaylistRef(val id: String, val title: String, val thumbnail: String?, val subtitle: String?)
@@ -139,25 +156,144 @@ class YouTubeRefusedException(val code: Int) : IOException(
  * are merged back in so the session stays alive.
  */
 object Account {
+    /** One saved Google login: its cookies and the profile Google reported for it. */
+    private class Session(
+        var cookies: LinkedHashMap<String, String>,
+        var name: String,
+        var handle: String?,
+        var avatar: String?,
+        var clientVersion: String,
+        var visitor: String?,
+    )
+
     var profile by mutableStateOf<Profile?>(null)
         private set
     val signedIn get() = profile != null
 
+    /** Every Google login kept on this phone, oldest first; [active] is the one in use. */
+    private val sessions = mutableListOf<Session>()
+
+    /** Bumped whenever the session (or its channel) changes, for screens that keep YouTube data. */
+    var generation by mutableIntStateOf(0)
+        private set
+
+    var active by mutableIntStateOf(0)
+        private set
+
+    /** The active Google login's index into [sessionProfiles], or -1 signed out. */
+    val activeSession: Int get() = if (sessions.isEmpty()) -1 else active
+
+    /** The saved logins' identities, for the account sheet. */
+    val sessionProfiles: List<Profile>
+        get() = sessions.map { Profile(it.name, it.handle, it.avatar) }
+
+    /** The channels the active account can act as (personal + brand), as of the last [loadBrandAccounts]. */
+    var brandAccounts by mutableStateOf<List<BrandAccount>>(emptyList())
+        private set
+
     private var store: SecureStore? = null
+    private var sessionStore: SecureStore? = null
     private val cookies = linkedMapOf<String, String>()
     private var clientVersion = FALLBACK_CLIENT_VERSION
     private var visitorData: String? = null
 
+    /** False while a fresh sign-in's cookies are loaded but not yet kept as a session. */
+    private var cookiesBelongToActive = true
+
     fun init(context: Context) {
         val s = SecureStore(context, "account").also { store = it }
-        s.get(KEY_COOKIES)?.let { parseCookieHeader(it, cookies) }
+        sessionStore = SecureStore(context, "accounts")
+        val saved = sessionStore?.get(KEY_SESSIONS)?.let(::decodeSessions).orEmpty()
+        if (saved.isNotEmpty()) {
+            sessions += saved
+            active = sessionStore?.get(KEY_ACTIVE)?.toIntOrNull()?.coerceIn(0, saved.lastIndex) ?: 0
+            activate(active)
+            return
+        }
+        // One session from before multiple logins were kept: move it into the list.
+        val legacyCookies = linkedMapOf<String, String>()
+        s.get(KEY_COOKIES)?.let { parseCookieHeader(it, legacyCookies) }
         s.get(KEY_CLIENT_VERSION)?.let { clientVersion = it }
         visitorData = s.get(KEY_VISITOR)
         val name = s.get(KEY_NAME)
-        if (name != null && cookies.containsKey("SAPISID")) {
-            profile = Profile(name, s.get(KEY_HANDLE), s.get(KEY_AVATAR))
+        if (name != null && legacyCookies.containsKey("SAPISID")) {
+            sessions += Session(legacyCookies, name, s.get(KEY_HANDLE), s.get(KEY_AVATAR), clientVersion, visitorData)
+            active = 0
+            activate(0)
+            persistSessions()
         }
     }
+
+    /** Loads session [index] into the live cookie jar and profile. */
+    private fun activate(index: Int) {
+        active = index
+        val s = sessions.getOrNull(index)
+        synchronized(cookies) {
+            cookies.clear()
+            s?.let { cookies.putAll(it.cookies) }
+        }
+        profile = s?.let { Profile(it.name, it.handle, it.avatar) }
+        clientVersion = s?.clientVersion ?: FALLBACK_CLIENT_VERSION
+        visitorData = s?.visitor
+        brandAccounts = emptyList()
+        cookiesBelongToActive = true
+        generation++
+    }
+
+    /** The live cookies are the active session's: keep the stored copy (and any rotation) current. */
+    private fun saveActive() {
+        if (!cookiesBelongToActive) return
+        val s = sessions.getOrNull(active) ?: return
+        s.cookies = synchronized(cookies) { LinkedHashMap(cookies) }
+        s.clientVersion = clientVersion
+        s.visitor = visitorData
+        persistSessions()
+    }
+
+    private fun persistSessions() {
+        val arr = JSONArray()
+        sessions.forEach { s ->
+            val cookieObject = JSONObject()
+            s.cookies.forEach { (k, v) -> cookieObject.put(k, v) }
+            arr.put(
+                JSONObject()
+                    .put("cookies", cookieObject)
+                    .put("name", s.name)
+                    .put("handle", s.handle ?: JSONObject.NULL)
+                    .put("avatar", s.avatar ?: JSONObject.NULL)
+                    .put("clientVersion", s.clientVersion)
+                    .put("visitor", s.visitor ?: JSONObject.NULL),
+            )
+        }
+        sessionStore?.put(KEY_SESSIONS, arr.toString())
+        sessionStore?.put(KEY_ACTIVE, active.toString())
+    }
+
+    private fun decodeSessions(raw: String): List<Session> = runCatching {
+        val arr = JSONArray(raw)
+        (0 until arr.length()).mapNotNull { i ->
+            val o = arr.optJSONObject(i) ?: return@mapNotNull null
+            val cookieObject = o.optJSONObject("cookies") ?: return@mapNotNull null
+            val map = LinkedHashMap<String, String>()
+            val keys = cookieObject.keys()
+            while (keys.hasNext()) {
+                val k = keys.next()
+                cookieObject.optString(k).takeIf { it.isNotEmpty() }?.let { map[k] = it }
+            }
+            if (!map.containsKey("SAPISID")) return@mapNotNull null
+            // A session saved before the JSON-null fix can carry the literal string "null"
+            // (a poisoned cache); read such a value as absent too.
+            fun String?.notNullString() = takeUnless { it == "null" }
+            Session(
+                map,
+                o.optText("name").notNullString() ?: str(R.string.app_account_fallback_name),
+                o.optText("handle").notNullString(),
+                o.optText("avatar").notNullString(),
+                o.optText("clientVersion") ?: FALLBACK_CLIENT_VERSION,
+                o.optText("visitor").notNullString(),
+            )
+        }
+    }.getOrDefault(emptyList())
 
     /** True once the WebView's cookies prove a completed YouTube sign-in. */
     fun looksSignedIn(cookieHeader: String?): Boolean {
@@ -165,14 +301,50 @@ object Account {
         return "SAPISID" in names && "LOGIN_INFO" in names
     }
 
-    /** Takes over the WebView session: stores the cookies, then loads the account's name. */
-    suspend fun completeSignIn(cookieHeader: String) = withContext(Dispatchers.IO) {
+    /**
+     * Takes over the WebView session: stores the cookies as a login of its own (an added account,
+     * or the first one), then loads the account's name. The WebView starts from empty cookies, so
+     * each saved session is one Google login.
+     */
+    suspend fun completeSignIn(cookieHeader: String): Profile? = withContext(Dispatchers.IO) {
+        val previous = synchronized(cookies) { LinkedHashMap(cookies) }
+        val wasActive = cookiesBelongToActive
         synchronized(cookies) {
             cookies.clear()
             parseCookieHeader(cookieHeader, cookies)
         }
-        persistCookies()
-        refreshClientConfig()
+        cookiesBelongToActive = false
+        try {
+            refreshClientConfig()
+            val p = fetchProfile()
+            val session = Session(
+                synchronized(cookies) { LinkedHashMap(cookies) },
+                p.name, p.handle, p.avatar, clientVersion, visitorData,
+            )
+            val existing = sessions.indexOfFirst {
+                it.cookies["SAPISID"] == session.cookies["SAPISID"] &&
+                    it.cookies["LOGIN_INFO"] == session.cookies["LOGIN_INFO"]
+            }
+            if (existing >= 0) sessions[existing] = session else sessions += session
+            active = if (existing >= 0) existing else sessions.lastIndex
+            cookiesBelongToActive = true
+            brandAccounts = emptyList()
+            persistSessions()
+            generation++
+            withContext(Dispatchers.Main) { profile = p }
+            p
+        } catch (e: Throwable) {
+            synchronized(cookies) {
+                cookies.clear()
+                cookies.putAll(previous)
+            }
+            cookiesBelongToActive = wasActive
+            throw e
+        }
+    }
+
+    /** The account's own name, handle and photo, from its account menu. */
+    private suspend fun fetchProfile(): Profile {
         val menu = InnerTube.post("account/account_menu", JSONObject())
         var found: Profile? = null
         // A fallback name is stored with the session, so it stays in the language of the sign-in.
@@ -186,17 +358,44 @@ object Account {
                 )
             }
         }
-        val p = found ?: Profile(fallbackName, null, null)
-        store?.apply {
-            put(KEY_NAME, p.name); put(KEY_HANDLE, p.handle); put(KEY_AVATAR, p.avatar)
+        return found ?: Profile(fallbackName, null, null)
+    }
+
+    /** Switches to another saved Google login. Returns false when [index] is already active. */
+    suspend fun switchTo(index: Int): Boolean = withContext(Dispatchers.IO) {
+        if (index !in sessions.indices || index == active) return@withContext false
+        saveActive()
+        activate(index)
+        StreamCache.invalidateAll()
+        Bells.clear()
+        true
+    }
+
+    /** Forgets one saved login; signing out the last one is [signOut]. */
+    fun removeSession(index: Int) {
+        if (index !in sessions.indices) return
+        val wasActive = index == active
+        sessions.removeAt(index)
+        if (sessions.isEmpty()) {
+            signOut()
+            return
         }
-        withContext(Dispatchers.Main) { profile = p }
+        if (index < active) active--
+        if (wasActive) activate(active.coerceIn(0, sessions.lastIndex))
+        persistSessions()
+        generation++
     }
 
     fun signOut() {
         synchronized(cookies) { cookies.clear() }
+        sessions.clear()
+        active = 0
+        brandAccounts = emptyList()
+        cookiesBelongToActive = true
         store?.clear()
+        sessionStore?.clear()
         profile = null
+        generation++
         // The bells are the account's; signed out there are none (and no new-video notifications).
         Bells.clear()
         android.webkit.CookieManager.getInstance().apply { removeAllCookies(null); flush() }
@@ -215,8 +414,13 @@ object Account {
                 Regex("\"INNERTUBE_CLIENT_VERSION\":\"([^\"]+)\"").find(html)?.groupValues?.get(1)?.let { clientVersion = it }
                 Regex("\"VISITOR_DATA\":\"([^\"]+)\"").find(html)?.groupValues?.get(1)?.let { visitorData = it }
             }
-            store?.put(KEY_CLIENT_VERSION, clientVersion)
-            store?.put(KEY_VISITOR, visitorData)
+            if (sessions.isEmpty()) {
+                // Guest: the visitor id and client version are all that's kept.
+                store?.put(KEY_CLIENT_VERSION, clientVersion)
+                store?.put(KEY_VISITOR, visitorData)
+            } else {
+                saveActive()
+            }
         }
     }
 
@@ -229,8 +433,109 @@ object Account {
         refreshClientConfig()
     }
 
+    /**
+     * The channels the active Google login can act as: its personal channel and every brand
+     * channel (`account/accounts_list` → `accountItem`s). The personal one has no page id.
+     */
+    suspend fun loadBrandAccounts(): List<BrandAccount> = withContext(Dispatchers.IO) {
+        val root = InnerTube.post("account/accounts_list", JSONObject())
+        parseBrandAccounts(root).also { brandAccounts = it }
+    }
+
+    /** The `accountItem`s of an `account/accounts_list` answer (personal + brand channels). */
+    internal fun parseBrandAccounts(root: JSONObject): List<BrandAccount> {
+        val out = LinkedHashMap<String, BrandAccount>()
+        root.walk { key, item ->
+            if (key != "accountItem") return@walk
+            val name = item.text("accountName")?.ifBlank { null } ?: return@walk
+            var pageId: String? = null
+            var signinUrl: String? = null
+            val tokens = item.optJSONObject("serviceEndpoint")
+                ?.optJSONObject("selectActiveIdentityEndpoint")
+                ?.optJSONArray("supportedTokens")
+            for (i in 0 until (tokens?.length() ?: 0)) {
+                val token = tokens?.optJSONObject(i) ?: continue
+                token.optJSONObject("pageIdToken")?.optString("pageId")?.ifBlank { null }?.let { pageId = it }
+                token.optJSONObject("accountSigninToken")?.optString("signinUrl")?.ifBlank { null }
+                    ?.let { signinUrl = resolveSigninUrl(it) }
+            }
+            val avatar = item.optJSONObject("accountPhoto")?.thumbnails()?.lastOrNull()?.let(::absoluteUrl)
+            val account = BrandAccount(
+                name = name,
+                handle = item.text("channelHandle"),
+                avatar = avatar,
+                selected = item.optBoolean("isSelected"),
+                pageId = pageId,
+                signinUrl = signinUrl,
+            )
+            out[pageId ?: "personal"] = account
+        }
+        return out.values.toList()
+    }
+
+    /**
+     * Acts as [account] from now on: visits YouTube's own switch URL (which re-points the
+     * session and sets its delegation cookies), then records the channel's page id for the
+     * requests that carry `onBehalfOfUser` ([InnerTube.post]).
+     */
+    suspend fun switchBrand(account: BrandAccount): Unit = withContext(Dispatchers.IO) {
+        if (!signedIn) return@withContext
+        // A failed switch must not keep speaking as the old brand.
+        synchronized(cookies) {
+            cookies.remove("DELEGATED_SESSION_ID")
+            cookies.remove("INNERTUBE_CONTEXT_SERIALIZED_DELEGATION_CONTEXT")
+        }
+        account.signinUrl?.let { url ->
+            runCatching {
+                val request = Request.Builder().url(url)
+                    .header("User-Agent", Net.USER_AGENT)
+                    .header("Cookie", cookieHeader())
+                    .build()
+                Net.client.newBuilder().followRedirects(true).followSslRedirects(true).build()
+                    .newCall(request).execute().use { r ->
+                        absorbSetCookies(r.headers("Set-Cookie"))
+                        r.body?.string()
+                    }
+            }
+        }
+        if (account.pageId != null) {
+            synchronized(cookies) {
+                if (cookies["DELEGATED_SESSION_ID"].isNullOrBlank()) cookies["DELEGATED_SESSION_ID"] = account.pageId
+            }
+        }
+        saveActive()
+        brandAccounts = brandAccounts.map { it.copy(selected = it.pageId == account.pageId) }
+        generation++
+        StreamCache.invalidateAll()
+        Bells.clear()
+    }
+
+    private fun resolveSigninUrl(url: String): String = when {
+        url.startsWith("http://") || url.startsWith("https://") -> url
+        url.startsWith("//") -> "https:$url"
+        url.startsWith("/") -> ORIGIN + url
+        else -> "$ORIGIN/$url"
+    }
+
+    private fun absoluteUrl(url: String) = if (url.startsWith("//")) "https:$url" else url
+
     internal fun clientVersion() = clientVersion
     internal fun visitorData() = visitorData
+
+    /**
+     * The brand channel this session is acting as: youtube.com keeps the selected one in the
+     * `DELEGATED_SESSION_ID` cookie (an obfuscated Google id, also called the page id). Its
+     * requests then carry `X-Goog-PageId` and `user.onBehalfOfUser`; see [switchBrand].
+     */
+    internal fun pageId(): String? = synchronized(cookies) { cookies["DELEGATED_SESSION_ID"]?.ifBlank { null } }
+
+    /** The selected channel's opaque delegation context cookie, forwarded with requests when present. */
+    internal fun delegationContext(): String? =
+        synchronized(cookies) { cookies["INNERTUBE_CONTEXT_SERIALIZED_DELEGATION_CONTEXT"]?.ifBlank { null } }
+
+    /** Which Google session on this browser signs the request; youtube.com's own pages use 0 unless told otherwise. */
+    internal fun authUser(): String =
+        synchronized(cookies) { cookies["SESSION_INDEX"]?.toIntOrNull()?.coerceAtLeast(0)?.toString() } ?: "0"
 
     internal fun cookieHeader(): String = synchronized(cookies) { cookies.entries.joinToString("; ") { "${it.key}=${it.value}" } }
 
@@ -268,7 +573,7 @@ object Account {
         if (changed) persistCookies()
     }
 
-    private fun persistCookies() = store?.put(KEY_COOKIES, cookieHeader())
+    private fun persistCookies() = saveActive()
 
     private fun parseCookieHeader(header: String, into: MutableMap<String, String>) {
         header.split(';').forEach { part ->
@@ -285,6 +590,9 @@ object Account {
     private const val KEY_NAME = "name"
     private const val KEY_HANDLE = "handle"
     private const val KEY_AVATAR = "avatar"
+    /** In the second SecureStore: the saved logins and which one is active. */
+    private const val KEY_SESSIONS = "sessions"
+    private const val KEY_ACTIVE = "active"
 }
 
 /**
@@ -300,20 +608,34 @@ object InnerTube {
     internal fun postAny(endpoint: String, body: JSONObject): JSONObject =
         if (Account.signedIn) post(endpoint, body) else post(endpoint, body, anonymous = true)
 
-    internal fun post(endpoint: String, body: JSONObject, anonymous: Boolean = false): JSONObject {
+    internal fun post(endpoint: String, body: JSONObject, anonymous: Boolean = false): JSONObject =
+        postWith(endpoint, body, anonymous, Account.pageId(), Account.delegationContext())
+
+    private fun postWith(
+        endpoint: String,
+        body: JSONObject,
+        anonymous: Boolean,
+        pageId: String?,
+        delegation: String?,
+    ): JSONObject {
         val auth = if (anonymous) null else Account.authorization() ?: throw NotSignedInException()
-        body.put(
-            "context",
-            JSONObject().put(
-                "client",
-                JSONObject()
-                    .put("clientName", "WEB")
-                    .put("clientVersion", Account.clientVersion())
-                    .put("hl", "en")
-                    .put("gl", "US")
-                    .apply { Account.visitorData()?.let { put("visitorData", it) } },
-            ),
+        val context = JSONObject().put(
+            "client",
+            JSONObject()
+                .put("clientName", "WEB")
+                .put("clientVersion", Account.clientVersion())
+                .put("hl", ContentLanguage.hl)
+                .put("gl", ContentLanguage.gl)
+                .apply { Account.visitorData()?.let { put("visitorData", it) } },
         )
+        if (!anonymous && (pageId != null || delegation != null)) {
+            // A brand channel: youtube.com acts as it through these two (see Account.switchAccount).
+            context.put("user", JSONObject().apply {
+                pageId?.let { put("onBehalfOfUser", it) }
+                delegation?.let { put("serializedDelegationContext", it) }
+            })
+        }
+        body.put("context", context)
         val request = Request.Builder()
             .url("$BASE$endpoint?prettyPrint=false")
             .post(body.toString().toRequestBody(JSON_TYPE))
@@ -322,10 +644,16 @@ object InnerTube {
             .header("Origin", Account.ORIGIN)
             .header("X-Origin", Account.ORIGIN)
             .header("Referer", Account.ORIGIN + "/")
-            .header("X-Goog-AuthUser", "0")
+            .header("X-Goog-AuthUser", if (auth != null) Account.authUser() else "0")
             .header("X-Youtube-Client-Name", "1")
             .header("X-Youtube-Client-Version", Account.clientVersion())
-            .apply { Account.visitorData()?.let { header("X-Goog-Visitor-Id", it) } }
+            .apply {
+                if (auth != null) {
+                    pageId?.let { header("X-Goog-PageId", it) }
+                    delegation?.let { header("X-YouTube-Delegation-Context", it) }
+                }
+                Account.visitorData()?.let { header("X-Goog-Visitor-Id", it) }
+            }
             .build()
         Net.client.newCall(request).execute().use { r ->
             if (auth != null) Account.absorbSetCookies(r.headers("Set-Cookie"))
@@ -1303,13 +1631,17 @@ internal fun JSONObject.findObject(key: String): JSONObject? {
     return found
 }
 
+/** optString that also treats a JSON null as absent: Android's optString reads JSONObject.NULL
+ *  as the literal string "null", which used to surface verbatim (e.g. an account row's handle). */
+internal fun JSONObject.optText(key: String): String? = if (isNull(key)) null else optString(key).ifBlank { null }
+
 /** YouTube text: {"simpleText": "..."} or {"runs": [{"text": "..."}]}. */
 internal fun JSONObject.text(key: String): String? {
-    val o = optJSONObject(key) ?: return optString(key).ifBlank { null }
-    o.optString("simpleText").ifBlank { null }?.let { return it }
-    o.optString("content").ifBlank { null }?.let { return it }
+    val o = optJSONObject(key) ?: return optText(key)
+    o.optText("simpleText")?.let { return it }
+    o.optText("content")?.let { return it }
     val runs = o.optJSONArray("runs") ?: return null
-    return (0 until runs.length()).joinToString("") { runs.optJSONObject(it)?.optString("text").orEmpty() }.ifBlank { null }
+    return (0 until runs.length()).joinToString("") { runs.optJSONObject(it)?.optText("text").orEmpty() }.ifBlank { null }
 }
 
 /** URLs from {"thumbnail": {"thumbnails": [...]}} or {"thumbnails": [...]}, smallest first. */
