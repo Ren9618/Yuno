@@ -549,7 +549,8 @@ object StreamSelection {
         val candidates = info.videoOnlyStreams
             .filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.height > 0 }
             .filter(::allowed)
-        val chosen = QualityPreference.height
+        // The fork's per-network ceiling (Settings › Playback) rides above the player's own pick.
+        val chosen = NetworkQuality.effective(QualityPreference.height)
         // A chosen height plays exactly if offered, else the nearest below it. Auto caps at 1080p.
         val ceiling = chosen ?: MAX_HEIGHT
         val video = (candidates.filter { it.height <= ceiling }.ifEmpty { candidates })

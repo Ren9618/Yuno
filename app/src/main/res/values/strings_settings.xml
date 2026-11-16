@@ -112,4 +112,9 @@
     <string name="settings_shorts_double_tap_line">Two quick taps on a short give it a like. Off, they do nothing</string>
     <string name="settings_shorts_hold_fast_title">Hold a short for 2×</string>
     <string name="settings_shorts_hold_fast_line">Pressing and holding a short fasts it forward; letting go returns to normal speed</string>
+
+    <!-- The fork's per-network quality (Settings › Playback): each connection gets its own ceiling. -->
+    <string name="settings_quality_wifi_title">Quality on Wi-Fi</string>
+    <string name="settings_quality_mobile_title">Quality on mobile data</string>
+    <string name="settings_quality_line">The ceiling for videos on this connection, over the player\'s own pick</string>
 </resources>

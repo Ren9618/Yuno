@@ -578,8 +578,9 @@ internal class YouTubeMediaSourceFactory(context: Context) : MediaSource.Factory
     override fun createMediaSource(mediaItem: MediaItem): MediaSource {
         val info = StreamCache.get(mediaItem.mediaId) ?: return fallback.createMediaSource(mediaItem)
         val picked = StreamSelection.pick(info)
-        // Auto: every quality as one adaptive set. A chosen quality stays pinned below.
-        if (QualityPreference.height == null && picked.audio != null) {
+        // Auto: every quality as one adaptive set. A chosen quality stays pinned below — the
+        // player's own, or the fork's per-network one (Settings › Playback).
+        if (QualityPreference.height == null && NetworkQuality.ceiling() == null && picked.audio != null) {
             val adaptive = adaptiveVideo(info, mediaItem)
             if (adaptive != null) {
                 Log.i("Yuno", "media source ${mediaItem.mediaId}: adaptive video ${StreamSelection.autoLadder(info).joinToString("/") { "${it.height}" }}p + audio itag ${picked.audio.itag}")

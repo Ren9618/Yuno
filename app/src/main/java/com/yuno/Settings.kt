@@ -41,8 +41,10 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.SignalCellularAlt
 import androidx.compose.material.icons.rounded.SystemUpdateAlt
 import androidx.compose.material.icons.rounded.ZoomOutMap
+import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -306,6 +308,27 @@ private fun PlaybackBody(player: PlayerState, search: SettingsSearch) {
         val sideLine = stringResource(R.string.settings_side_sliders_line)
         row(sideTitle, sideLine, "brightness", "volume") {
             ToggleRow(SfIcons.BrightnessMedium, sideTitle, sideLine, SideSliders.on) { SideSliders.set(context, it) }
+        }
+        // The fork's per-network quality: each connection gets its own ceiling over the player's pick.
+        val wifiTitle = stringResource(R.string.settings_quality_wifi_title)
+        row(wifiTitle, stringResource(R.string.settings_quality_line), "wifi") {
+            ChoiceRow(
+                Icons.Rounded.Wifi,
+                wifiTitle,
+                null,
+                qualityChoices(),
+                qualityChoicesHeights().indexOf(NetworkQuality.wifiHeight ?: 0),
+            ) { NetworkQuality.setWifi(context, qualityChoicesHeights()[it].takeIf { h -> h > 0 }) }
+        }
+        val mobileTitle = stringResource(R.string.settings_quality_mobile_title)
+        row(mobileTitle, stringResource(R.string.settings_quality_line), "mobile") {
+            ChoiceRow(
+                Icons.Rounded.SignalCellularAlt,
+                mobileTitle,
+                null,
+                qualityChoices(),
+                qualityChoicesHeights().indexOf(NetworkQuality.mobileHeight ?: 0),
+            ) { NetworkQuality.setMobile(context, qualityChoicesHeights()[it].takeIf { h -> h > 0 }) }
         }
         val audioTitle = stringResource(R.string.bar_audio_only)
         val audioLine = stringResource(R.string.settings_audio_only_line)
@@ -919,6 +942,14 @@ private fun ChoiceRow(
         modifier = Modifier.padding(start = ROW_INSET, end = ROW_INSET, bottom = 14.dp),
     )
 }
+
+/** The fork's per-network quality rows: Auto plus the ceiling rungs, in the player's own labels. */
+@Composable
+private fun qualityChoices(): List<String> =
+    qualityChoicesHeights().map { if (it == 0) stringResource(R.string.bar_quality_auto) else "${it}p" }
+
+/** 0 stands for Auto. */
+private fun qualityChoicesHeights(): List<Int> = listOf(0, 480, 720, 1080, 1440, 2160)
 
 @Composable
 private fun captionShowLabel(show: CaptionSettings.Show): String = when (show) {

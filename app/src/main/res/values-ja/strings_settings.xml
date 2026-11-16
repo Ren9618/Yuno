@@ -97,4 +97,9 @@
     <string name="settings_shorts_double_tap_line">ショートを素早く 2 回タップして高く評価します。オフにすると何も起きません</string>
     <string name="settings_shorts_hold_fast_title">長押しで 2 倍速</string>
     <string name="settings_shorts_hold_fast_line">ショートを長押しすると 2 倍速で再生し、離すと元の速度に戻ります</string>
+
+    <!-- The fork's per-network quality (Settings › Playback): each connection gets its own ceiling. -->
+    <string name="settings_quality_wifi_title">Wi-Fi 接続時の画質</string>
+    <string name="settings_quality_mobile_title">モバイルデータ通信時の画質</string>
+    <string name="settings_quality_line">この接続での動画の画質上限。プレイヤー側の画質指定より優先します</string>
 </resources>
