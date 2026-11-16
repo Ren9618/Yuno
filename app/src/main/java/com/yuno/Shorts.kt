@@ -1673,7 +1673,22 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                 if (description != null) {
                     Spacer(Modifier.height(4.dp))
                     if (open) {
-                        Text(description, color = Ink, fontSize = if (wide) 16.sp else 13.sp, lineHeight = if (wide) 21.sp else 17.sp, style = shade)
+                        // The fork's links: a tapped url opens in the browser; the page's own tap
+                        // stands down because the link consumes the touch before the page feels it.
+                        val context = LocalContext.current
+                        Text(
+                            linkifiedDescription(description, DescriptionLinkBlue) { url ->
+                                try {
+                                    context.startActivity(
+                                        android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                                    )
+                                } catch (_: android.content.ActivityNotFoundException) {
+                                    shorts.onMessage(str(R.string.settings_no_app))
+                                }
+                            },
+                            color = Ink, fontSize = if (wide) 16.sp else 13.sp, lineHeight = if (wide) 21.sp else 17.sp, style = shade,
+                        )
                         Spacer(Modifier.height(4.dp))
                         Text(
                             stringResource(R.string.shorts_description_less),

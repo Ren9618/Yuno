@@ -294,8 +294,20 @@ fun PlayerScreen(
                             }
                         }
                         if (descriptionOpen && details != null) {
+                            // The fork's links: a tapped url opens in the browser; nothing to open
+                            // it, and the player says so (its action message, like its own buttons).
+                            val context = LocalContext.current
                             Text(
-                                details.description,
+                                linkifiedDescription(details.description, DescriptionLinkBlue) { url ->
+                                    try {
+                                        context.startActivity(
+                                            android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                                        )
+                                    } catch (_: android.content.ActivityNotFoundException) {
+                                        state.actionMessage = str(R.string.settings_no_app)
+                                    }
+                                },
                                 modifier = Modifier.padding(top = 10.dp),
                                 color = c.onSurfaceVariant,
                                 fontSize = 14.sp,
