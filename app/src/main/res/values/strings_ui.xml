@@ -13,6 +13,8 @@
     <string name="ui_watch_later">Watch later</string>
     <!-- Name of the account's built-in playlist of liked videos. -->
     <string name="ui_liked_videos">Liked videos</string>
+    <!-- Accessibility label of the verified badge beside a channel's name. -->
+    <string name="ui_verified">Verified</string>
 
     <!-- ── Long-press options on a video ──────────────────────────────────── -->
     <string name="ui_play_next">Play next</string>

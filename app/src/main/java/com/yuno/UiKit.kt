@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Forward10
 import androidx.compose.material.icons.rounded.Forward30
@@ -522,7 +523,7 @@ fun ChannelNameWithBadge(
         )
         if (verified) {
             Spacer(Modifier.width(5.dp))
-            Icon(SfIcons.Verified, "Verified", Modifier.size(badge), tint = c.onSurfaceVariant)
+            Icon(SfIcons.Verified, stringResource(R.string.ui_verified), Modifier.size(badge), tint = c.onSurfaceVariant)
         }
     }
 }

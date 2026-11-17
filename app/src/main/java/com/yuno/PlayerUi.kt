@@ -737,7 +737,7 @@ private fun SubscribeButton(subscribed: Boolean, onClick: () -> Unit) {
             Spacer(Modifier.width(6.dp))
         }
         Text(
-            if (subscribed) "Subscribed" else "Subscribe",
+            stringResource(if (subscribed) R.string.app_subscribed else R.string.app_subscribe),
             color = if (subscribed) c.onSecondaryContainer else c.surface,
             fontWeight = FontWeight.ExtraBold, fontSize = 14.sp,
         )

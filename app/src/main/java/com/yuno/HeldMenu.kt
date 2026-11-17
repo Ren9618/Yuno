@@ -282,13 +282,13 @@ fun VideoHeldMenu(
                     .border(0.5.dp, hairline, menuShape)
                     .padding(vertical = 8.dp),
             ) {
-                MenuRow(SfIcons.PlaylistPlay, "Play next", open) { player.playNext(menuVideo); onDismiss() }
-                MenuRow(SfIcons.PlaylistAdd, "Add to queue", open) { player.addToQueue(menuVideo); onDismiss() }
+                MenuRow(SfIcons.PlaylistPlay, stringResource(R.string.ui_play_next), open) { player.playNext(menuVideo); onDismiss() }
+                MenuRow(SfIcons.PlaylistAdd, stringResource(R.string.ui_add_to_queue), open) { player.addToQueue(menuVideo); onDismiss() }
                 MenuSeparator(hairline)
-                MenuRow(SfIcons.Clock, "Save to Watch later", open) { player.saveToWatchLater(menuVideo); onDismiss() }
-                MenuRow(SfIcons.LibraryAdd, "Save to playlist", open) { onDismiss(); player.openPlaylists(menuVideo) }
+                MenuRow(SfIcons.Clock, stringResource(R.string.ui_save_to_watch_later), open) { player.saveToWatchLater(menuVideo); onDismiss() }
+                MenuRow(SfIcons.LibraryAdd, stringResource(R.string.ui_save_to_playlist), open) { onDismiss(); player.openPlaylists(menuVideo) }
                 MenuSeparator(hairline)
-                MenuRow(SfIcons.Share, "Share", open) {
+                MenuRow(SfIcons.Share, stringResource(R.string.ui_share), open) {
                     shareLink(context, "https://youtu.be/${menuVideo.id}", menuVideo.title)
                     onDismiss()
                 }

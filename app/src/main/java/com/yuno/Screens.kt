@@ -510,7 +510,7 @@ fun PlaylistScreen(
         if (feed.videos.isEmpty() && !feed.loading && feed.error == null && !feed.hasMore) {
             Column(Modifier.padding(contentPadding.withTop(top))) {
                 LargePageTitle(playlist.title, barAligned = false)
-                EmptyState(SfIcons.VideoLibrary, "Nothing here yet", "Videos you add to this playlist will show up here.")
+                EmptyState(SfIcons.VideoLibrary, stringResource(R.string.ui_playlist_empty_title), stringResource(R.string.ui_playlist_empty_body))
             }
         } else {
             FeedList(
@@ -742,19 +742,19 @@ fun SearchScreen(
             )
             state.error != null -> EmptyState(
                 icon = SfIcons.CloudOff,
-                title = "Search didn't load",
+                title = stringResource(R.string.ui_search_error_title),
                 body = state.error.orEmpty(),
-                action = { PillButton("Try again", { state.submit() }) },
+                action = { PillButton(stringResource(R.string.ui_try_again), { state.submit() }) },
             )
             state.submitted.isEmpty() -> EmptyState(
                 icon = SfIcons.Explore,
-                title = "Search without the ads",
-                body = "Results play straight away, with no ads and no sign-in.",
+                title = stringResource(R.string.ui_search_intro_title),
+                body = stringResource(R.string.ui_search_intro_body),
             )
             state.results.isEmpty() && !state.loading -> EmptyState(
                 icon = SfIcons.History,
-                title = "Nothing found",
-                body = "No videos matched “${state.submitted}”.",
+                title = stringResource(R.string.ui_search_nothing_found),
+                body = stringResource(R.string.ui_search_no_match, state.submitted),
             )
             else -> {
                 val list = rememberScrollToTop(scrollToTop)
@@ -806,7 +806,7 @@ private fun SearchBarField(
     ) {
         Icon(
             SfIcons.Search,
-            contentDescription = "Search",
+            contentDescription = stringResource(R.string.ui_search_title),
             tint = hint,
             modifier = Modifier
                 .size(32.dp)
@@ -817,7 +817,7 @@ private fun SearchBarField(
         Spacer(Modifier.width(4.dp))
         Box(Modifier.weight(1f)) {
             if (query.isEmpty()) {
-                Text("Search YouTube", style = style, color = hint, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(R.string.ui_search_hint), style = style, color = hint, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             BasicTextField(
                 value = query,
@@ -844,7 +844,7 @@ private fun SearchBarField(
                 Modifier.size(28.dp).clip(CircleShape).pressable(onClick = onClear),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(SfIcons.Close, "Clear", tint = hint, modifier = Modifier.size(18.dp))
+                Icon(SfIcons.Close, stringResource(R.string.ui_clear_search), tint = hint, modifier = Modifier.size(18.dp))
             }
         }
     }
@@ -858,8 +858,8 @@ private fun SearchHistoryList(history: List<String>, contentPadding: PaddingValu
             Row(
                 modifier = Modifier.fillMaxWidth().padding(end = 12.dp),
             ) {
-                SectionTitle("Recent searches", Modifier.weight(1f).alignByBaseline(), top = 0.dp)
-                Box(Modifier.alignByBaseline()) { TextLink("Clear all") { SearchHistory.clear() } }
+                SectionTitle(stringResource(R.string.ui_recent_searches), Modifier.weight(1f).alignByBaseline(), top = 0.dp)
+                Box(Modifier.alignByBaseline()) { TextLink(stringResource(R.string.ui_clear_all)) { SearchHistory.clear() } }
             }
         }
         items(history, key = { it }) { query ->
@@ -885,7 +885,7 @@ private fun SearchHistoryList(history: List<String>, contentPadding: PaddingValu
                 Box(
                     modifier = Modifier.size(44.dp).pressable { SearchHistory.remove(query) },
                     contentAlignment = Alignment.Center,
-                ) { Icon(SfIcons.Close, "Remove", tint = c.onSurfaceVariant, modifier = Modifier.size(20.dp)) }
+                ) { Icon(SfIcons.Close, stringResource(R.string.ui_remove_search), tint = c.onSurfaceVariant, modifier = Modifier.size(20.dp)) }
             }
         }
     }

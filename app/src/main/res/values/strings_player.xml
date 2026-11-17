@@ -41,6 +41,14 @@
     <!-- %1$s is a playlist's name. -->
     <string name="player_playlist_update_failed">Couldn\'t update %1$s.</string>
     <string name="player_create_playlist_failed">Couldn\'t create the playlist.</string>
+    <!-- Signed out: the note after a tap on like / subscribe / save / save to playlist. -->
+    <string name="player_sign_in_to_like">Sign in to like videos.</string>
+    <string name="player_sign_in_to_subscribe">Sign in to subscribe.</string>
+    <string name="player_sign_in_to_save">Sign in to save videos.</string>
+    <string name="player_sign_in_to_save_playlist">Sign in to save to a playlist.</string>
+    <string name="player_removed_watch_later">Removed from Watch later</string>
+    <!-- When the toggle couldn't be written back (the save's failure is player_watch_later_failed). -->
+    <string name="player_watch_later_update_failed">Couldn\'t update Watch later.</string>
 
     <!-- ── Errors shown over the video ── -->
     <string name="player_error_no_stream">No playable stream was found for this video.</string>

@@ -801,7 +801,7 @@ private fun AboutBody(player: PlayerState, search: SettingsSearch) {
                 scope.launch {
                     val text = withContext(Dispatchers.IO) { CrashLog.report(context) }
                     val send = Intent(Intent.ACTION_SEND).setType("text/plain")
-                        .putExtra(Intent.EXTRA_SUBJECT, "Yuno crash report")
+                        .putExtra(Intent.EXTRA_SUBJECT, str(R.string.settings_crash_subject))
                         .putExtra(Intent.EXTRA_TEXT, text)
                     context.openOrSay(Intent.createChooser(send, shareTitle)) { player.actionMessage = it }
                     CrashLog.markShared()

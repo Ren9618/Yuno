@@ -411,7 +411,7 @@ private fun PlaylistChoiceRow(choice: PlaylistChoice, onClick: () -> Unit) {
             Modifier.size(26.dp).squishOn(on).clip(CircleShape).background(fill),
             contentAlignment = Alignment.Center,
         ) {
-            if (on) Icon(SfIcons.Check, "Saved", tint = c.onPrimary, modifier = Modifier.size(18.dp))
+            if (on) Icon(SfIcons.Check, stringResource(R.string.ui_saved), tint = c.onPrimary, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -429,7 +429,7 @@ private fun NewPlaylistRow(onCreate: (title: String, privacy: String) -> Unit) {
     val c = MaterialTheme.colorScheme
     var open by remember { mutableStateOf(false) }
     if (!open) {
-        OptionRow(SfIcons.Add, "New playlist") { open = true }
+        OptionRow(SfIcons.Add, stringResource(R.string.ui_new_playlist)) { open = true }
         return
     }
     var title by remember { mutableStateOf("") }
@@ -590,7 +590,7 @@ fun QueueSheet(player: PlayerState, onDismiss: () -> Unit) {
     val clearAlpha by animateFloatAsState(if (leavingRows == null && player.queue.isNotEmpty()) 1f else 0f, label = "clearAlpha")
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = c.surfaceContainerLow) {
         Row(Modifier.padding(horizontal = PageGutter).padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Queue", fontFamily = RoundedHeavy, fontWeight = FontWeight.ExtraBold, fontSize = 21.sp, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.ui_queue), fontFamily = RoundedHeavy, fontWeight = FontWeight.ExtraBold, fontSize = 21.sp, modifier = Modifier.weight(1f))
             Text(
                 stringResource(R.string.ui_clear), color = c.primary, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp,
                 modifier = Modifier
@@ -621,7 +621,7 @@ fun QueueSheet(player: PlayerState, onDismiss: () -> Unit) {
                             Box(Modifier.padding(horizontal = PageGutter)) {
                                 VideoRow(video, onClick = { player.playFromQueue(index); onDismiss() }) {
                                     Box(Modifier.size(40.dp).pressable { player.removeFromQueue(index) }, contentAlignment = Alignment.Center) {
-                                        Icon(SfIcons.Close, "Remove from queue", tint = c.onSurfaceVariant)
+                                        Icon(SfIcons.Close, stringResource(R.string.ui_remove_from_queue), tint = c.onSurfaceVariant)
                                     }
                                 }
                             }
@@ -674,14 +674,14 @@ private fun SlideAway(slide: () -> Float, size: () -> Float = { 1f }, content: @
 fun SponsorBlockSettings() {
     val c = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth()) {
-        SettingSwitchRow("SponsorBlock", "Skip sponsor reads and other segments", SponsorBlock.enabled, SponsorBlock::updateEnabled)
+        SettingSwitchRow(stringResource(R.string.settings_sponsorblock), stringResource(R.string.ui_sponsorblock_line), SponsorBlock.enabled, SponsorBlock::updateEnabled)
         if (SponsorBlock.enabled) {
             Spacer(Modifier.height(10.dp))
             SponsorBlock.Category.entries.forEach { category -> CategoryRow(category) }
         }
         Spacer(Modifier.height(10.dp))
         Text(
-            "Segments from SponsorBlock (sponsor.ajay.app), a community project. Data licensed CC BY-NC-SA 4.0.",
+            stringResource(R.string.ui_sponsorblock_credit),
             color = c.onSurfaceVariant, fontSize = 11.5.sp, lineHeight = 16.sp,
         )
     }
@@ -722,8 +722,8 @@ private fun CategoryRow(category: SponsorBlock.Category) {
 fun ShortsSettings() {
     val context = LocalContext.current
     SettingSwitchRow(
-        "Shorts",
-        if (ShortsSetting.enabled) "Show the Shorts tab" else "The Shorts tab is hidden and no Shorts are loaded",
+        stringResource(R.string.ui_shorts),
+        stringResource(if (ShortsSetting.enabled) R.string.ui_shorts_on_line else R.string.ui_shorts_off_line),
         ShortsSetting.enabled,
     ) { ShortsSetting.set(context, it) }
 }
@@ -763,19 +763,23 @@ private fun SettingSwitchRow(title: String, line: String, checked: Boolean, onCh
 fun AppearanceSettings() {
     val c = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth()) {
-        Text("Appearance", fontFamily = RoundedHeavy, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+        Text(stringResource(R.string.ui_appearance), fontFamily = RoundedHeavy, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
         Spacer(Modifier.height(10.dp))
         if (isGlassSupported()) {
             SettingSwitchRow(
-                "Liquid Glass",
-                "Frosted, refractive bar that samples the page behind it",
+                stringResource(R.string.settings_liquid_glass),
+                stringResource(R.string.settings_liquid_glass_line),
                 LiquidGlassSetting.enabled,
                 LiquidGlassSetting::set,
             )
             Spacer(Modifier.height(14.dp))
         }
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEach { (key, label) ->
+            listOf(
+                "system" to stringResource(R.string.ui_mode_system),
+                "light" to stringResource(R.string.ui_mode_light),
+                "dark" to stringResource(R.string.ui_mode_dark),
+            ).forEach { (key, label) ->
                 val on = ThemeSettings.mode == key
                 Box(
                     Modifier

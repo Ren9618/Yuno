@@ -19,6 +19,9 @@
     <string name="settings_speed_per_video">速度は動画ごと</string>
     <string name="settings_audio_only_line">すべての動画で映像なしの音声のみ。プレーヤーのバーにもあります。</string>
     <string name="settings_sb_summary">%1$s 件をスキップ、%2$s 件は確認</string>
+    <!-- The fork's appearance row: the frosted bar. -->
+    <string name="settings_liquid_glass">リキッドガラス</string>
+    <string name="settings_liquid_glass_line">背後のページを取り込んでぼかす、屈折するすりガラスのバー</string>
     <string name="settings_mode">モード</string>
     <!-- 設定 › 外観: 下部タブバーのタブとその並び順 (NavTabs)。 -->
     <string name="settings_tabs">タブバー</string>
@@ -56,6 +59,8 @@
     <string name="settings_crash_none">保存されたクラッシュはありません。Android が前回 Yuno を終了した理由を共有します（GitHub の issue 用）</string>
     <string name="settings_crash_tile">クラッシュレポートを保存しました</string>
     <string name="settings_crash_share">クラッシュレポートを共有</string>
+    <!-- Subject of the email the shared crash report lands in. -->
+    <string name="settings_crash_subject">Yuno クラッシュレポート</string>
     <string name="settings_no_app">この端末にはこれを開けるアプリがありません</string>
 <string name="settings_zoom_fill_title">全画面で画面に合わせてズーム</string>
     <string name="settings_zoom_fill_on">すべての動画が画面いっぱいに表示され、はみ出す端は切り取られます。ピンチインで動画全体を表示します。</string>

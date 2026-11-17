@@ -13,6 +13,8 @@
     <string name="ui_watch_later">後で見る</string>
     <!-- Name of the account's built-in playlist of liked videos. -->
     <string name="ui_liked_videos">高く評価した動画</string>
+    <!-- Accessibility label of the verified badge beside a channel's name. -->
+    <string name="ui_verified">認証済み</string>
 
     <!-- ── Long-press options on a video ──────────────────────────────────── -->
     <string name="ui_play_next">次に再生</string>

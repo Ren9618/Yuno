@@ -46,6 +46,8 @@
     <string name="app_bell_on_message_unnamed">このチャンネルのすべての新しい動画を通知します</string>
     <string name="app_bell_off_message_unnamed">このチャンネルの通知をオフにしました</string>
     <string name="app_bell_failed">通知設定を変更できませんでした。</string>
+    <!-- The bell's note when the channel isn't subscribed yet (kept here for the tables' parity). -->
+    <string name="app_subscribe_first">先にこのチャンネルを登録してから、ベルをオンにしてください。</string>
     <!-- Notifications were refused when asked (Android 13+). -->
 <string name="app_bell_allow_notifications">ベルを使うには Yuno の通知を許可してください。</string>
     <!-- Notifications are off in Android's settings; the settings page opens next. -->
@@ -62,4 +64,34 @@
     <!-- Errors shown on the signed-in feeds. %1$s is an HTTP status code ("403"). -->
     <string name="app_error_session_rejected">YouTube がセッションを拒否しました（%1$s）。もう一度ログインしてください。</string>
     <string name="app_error_youtube_returned">YouTube からの応答: %1$s</string>
+    <!-- ── Onboarding (the first-launch steps) ────────────────────────────── -->
+    <!-- The steps' bottom bar: back is ui_back. -->
+    <string name="onboarding_next">次へ</string>
+    <string name="onboarding_skip">スキップ</string>
+    <!-- The last step's round button. -->
+    <string name="onboarding_get_started">はじめる</string>
+    <!-- The welcome step. -->
+    <string name="onboarding_welcome_title">Yuno へようこそ</string>
+    <string name="onboarding_welcome_tagline">広告のない、あなたの YouTube。</string>
+    <!-- The three feature cards. -->
+    <string name="onboarding_feature_ads_title">広告なし</string>
+    <string name="onboarding_feature_ads_body">CM や広告 SDK を読み込まずに YouTube の動画を再生します。</string>
+    <string name="onboarding_feature_audio_title">バックグラウンド再生</string>
+    <string name="onboarding_feature_audio_body">画面をロックしてもアプリを切り替えても、音声は再生し続けます。</string>
+    <string name="onboarding_feature_sync_title">同期は任意</string>
+    <string name="onboarding_feature_sync_body">ログインするとホーム・登録チャンネル・高評価・履歴が同期されます。しなくても使えます。</string>
+    <!-- The appearance step. -->
+    <string name="onboarding_appearance_title">自分好みにカスタマイズ</string>
+    <string name="onboarding_appearance_body">見た目を選べます。いつでもアカウントシートから変更できます。</string>
+    <!-- The account step. -->
+    <string name="onboarding_account_signed_in_title">ログインしています</string>
+    <string name="onboarding_account_title">アカウントを接続</string>
+    <string name="onboarding_account_signed_in_body">ホーム・登録チャンネル・履歴・再生リストがこの端末で同期されます。</string>
+    <!-- The warning box: Google's terms and the secondary account. -->
+    <string name="onboarding_account_warning">Google は非公式アプリの利用を利用規約違反とみなし、利用したアカウントを停止することがあります。サブアカウントでログインすれば、このリスクをメインアカウントから切り離せます。</string>
+    <!-- Under the sign-in button. -->
+    <string name="onboarding_account_skip_note">スキップしても構いません。ログインしなくてもすべての機能が使えます。</string>
+    <!-- The ready step. -->
+    <string name="onboarding_ready_title">準備完了</string>
+    <string name="onboarding_ready_body">動画の検索・再生・キューへの追加ができます。外観・ショート・SponsorBlock はいつでもアカウントシートから。</string>
 </resources>
