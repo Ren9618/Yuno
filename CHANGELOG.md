@@ -20,6 +20,17 @@ changes something people see or feel (faster, fewer errors); then say that.
 - Show the fork's own version and maintainer in Settings › About.
 - The player's Save and Playlist pills follow the app's language instead of staying English.
 - Add skip silence: long quiet stretches in a video are fast-forwarded while it plays (a toggle in Settings › Playback, off by default).
+- The Shorts screen's chrome (Subscribe, Go to channel, Back, Comments, Share, the error notes) follows the app's language instead of staying English.
+- Add Shorts at their own ratio: a short keeps its shape with black bars instead of being blown up to fill the screen (a toggle in Settings › Shorts).
+- Add quality per network: separate video-height ceilings for Wi-Fi and for mobile data, each overriding the player's own pick while on that connection (Settings › Playback).
+- The fullscreen brightness and volume side sliders can be turned off (Settings › Playback).
+- Add Shorts like, dislike and comment counts on the rail, and make the dislike button act as YouTube's "not interested": a real dislike plus the channel's Shorts stop being offered, skipping to the next short.
+- Add the short's description behind a 「もっと見る」 (More) under the title, folding open and closed in place.
+- Shorts' double-tap like can be turned off, and holding a short plays it at 2× until the finger lifts (toggles in Settings › Shorts).
+- The Enhancements page is grouped into five sections: extraction, community APIs, the player's own buttons, sharing, and the decoder policy.
+- The video's scrub gestures are choosable: a tap on the progress bar jumps there, holding the video for 2× can be kept or turned off, and a horizontal slide on the video scrubs from where play is (toggles in Settings › Playback; the slide is off by default).
+- Add downloading: a video's long-press menu and the quality pickers open a sheet that saves the combined MP4 (YouTube's combined streams top out at 360p) or the audio's M4A through Android's Download Manager, and an external-downloader row hands the cleaned link to an app like Seal for full quality.
+- Every screen now speaks the app's language: the search page, the long-press menu, the player's action notes and errors, the SponsorBlock pills, the quality/speed/chapters sheets, the queue, the account sheet's settings rows, the top bar's accessibility labels, and the whole onboarding follow Japanese instead of staying English (the ja tables also gained the two strings they were missing).
 
 ## Unreleased
 

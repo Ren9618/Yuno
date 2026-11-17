@@ -6,7 +6,7 @@
 > ### Added in this fork
 > - **YouTube in the app's language** — a content-language setting that makes YouTube answer in the language the app runs in, so feed rows, chips, view counts, ages and descriptions come back localized (Japanese verified on device).
 > - **Multiple Google accounts and brand channels** — keep several Google accounts signed in side by side with quick switching, and act as one of the brand channels each account manages.
-> - **The Enhancements page** — Return YouTube Dislike on the like pill, DeArrow, the player's mute, loop and copy buttons, tracking-parameter-free share links, and a per-codec decoder policy, gathered on one settings page.
+> - **The Enhancements page** — Return YouTube Dislike on the like pill, DeArrow, the player's mute, loop and copy buttons, tracking-parameter-free share links, and a per-codec decoder policy, gathered on one settings page in five groups (extraction, community APIs, the player's own buttons, sharing, the decoder policy).
 > - **An adjustable tab bar** — reorder, hide and show the bottom bar's tabs in Settings › Appearance › Tab bar (Home always stays).
 > - **Empty states** — a feed that loads with no videos shows an empty state with a retry, and a signed-in Home with nothing of its own falls back to the guest recommendations for the session.
 > - **Self-recovering bot check** — when YouTube's "confirm you're not a bot" refuses the streams, Yuno keeps waiting it out in the background (and again the moment the network changes), then opens the video by itself: the error panel needs no manual retry, and a video playing its 360p fallback swaps to the real streams.
@@ -14,6 +14,16 @@
 > - **Comment translation** — a Translate button under every comment turns it into the app's language, the original one tap away.
 > - **The fork, labelled** — Settings › About shows this fork's own version and maintainer next to Yuno's, and the player's Save / Playlist pills speak the app's language.
 > - **Skip silence** — long quiet stretches in a video are fast-forwarded while it plays (a toggle in Settings › Playback, off by default).
+> - **Shorts that speak the app's language** — the Shorts screen's chrome (Subscribe, Go to channel, Back, Comments, Share, the error notes) reads the string tables like the rest of the app.
+> - **Shorts at their own ratio** — a short keeps its shape with black bars where the screen is wider, instead of being blown up to fill the screen (a toggle in Settings › Shorts).
+> - **Quality per network** — a separate video-height ceiling for Wi-Fi and for mobile data, each overriding the player's own pick while the app rides that connection (Settings › Playback).
+> - **Fullscreen side sliders, switchable** — the brightness and volume side drags on a fullscreen video can be turned off (Settings › Playback).
+> - **Shorts counts, and dislike as "not interested"** — the Shorts rail shows like, dislike and comment counts (dislikes estimated by Return YouTube Dislike), and its dislike button is a real dislike to YouTube plus the channel's Shorts stop being offered on this device, skipping to the next short.
+> - **The short's description** — a 「もっと見る」 (More) under the title opens the description text in place, TikTok-style, when YouTube sent one.
+> - **Shorts gestures, chosen** — double-tap to like can be turned off, and pressing and holding a short plays it at 2× until the finger lifts (toggles in Settings › Shorts).
+> - **Scrub gestures, chosen** — a tap on the progress bar seeks there, holding the video for 2× can be kept or turned off, and a horizontal slide on the video scrubs from where play is (toggles in Settings › Playback; the slide is off by default).
+> - **Downloads** — a video's long-press menu and the quality pickers open a download sheet: the combined MP4 and the audio's M4A go through Android's Download Manager (its notification shows the progress; the file lands in Downloads), and an external-downloader row hands the cleaned link to an app like Seal, which isn't capped at 360p.
+> - **Everything in the app's language** — the last hardcoded English is gone: the search page, the long-press menu, the player's notes and errors, the SponsorBlock pills, the quality/speed/chapters sheets, the queue, the account sheet's settings, the accessibility labels, and the onboarding all follow Japanese.
 >
 > ### Technical notes
 > - The content language rides through the InnerTube requests (`hl`/`gl`), so YouTube answers with localized strings the existing parsers read; counts and ages fall back to a locale-aware number parser when YouTube answers in Japanese.
