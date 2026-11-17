@@ -34,6 +34,10 @@
 >
 > ![The Enhancements settings page added in this fork](docs/images/fork-enhancements.png)
 >
+> | ![The held menu's 「ダウンロード」 row](docs/images/fork-download-menu.png) | ![The download sheet](docs/images/fork-download-sheet.png) | ![Scrub gesture toggles in Settings › Playback](docs/images/fork-scrub-gestures.png) |
+> |---|---|---|
+> | The long-press menu, in Japanese, with its new **ダウンロード** (Download) row | The download sheet: the combined MP4, the audio's M4A, or the **外部ダウンローダー** (external downloader) row for full quality | The three scrub gestures, each with its own toggle (the slide is off by default) |
+>
 > Upstream: https://github.com/danielkanan/Yuno (GPL-3.0 — see LICENSE and Credits below)
 
 <div align="center">

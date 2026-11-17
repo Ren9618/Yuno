@@ -37,6 +37,14 @@ One commit per feature, all on `feat/enhancements`:
 
 ![Tab bar settings](images/fork-enhancements-tabbar.png)
 
+![The held menu with Download, in Japanese](images/fork-download-menu.png)
+
+![The download sheet: the MP4, the M4A and the external downloader](images/fork-download-sheet.png)
+
+![Scrub gesture toggles in Settings › Playback](images/fork-scrub-gestures.png)
+
+![The search page in Japanese](images/fork-language-search.png)
+
 ## Technical challenges
 
 - Making YouTube actually answer in Japanese was a request problem, not a string problem: the `hl`/`gl` parameters had to ride every InnerTube call, and a few parsers assumed English digits and "views"/"ago" words. Counts and ages now go through a locale-aware parser with an ICU-based fallback (`JapaneseParseTest`).
