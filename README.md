@@ -5,7 +5,7 @@
 >
 > ### Added in this fork
 > - **YouTube in the app's language** — a content-language setting that makes YouTube answer in the language the app runs in, so feed rows, chips, view counts, ages and descriptions come back localized (Japanese verified on device).
-> - **Multiple Google accounts and brand channels** — keep several Google accounts signed in side by side with quick switching, and act as one of the brand channels each account manages.
+> - **Multiple Google accounts and brand channels** — keep several Google accounts signed in side by side with quick switching, and act as one of the brand channels each account manages; the top bar, the account row and the comment composer then show the acting channel's photo and name.
 > - **The Enhancements page** — Return YouTube Dislike on the like pill, DeArrow, the player's mute, loop and copy buttons, tracking-parameter-free share links, and a per-codec decoder policy, gathered on one settings page in five groups (extraction, community APIs, the player's own buttons, sharing, the decoder policy).
 > - **An adjustable tab bar** — reorder, hide and show the bottom bar's tabs in Settings › Appearance › Tab bar (Home always stays).
 > - **Empty states** — a feed that loads with no videos shows an empty state with a retry, and a signed-in Home with nothing of its own falls back to the guest recommendations for the session.
@@ -115,7 +115,7 @@
 
 #### Account & community
 - **Optional Google sign-in** — full sync: recommendations, subscriptions, history, likes, subscribes, Save, Watch later, watch history, and **comment/reply posting**.
-- **Multiple Google accounts and brand channels** — keep several Google accounts signed in side by side with quick switching, and act as one of the brand channels each account manages. *(added in this fork)*
+- **Multiple Google accounts and brand channels** — keep several Google accounts signed in side by side with quick switching, and act as one of the brand channels each account manages; the top bar then shows the acting channel's photo and name. *(added in this fork)*
 - Session cookies stored **AES-GCM encrypted** (Android Keystore).
 - **Comments** with avatars, replies, and likes (signed in).
 - **Comment translation** — a Translate button under every comment turns it into the app's language, the original one tap away. *(added in this fork)*
