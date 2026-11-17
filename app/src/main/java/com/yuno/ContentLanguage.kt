@@ -19,8 +19,8 @@ import java.util.Locale
  *
  * NewPipeExtractor's stream extraction stays on English (see [AppLanguage]): its error handling
  * recognises YouTube's English refusal messages (bot check, age, members-only). Those pages are
- * only used for what they are good at (stream URLs, captions); the Japanese description comes
- * from InnerTube ([InnerTube.videoDescription]).
+ * only used for what they are good at (stream URLs, captions); the Japanese description and the
+ * related videos' titles come from InnerTube ([InnerTube.watchPage]).
  */
 object ContentLanguage {
     /** A language YouTube answers in, named in its own language. */

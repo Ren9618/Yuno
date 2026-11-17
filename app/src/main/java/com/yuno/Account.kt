@@ -772,17 +772,22 @@ object InnerTube {
     }
 
     /**
-     * The video's description as YouTube words it for the content language (the watch page's
-     * `next` answer). NewPipeExtractor's stream extraction stays English (see [ContentLanguage]),
-     * so this is what puts a Japanese 概要欄 under a Japanese user's video.
+     * One watch page's `next` answer, asked in the content language: its 概要欄 and its related
+     * videos, so a video opens with one InnerTube request for both. NewPipeExtractor's stream
+     * extraction (its description and its related items) stays English (see [ContentLanguage]),
+     * so this is what puts a Japanese 概要欄 and Japanese related titles under a Japanese
+     * user's video.
      */
-    suspend fun videoDescription(videoId: String): String? = withContext(Dispatchers.IO) {
+    internal suspend fun watchPage(videoId: String): WatchPage = withContext(Dispatchers.IO) {
         val key = ContentLanguage.hl + ":" + videoId
-        descriptions.get(key)?.let { return@withContext it }
-        val secondary = postAny("next", JSONObject().put("videoId", videoId)).findObject("videoSecondaryInfoRenderer")
-            ?: return@withContext null
+        watchPages.get(key)?.let { return@withContext it }
+        parseWatchPage(postAny("next", JSONObject().put("videoId", videoId))).also { watchPages.put(key, it) }
+    }
+
+    /** The parsing half of [watchPage]: the 概要欄's text and the feed of related videos. */
+    internal fun parseWatchPage(root: JSONObject): WatchPage {
         var text: String? = null
-        secondary.walk { key2, obj ->
+        root.findObject("videoSecondaryInfoRenderer")?.walk { key2, obj ->
             if (text != null) return@walk
             if (key2 == "attributedDescription") {
                 text = obj.optString("content").ifBlank { null }
@@ -793,10 +798,23 @@ object InnerTube {
                     }?.ifBlank { null }
             }
         }
-        text?.trim()?.ifBlank { null }?.also { descriptions.put(key, it) }
+        return WatchPage(text?.trim()?.ifBlank { null }, parseFeed(root).videos)
     }
 
-    private val descriptions = android.util.LruCache<String, String>(80)
+    /** A watch page's `next` answer parsed: the description and the related videos. */
+    internal data class WatchPage(val description: String?, val related: List<VideoItem>)
+
+    private val watchPages = android.util.LruCache<String, WatchPage>(80)
+
+    /** The video's description as YouTube words it for the content language. */
+    suspend fun videoDescription(videoId: String): String? = runCatching { watchPage(videoId) }.getOrNull()?.description
+
+    /**
+     * The player's related videos in the content language — the same `next` answer that
+     * carries the description. Live streams and movies are dropped by [parseFeed], like
+     * in every feed.
+     */
+    suspend fun relatedVideos(videoId: String): List<VideoItem> = runCatching { watchPage(videoId) }.getOrNull()?.related ?: emptyList()
 
     /**
      * Guest Home. Anonymous `FEwhat_to_watch` is an empty "history is off" wall, and Trending

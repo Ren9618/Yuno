@@ -215,9 +215,10 @@ object YouTube {
             if (d.type == Description.HTML) HtmlCompat.fromHtml(d.content, HtmlCompat.FROM_HTML_MODE_COMPACT).toString().trim()
             else d.content.trim()
         }.orEmpty()
-        // The 概要欄 in the user's language: the extractor page stays English, InnerTube is asked
-        // in ContentLanguage (a failure keeps the extractor's text).
-        val description = runCatching { InnerTube.videoDescription(id) }.getOrNull() ?: fromExtractor
+        // The 概要欄 and the related videos in the user's language: the extractor page stays
+        // English, InnerTube is asked in ContentLanguage (a failure keeps the extractor's text).
+        val watch = runCatching { InnerTube.watchPage(id) }.getOrNull()
+        val description = watch?.description ?: fromExtractor
         val live = info.liveSource()
         VideoDetails(
             item = VideoItem(
@@ -234,7 +235,8 @@ object YouTube {
             description = description,
             likes = info.likeCount,
             subscribers = info.uploaderSubscriberCount,
-            related = info.relatedItems.filterIsInstance<StreamInfoItem>().mapNotNull { it.toVideoItem() },
+            related = watch?.related?.takeIf { it.isNotEmpty() }
+                ?: info.relatedItems.filterIsInstance<StreamInfoItem>().mapNotNull { it.toVideoItem() },
             playable = picked.isPlayable || live != null,
             live = live != null,
             quality = picked.playedHeight?.let { "${it}p" },

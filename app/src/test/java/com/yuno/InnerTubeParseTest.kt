@@ -118,6 +118,14 @@ class InnerTubeParseTest {
         assertTrue("fundraiser video kept", page.videos.any { it.id == "-7Gl-yKF6Y4" })
     }
 
+    @Test fun watchPageDescriptionAndRelated() {
+        val page = InnerTube.parseWatchPage(fixture("next"))
+        assertTrue("expected the description, got ${page.description?.take(40)}", !page.description.isNullOrBlank())
+        assertTrue("expected the related feed, got ${page.related.size}", page.related.size >= 10)
+        // The video itself (videoPrimaryInfoRenderer) must not come back as its own related row.
+        assertTrue("no self row", page.related.none { it.title.isBlank() })
+    }
+
     /** Less Bitter's Videos tab (captured 2026-10-06): its "Insider Edition" uploads are members-only. */
     @Test fun channelVideosDropMembersOnly() {
         val page = InnerTube.parseFeed(fixture("channel_videos"))
