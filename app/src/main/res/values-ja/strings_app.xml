@@ -94,4 +94,19 @@
     <!-- The ready step. -->
     <string name="onboarding_ready_title">準備完了</string>
     <string name="onboarding_ready_body">動画の検索・再生・キューへの追加ができます。外観・ショート・SponsorBlock はいつでもアカウントシートから。</string>
+
+    <!-- Yuno 1.1.1 upstream keys: the channel page's extra tabs and its About block. -->
+    <string name="channel_tab_live">ライブ</string>
+    <string name="channel_tab_shows">番組</string>
+    <string name="channel_tab_podcasts">ポッドキャスト</string>
+    <string name="channel_tab_posts">投稿</string>
+    <string name="channel_tab_about">概要</string>
+    <string name="channel_about_heading">概要</string>
+    <string name="channel_about_more">詳細情報</string>
+    <string name="channel_about_links">リンク</string>
+    <string name="channel_post_more">もっと見る</string>
+    <string name="channel_posts_empty">投稿はありません</string>
+    <string name="channel_search_hint">このチャンネルを検索</string>
+    <string name="channel_search_empty">動画はありません</string>
+    <string name="channel_posts_failed">投稿を読み込めませんでした</string>
 </resources>

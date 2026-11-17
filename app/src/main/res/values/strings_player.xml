@@ -51,6 +51,7 @@
     <string name="player_watch_later_update_failed">Couldn\'t update Watch later.</string>
 
     <!-- ── Errors shown over the video ── -->
+    <string name="player_live">LIVE</string>
     <string name="player_error_no_stream">No playable stream was found for this video.</string>
     <string name="player_error_connection">Lost the connection. Check your network and try again.</string>
     <string name="player_error_refused">YouTube refused the stream. Try again.</string>

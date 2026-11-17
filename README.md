@@ -38,7 +38,7 @@
 > |---|---|---|
 > | The long-press menu, in Japanese, with its new **ダウンロード** (Download) row | The download sheet: the combined MP4, the audio's M4A, or the **外部ダウンローダー** (external downloader) row for full quality | The three scrub gestures, each with its own toggle (the slide is off by default) |
 >
-> Upstream: https://github.com/danielkanan/Yuno (GPL-3.0 — see LICENSE and Credits below)
+> Upstream: https://github.com/danielkanan/Yuno (GPL-3.0 — see LICENSE and Credits below) — merged through its Yuno 1.1.1 (channel tabs, Flow-style search, livestreams, playlist pages, letterboxing, the morphing player); the fork's features ride on top, and the new screens are translated into Japanese.
 
 <div align="center">
 

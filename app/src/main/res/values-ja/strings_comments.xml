@@ -123,4 +123,17 @@
     <string name="captions_kept_languages">このスマートフォンにある翻訳言語</string>
     <!-- Accessibility label of a downloaded language's X. %1$s = the language. -->
     <string name="captions_remove_language">%1$sを削除</string>
+
+    <!-- Yuno 1.1.1 upstream keys: the livestream's chat. -->
+    <string name="live_chat">ライブチャット</string>
+    <string name="live_chat_empty">まだメッセージはありません</string>
+    <string name="live_chat_close">ライブチャットを閉じる</string>
+    <string name="live_chat_hint">コメントする…</string>
+    <string name="live_chat_sign_in">チャットするにはログインしてください。</string>
+    <!-- The views/watching line on a live video's page. %1$s is the compact count. -->
+    <plurals name="live_watching">
+        <item quantity="other">%1$s 人が視聴中</item>
+    </plurals>
+    <!-- The caption style named after the app itself: a brand name, not translated. -->
+    <string name="captions_look_Yuno">Yuno</string>
 </resources>

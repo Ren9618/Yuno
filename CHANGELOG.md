@@ -5,10 +5,13 @@ What each release brings, in a line or two per change, written for the people us
 What's new sheet (tap Update on Home) shows them before installing.
 
 Add every change someone would notice under **Unreleased**, under `### New`, `### Improved` or
-`### Fixed`. Publishing renames Unreleased to the version. Leave out under-the-hood work unless it
+`### Miscellaneous`. Publishing renames Unreleased to the version. Leave out under-the-hood work unless it
 changes something people see or feel (faster, fewer errors); then say that.
 
 ## Fork changes (unreleased)
+- Bring in upstream's Yuno 1.1.1: the channel page's tabs (Home, Videos, Shorts, Live, Playlists, Posts, About), home recommendation categories, release-style playlist pages, Flow-style search with filter chips and anchored menus, livestreams with live chat, sharper thumbnails, letterboxed widescreen videos and Shorts, a player that opens from the tapped thumbnail with a morph and returns to the same spot, search results staying behind the player, the status bar's blur following the video, and channel/playlist colours as an opt-in (Settings › Appearance).
+- The audio-only mode is gone with the merge: upstream removed it in 1.1.0, so its switch, stage and kept preference are out of the fork too.
+- The 69 strings the release added are translated into Japanese, so the new screens speak the app's language like the rest.
 - Add YouTube in the app's language: a content-language setting that makes YouTube answer in the language the app runs in, so feeds, chips, view counts, ages and descriptions come back localized.
 - Add multiple Google accounts and brand channels: several Google accounts signed in side by side with quick switching, each acting as one of the brand channels it manages.
 - Fix the account photo while acting as a brand channel: the top bar, the account row and the comment composer show the acting channel's identity, kept across restarts while the delegation lasts.
@@ -34,6 +37,39 @@ changes something people see or feel (faster, fewer errors); then say that.
 - Every screen now speaks the app's language: the search page, the long-press menu, the player's action notes and errors, the SponsorBlock pills, the quality/speed/chapters sheets, the queue, the account sheet's settings rows, the top bar's accessibility labels, and the whole onboarding follow Japanese instead of staying English (the ja tables also gained the two strings they were missing).
 
 ## Unreleased
+
+## 1.1.1
+
+![Yuno](https://github.com/danielkanan/Yuno/raw/main/docs/banner.png?v=2)
+
+### New
+- Tapping a video opens the full player from that thumbnail. Minimising puts it in the bar, and tapping that same video opens it from the bar.
+
+### Improved
+- Going back from a video, Short, channel, or playlist returns you to the same spot. Search stays open behind the player.
+- The blur behind the status bar follows the video you just switched to.
+
+### Miscellaneous
+- Channel and playlist pages stay plain until you turn on Channel & playlist colors in Settings › Appearance.
+
+## 1.1.0
+
+![Yuno](https://github.com/danielkanan/Yuno/raw/main/docs/banner.png?v=2)
+
+### New
+- Channel pages take their colour from the profile picture. Tabs swipe between Home, Videos, Shorts, Live, Playlists and the rest, and Posts and About are their own pages.
+- Home has recommendation categories along the top. Each one keeps its own list.
+- A playlist page is the colour of its cover, with Play and Shuffle, and the videos in a grid.
+- Search has type chips under the bar, and a filter menu for duration, date and sort. A channel, a Shorts row, a video shelf and posts stay as their own blocks.
+- Livestreams play, with the watching count and live chat. A live thumbnail says LIVE.
+- Thumbnails, Shorts and post pictures are sharper.
+
+### Improved
+- A video wider than usual keeps the normal player, with black bars. A Short fits on the screen with black bars instead of being enlarged to fill it.
+- The Update button on Home sits clear of search and your picture.
+
+### Miscellaneous
+- Audio only is gone.
 
 ## 1.0.0
 

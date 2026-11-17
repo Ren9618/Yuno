@@ -185,4 +185,60 @@
     <plurals name="ui_seek_forward">
         <item quantity="other">%1$s 秒進む</item>
     </plurals>
+
+    <!-- Yuno 1.1.1 upstream keys: the search page's chips, filters and the playlist page's buttons. -->
+    <string name="ui_play">再生</string>
+    <string name="ui_shuffle">シャッフル</string>
+    <string name="ui_duration_hours_minutes">%1$d時間%2$d分</string>
+    <string name="ui_search_show_all">すべて表示</string>
+    <string name="ui_search_shelf_more">さらに表示</string>
+    <string name="ui_search_shelf_less">折りたたむ</string>
+    <string name="ui_search_fill">検索バーに入力</string>
+    <string name="ui_search_filters">フィルター</string>
+    <string name="ui_search_apply">適用</string>
+    <string name="ui_search_clear_title">検索履歴を削除しますか？</string>
+    <string name="ui_search_clear_body">この端末の最近の検索が削除されます。</string>
+    <string name="ui_search_clear">削除</string>
+    <string name="ui_search_all">すべて</string>
+    <string name="ui_search_channels">チャンネル</string>
+    <string name="ui_search_movies">映画</string>
+    <string name="ui_search_live">ライブ</string>
+    <string name="ui_search_recent">最近のアップロード</string>
+    <string name="ui_search_unwatched">未視聴</string>
+    <string name="ui_search_watched">視聴済み</string>
+    <string name="ui_search_type">種類</string>
+    <string name="ui_search_duration">動画の長さ</string>
+    <string name="ui_search_upload_date">アップロード日</string>
+    <string name="ui_search_sort">並び替え</string>
+    <string name="ui_search_features">機能</string>
+    <string name="ui_search_any">指定なし</string>
+    <string name="ui_search_under_3">3分未満</string>
+    <string name="ui_search_3_to_20">3～20分</string>
+    <string name="ui_search_over_20">20分以上</string>
+    <string name="ui_search_last_hour">1時間以内</string>
+    <string name="ui_search_today">今日</string>
+    <string name="ui_search_this_week">今週</string>
+    <string name="ui_search_this_month">今月</string>
+    <string name="ui_search_this_year">今年</string>
+    <string name="ui_search_relevance">関連度</string>
+    <string name="ui_search_view_count">視聴回数</string>
+    <string name="ui_search_hd">HD</string>
+    <string name="ui_search_4k">4K</string>
+    <string name="ui_search_hdr">HDR</string>
+    <string name="ui_search_subtitles">字幕</string>
+    <string name="ui_search_creative_commons">Creative Commons</string>
+    <string name="ui_search_360">360°</string>
+    <string name="ui_search_vr180">VR180</string>
+    <string name="ui_search_3d">3D</string>
+    <string name="ui_search_location">場所</string>
+    <string name="ui_search_purchased">購入済み</string>
+    <string name="ui_channel_no_live">このチャンネルにはライブ配信はありません。</string>
+
+    <!-- Yuno 1.1.1 upstream keys: durations and the playlist's row count. -->
+    <plurals name="ui_duration_minutes">
+        <item quantity="other">%1$d分</item>
+    </plurals>
+    <plurals name="ui_playlist_videos">
+        <item quantity="other">%d 本の動画</item>
+    </plurals>
 </resources>

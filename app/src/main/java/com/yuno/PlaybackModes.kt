@@ -86,29 +86,6 @@ object PlaybackSpeed {
 }
 
 /**
- * Audio only (Derek, 2026-10-13): one switch for the whole app, kept until turned off. The
- * player's video track is disabled (as in the background), so no video is fetched or
- * decoded; the open player shows only its playback controls and can't go fullscreen.
- */
-object AudioOnly {
-    private const val KEY = "audio_only"
-    private var prefs: SharedPreferences? = null
-
-    var enabled by mutableStateOf(false)
-        private set
-
-    fun init(context: Context) {
-        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
-        enabled = prefs?.getBoolean(KEY, false) == true
-    }
-
-    fun set(on: Boolean) {
-        enabled = on
-        prefs?.edit()?.putBoolean(KEY, on)?.apply()
-    }
-}
-
-/**
  * The video's scrub gestures (the fork): a tap on the bar jumps there, a finger held on the
  * video plays at 2× until it lifts, and a horizontal slide on the video scrubs from where
  * play is. Tap and hold are on as they shipped; the slide is off until asked for.
@@ -227,7 +204,7 @@ object ChaptersStayOpen {
 
 /**
  * Picture-in-picture by itself (#42): leaving the app (Home, Recents, another app) while a video plays
- * turns it into the floating window. Off by default (Derek): background play is audio only then.
+ * turns it into the floating window. Off by default (Derek): leaving the app keeps playing in the background.
  */
 object AutoPip {
     private const val KEY = "auto_pip"

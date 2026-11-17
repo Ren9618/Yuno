@@ -103,4 +103,7 @@
     <string name="player_not_interested_done">了解しました。このような動画の表示を減らします</string>
     <string name="player_channel_not_recommended">このチャンネルはおすすめに表示されなくなります</string>
     <string name="player_feedback_failed">YouTube に送信できませんでした。もう一度お試しください</string>
+
+    <!-- Yuno 1.1.1 upstream keys: the badge on a live video. -->
+    <string name="player_live">ライブ</string>
 </resources>
