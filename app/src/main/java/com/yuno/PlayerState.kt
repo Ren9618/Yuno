@@ -585,6 +585,10 @@ class PlayerState(private val scope: CoroutineScope) {
         zoomFor = null
     }
 
+    // ── Download (the fork) ──
+    /** The video the download sheet is open for, from a long-press or a quality picker; null = closed. */
+    var downloadTarget by mutableStateOf<VideoItem?>(null)
+
     // ── Save to playlist (GitHub issue #12) ──
     /** The video the "Save to playlist" sheet is open for; null = closed. */
     var playlistTarget by mutableStateOf<VideoItem?>(null)

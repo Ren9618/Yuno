@@ -22,6 +22,29 @@
     <string name="ui_save_to_playlist">Save to playlist</string>
     <string name="ui_share">Share</string>
 
+    <!-- ── Download (the fork) ────────────────────────────────────────────── -->
+    <!-- Option in a video's long-press menu and the quality pickers. -->
+    <string name="ui_download">Download</string>
+    <!-- Row of the download sheet for a video stream: %1$d is its height ("360"). -->
+    <string name="ui_download_video_quality">Video · %1$dp</string>
+    <!-- Row of the download sheet for the audio stream: %1$d is its bitrate ("128"). -->
+    <string name="ui_download_audio_quality">Audio · %1$d kbps</string>
+    <!-- Row that hands the cleaned link to an outside downloader (Seal and its like). -->
+    <string name="ui_download_external">External downloader</string>
+    <string name="ui_download_external_line">Full quality, through the share sheet</string>
+    <!-- The sheet while the streams load. -->
+    <string name="ui_download_loading">Fetching the streams…</string>
+    <!-- The sheet when the streams didn't come. -->
+    <string name="ui_download_unavailable">No streams came back for this video. The link below still works.</string>
+    <!-- Confirmation after the file was handed to Android's Download Manager. -->
+    <string name="ui_download_started">Downloading — its progress is in the notifications</string>
+    <!-- When the Download Manager refused. -->
+    <string name="ui_download_failed">Couldn\'t start the download</string>
+    <!-- The sheet's note: what the combined stream can't do (the external row can). -->
+    <string name="ui_download_note">The combined stream tops out at 360p; an external downloader gets full quality</string>
+    <!-- Sub of the quality pickers' download row. -->
+    <string name="ui_download_sheet_line">Save the video\'s file</string>
+
     <!-- ── Save to playlist sheet ─────────────────────────────────────────── -->
     <!-- Accessibility label of the check on a playlist that holds the video. -->
     <string name="ui_saved">Saved</string>

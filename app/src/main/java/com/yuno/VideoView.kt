@@ -1047,6 +1047,16 @@ fun QualitySheet(state: PlayerState, onDismiss: () -> Unit) {
         details.qualities.forEach { h ->
             SheetRow("${h}p", qualityTag(h), chosen == h) { state.setQuality(h); onDismiss() }
         }
+        // The fork's download: the sheet takes the video's file from here too.
+        state.current?.let {
+            Spacer(Modifier.height(10.dp))
+            RowDivider()
+            Spacer(Modifier.height(10.dp))
+            SheetRow(stringResource(R.string.ui_download), stringResource(R.string.ui_download_sheet_line), false) {
+                onDismiss()
+                state.downloadTarget = it
+            }
+        }
         Spacer(Modifier.height(28.dp))
         }
     }
@@ -1421,6 +1431,13 @@ private fun BoxScope.QualityDrop(state: PlayerState, open: Boolean, anchor: Rect
                 if (h != QualityPreference.height) state.setQuality(h)
                 scope.launch { delay(420); currentClose() }
             }
+        }
+        // The fork's download, in fullscreen too: the card closes into the download sheet.
+        Spacer(Modifier.height(5.dp))
+        DropRow(title = stringResource(R.string.ui_download), tag = null, selected = false) {
+            if (!open) return@DropRow
+            scope.launch { delay(420); currentClose() }
+            state.current?.let { state.downloadTarget = it }
         }
     }
 }

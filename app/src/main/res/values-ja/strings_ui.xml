@@ -22,6 +22,29 @@
     <string name="ui_save_to_playlist">再生リストに保存</string>
     <string name="ui_share">共有</string>
 
+    <!-- ── Download (the fork) ────────────────────────────────────────────── -->
+    <!-- Option in a video's long-press menu and the quality pickers. -->
+    <string name="ui_download">ダウンロード</string>
+    <!-- Row of the download sheet for a video stream: %1$d is its height ("360"). -->
+    <string name="ui_download_video_quality">動画 · %1$dp</string>
+    <!-- Row of the download sheet for the audio stream: %1$d is its bitrate ("128"). -->
+    <string name="ui_download_audio_quality">音声 · %1$d kbps</string>
+    <!-- Row that hands the cleaned link to an outside downloader (Seal and its like). -->
+    <string name="ui_download_external">外部ダウンローダー</string>
+    <string name="ui_download_external_line">フル画質。共有シート経由で渡します</string>
+    <!-- The sheet while the streams load. -->
+    <string name="ui_download_loading">ストリームを取得中…</string>
+    <!-- The sheet when the streams didn't come. -->
+    <string name="ui_download_unavailable">この動画のストリームを取得できませんでした。下のリンクは使えます</string>
+    <!-- Confirmation after the file was handed to Android's Download Manager. -->
+    <string name="ui_download_started">ダウンロードを開始しました。通知で進行します</string>
+    <!-- When the Download Manager refused. -->
+    <string name="ui_download_failed">ダウンロードを開始できませんでした</string>
+    <!-- The sheet's note: what the combined stream can't do (the external row can). -->
+    <string name="ui_download_note">結合ストリームは360pまで。フル画質は外部ダウンローダーで取得できます</string>
+    <!-- Sub of the quality pickers' download row. -->
+    <string name="ui_download_sheet_line">動画のファイルを保存します</string>
+
     <!-- ── Save to playlist sheet ─────────────────────────────────────────── -->
     <!-- Accessibility label of the check on a playlist that holds the video. -->
     <string name="ui_saved">保存済み</string>

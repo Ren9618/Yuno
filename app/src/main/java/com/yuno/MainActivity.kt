@@ -755,6 +755,9 @@ fun YunoApp() {
         player.playlistTarget?.let { video ->
             SaveToPlaylistSheet(player, video, maxHeight = maxHeight * 0.55f)
         }
+        player.downloadTarget?.let { video ->
+            DownloadSheet(video, player, onDismiss = { player.downloadTarget = null })
+        }
         windowLayout.tabletopY?.takeIf { tabletop && showNowPlaying }?.let { fold ->
             with(density) { TabletopPlayer(player, foldTop = fold.start.toDp(), foldBottom = fold.endInclusive.toDp()) }
         }

@@ -292,6 +292,11 @@ fun VideoHeldMenu(
                     shareLink(context, "https://youtu.be/${menuVideo.id}", menuVideo.title)
                     onDismiss()
                 }
+                MenuSeparator(hairline)
+                MenuRow(SfIcons.Download, stringResource(R.string.ui_download), open) {
+                    onDismiss()
+                    player.downloadTarget = menuVideo
+                }
                 if (menuVideo.feedback?.notInterested != null || menuVideo.feedback?.dontRecommend != null) {
                     MenuSeparator(hairline)
                 }

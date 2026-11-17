@@ -102,7 +102,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import android.view.inputmethod.InputMethodManager
+import android.util.Log
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.mutableIntStateOf
 import com.yuno.icons.SfIcons
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.schabi.newpipe.extractor.MediaFormat
+import org.schabi.newpipe.extractor.stream.DeliveryMethod
+import org.schabi.newpipe.extractor.stream.StreamInfo
 
 // ── Long-press options ─────────────────────────────────────────────────────────
 
@@ -150,6 +158,133 @@ fun VideoOptionsSheet(video: VideoItem, player: PlayerState, onDismiss: () -> Un
             OptionRow(Icons.Rounded.RemoveCircleOutline, stringResource(R.string.ui_dont_recommend_channel)) { player.dontRecommendChannel(video); onDismiss() }
         }
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+// ── Download (the fork) ───────────────────────────────────────────────────────
+
+/**
+ * What this app can save on its own, from the streams YouTube offers: the combined MP4
+ * (YouTube's muxed streams stop at 360p) and the audio's M4A, each handed to Android's
+ * Download Manager ([Downloads]). Under them, the external-downloader row hands the
+ * cleaned link through the share sheet to an app like Seal, which isn't capped at 360p —
+ * that's the way to full quality. The streams come fresh ([StreamCache.getOrLoad]): the
+ * same signed URLs playback uses, so one this app is playing costs no new extraction.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DownloadSheet(video: VideoItem, player: PlayerState, onDismiss: () -> Unit) {
+    val c = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    var attempt by remember(video.id) { mutableIntStateOf(0) }
+    var info by remember(video.id) { mutableStateOf<StreamInfo?>(null) }
+    var failed by remember(video.id) { mutableStateOf(false) }
+    LaunchedEffect(video.id, attempt) {
+        failed = false
+        val got = runCatching { withContext(Dispatchers.IO) { StreamCache.getOrLoad(video.id) } }
+            .onFailure { Log.w("Yuno", "download: streams for ${video.id}", it) }
+            .getOrNull()
+        info = got
+        failed = got == null
+    }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = c.surfaceContainerLow,
+    ) {
+        Row(Modifier.padding(horizontal = 20.dp).padding(bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Thumbnail(video.thumbnail, Modifier.width(112.dp).aspectRatio(16f / 9f), radius = 14)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(video.title, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(video.channel, color = c.onSurfaceVariant, fontSize = 13.sp, maxLines = 1)
+            }
+        }
+        val streams = info
+        when {
+            streams != null -> {
+                streams.videoStreams
+                    .filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP }
+                    .sortedByDescending { it.height }
+                    .forEach { stream ->
+                        val height = stream.height.takeIf { it > 0 }
+                        val ext = stream.format?.suffix ?: "mp4"
+                        DownloadRow(
+                            SfIcons.Download,
+                            height?.let { stringResource(R.string.ui_download_video_quality, it) }
+                                ?: stringResource(R.string.ui_download),
+                            ext.uppercase(),
+                        ) {
+                            val file = Downloads.fileName(video.title, height?.let { "${it}p" }, ext)
+                            if (Downloads.save(context, video.title, stream.content, file)) {
+                                player.actionMessage = str(R.string.ui_download_started)
+                                onDismiss()
+                            } else {
+                                player.actionMessage = str(R.string.ui_download_failed)
+                            }
+                        }
+                    }
+                streams.audioStreams
+                    .filter { it.isUrl && it.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP && it.format == MediaFormat.M4A }
+                    .maxByOrNull { it.averageBitrate }
+                    ?.takeIf { it.averageBitrate > 0 }
+                    ?.let { audio ->
+                        DownloadRow(
+                            SfIcons.Download,
+                            stringResource(R.string.ui_download_audio_quality, audio.averageBitrate),
+                            "M4A",
+                        ) {
+                            val file = Downloads.fileName(video.title, "audio", "m4a")
+                            if (Downloads.save(context, video.title, audio.content, file)) {
+                                player.actionMessage = str(R.string.ui_download_started)
+                                onDismiss()
+                            } else {
+                                player.actionMessage = str(R.string.ui_download_failed)
+                            }
+                        }
+                    }
+                Text(
+                    stringResource(R.string.ui_download_note),
+                    color = c.onSurfaceVariant, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = PageGutter, vertical = 10.dp),
+                )
+            }
+            failed -> Column(Modifier.fillMaxWidth().padding(horizontal = PageGutter, vertical = 12.dp)) {
+                Text(stringResource(R.string.ui_download_unavailable), color = c.onSurfaceVariant, fontSize = 14.sp, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(12.dp))
+                PillButton(stringResource(R.string.ui_try_again), { attempt++ })
+            }
+            else -> Row(
+                Modifier.fillMaxWidth().padding(horizontal = PageGutter, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                Spacer(Modifier.width(18.dp))
+                Text(stringResource(R.string.ui_download_loading), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+            }
+        }
+        // The other way, whichever of the above happened: a downloader app muxes full quality itself.
+        DownloadRow(SfIcons.Share, stringResource(R.string.ui_download_external), stringResource(R.string.ui_download_external_line)) {
+            shareLink(context, "https://youtu.be/${video.id}", video.title)
+            onDismiss()
+        }
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun DownloadRow(icon: ImageVector, title: String, sub: String?, onClick: () -> Unit) {
+    val c = MaterialTheme.colorScheme
+    Row(
+        Modifier.fillMaxWidth().pressable(pressedScale = 0.98f, onClick = onClick).padding(horizontal = PageGutter, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, tint = c.onSurface)
+        Spacer(Modifier.width(18.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+            sub?.let { Text(it, color = c.onSurfaceVariant, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold) }
+        }
     }
 }
 
