@@ -92,6 +92,14 @@
     <string name="settings_side_sliders_title">全画面の左右スワイプ調整</string>
     <string name="settings_side_sliders_line">全画面中に動画の左右を上下にドラッグして明るさと音量を調整します。オフにすると何も起きません</string>
 
+    <!-- The fork's scrub gestures (Settings › Playback): the bar's tap, the video's hold, its slide. -->
+    <string name="settings_scrub_tap_title">タップでシーク</string>
+    <string name="settings_scrub_tap_line">シークバーをタップするとその位置へ移動します</string>
+    <string name="settings_scrub_hold_title">長押しで2倍速</string>
+    <string name="settings_scrub_hold_line">動画を長押ししている間、2倍速で再生します</string>
+    <string name="settings_scrub_slide_title">スライドでシーク</string>
+    <string name="settings_scrub_slide_line">動画を横にスライドするとシークします</string>
+
     <!-- The fork's Shorts gestures (Settings › Shorts). -->
     <string name="settings_shorts_double_tap_title">ダブルタップで高評価</string>
     <string name="settings_shorts_double_tap_line">ショートを素早く 2 回タップして高く評価します。オフにすると何も起きません</string>

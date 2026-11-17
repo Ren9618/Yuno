@@ -109,6 +109,50 @@ object AudioOnly {
 }
 
 /**
+ * The video's scrub gestures (the fork): a tap on the bar jumps there, a finger held on the
+ * video plays at 2× until it lifts, and a horizontal slide on the video scrubs from where
+ * play is. Tap and hold are on as they shipped; the slide is off until asked for.
+ */
+object ScrubGestures {
+    private const val KEY_TAP = "scrub_tap_seek"
+    private const val KEY_HOLD = "scrub_hold_speed"
+    private const val KEY_SLIDE = "scrub_slide"
+    private var prefs: SharedPreferences? = null
+
+    /** A tap on the bar (its touch pad) seeks to where the finger came down. */
+    var tapToSeek by mutableStateOf(true)
+        private set
+    /** Holding the video (not the bar) plays at 2× while it lasts. */
+    var hold2xSpeed by mutableStateOf(true)
+        private set
+    /** A horizontal slide on the video drives the scrub, like dragging the bar itself. */
+    var slideSeek by mutableStateOf(false)
+        private set
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        tapToSeek = prefs?.getBoolean(KEY_TAP, true) != false
+        hold2xSpeed = prefs?.getBoolean(KEY_HOLD, true) != false
+        slideSeek = prefs?.getBoolean(KEY_SLIDE, false) == true
+    }
+
+    fun chooseTapToSeek(on: Boolean) {
+        tapToSeek = on
+        prefs?.edit()?.putBoolean(KEY_TAP, on)?.apply()
+    }
+
+    fun chooseHold2xSpeed(on: Boolean) {
+        hold2xSpeed = on
+        prefs?.edit()?.putBoolean(KEY_HOLD, on)?.apply()
+    }
+
+    fun chooseSlideSeek(on: Boolean) {
+        slideSeek = on
+        prefs?.edit()?.putBoolean(KEY_SLIDE, on)?.apply()
+    }
+}
+
+/**
  * Where the open portrait player's controls live (Derek, 2026-10-31; a choice in the account sheet):
  * in the playback pill the tab bar turns into (PlayerBar.kt, the default since 0.5.34), or on the
  * video itself (VideoContent's overlay, its bottom edge a playback head with a knob to scrub). On the

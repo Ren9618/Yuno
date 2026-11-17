@@ -267,6 +267,22 @@ private fun PlaybackBody(player: PlayerState, search: SettingsSearch) {
                 SeekStep.choices.indexOf(SeekStep.seconds).coerceAtLeast(0),
             ) { SeekStep.set(SeekStep.choices[it]) }
         }
+        // The fork's scrub gestures: how the bar and the video itself are touched.
+        val tapTitle = stringResource(R.string.settings_scrub_tap_title)
+        val tapLine = stringResource(R.string.settings_scrub_tap_line)
+        row(tapTitle, tapLine, "scrub", "tap", "bar") {
+            ToggleRow(SfIcons.SmartButton, tapTitle, tapLine, ScrubGestures.tapToSeek) { ScrubGestures.chooseTapToSeek(it) }
+        }
+        val holdTitle = stringResource(R.string.settings_scrub_hold_title)
+        val holdLine = stringResource(R.string.settings_scrub_hold_line)
+        row(holdTitle, holdLine, "scrub", "hold", "2x") {
+            ToggleRow(SfIcons.FastForward, holdTitle, holdLine, ScrubGestures.hold2xSpeed) { ScrubGestures.chooseHold2xSpeed(it) }
+        }
+        val slideTitle = stringResource(R.string.settings_scrub_slide_title)
+        val slideLine = stringResource(R.string.settings_scrub_slide_line)
+        row(slideTitle, slideLine, "scrub", "slide") {
+            ToggleRow(SfIcons.DragHandle, slideTitle, slideLine, ScrubGestures.slideSeek) { ScrubGestures.chooseSlideSeek(it) }
+        }
         val chaptersTitle = stringResource(R.string.settings_chapters_open_title)
         val chaptersLine = stringResource(R.string.settings_chapters_open_line)
         row(chaptersTitle, chaptersLine) {

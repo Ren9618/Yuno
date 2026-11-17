@@ -107,6 +107,14 @@
     <string name="settings_side_sliders_title">Fullscreen side sliders</string>
     <string name="settings_side_sliders_line">A vertical drag on a fullscreen video\'s sides sets brightness and volume. Off, those drags do nothing</string>
 
+    <!-- The fork's scrub gestures (Settings › Playback): the bar's tap, the video's hold, its slide. -->
+    <string name="settings_scrub_tap_title">Tap the bar to seek</string>
+    <string name="settings_scrub_tap_line">A tap on the progress bar jumps there</string>
+    <string name="settings_scrub_hold_title">Hold the video for 2× speed</string>
+    <string name="settings_scrub_hold_line">A finger held on the video plays at 2× until it lifts</string>
+    <string name="settings_scrub_slide_title">Slide the video to scrub</string>
+    <string name="settings_scrub_slide_line">A horizontal slide on the video scrubs, like the bar</string>
+
     <!-- The fork's Shorts gestures (Settings › Shorts). -->
     <string name="settings_shorts_double_tap_title">Double-tap to like</string>
     <string name="settings_shorts_double_tap_line">Two quick taps on a short give it a like. Off, they do nothing</string>

@@ -337,6 +337,12 @@ fun VideoContent(
                                     return@withTimeoutOrNull change
                                 } else {
                                     mode = 2
+                                    // The fork's slide-scrub starts the moment the slide wins,
+                                    // not when the hold's timeout runs out under it.
+                                    if (ScrubGestures.slideSeek && state.durationMs > 0) {
+                                        change.consume()
+                                        return@withTimeoutOrNull change
+                                    }
                                 }
                             }
                         }
@@ -349,14 +355,42 @@ fun VideoContent(
                 }
                 if (mode == 1) return@awaitEachGesture
                 if (mode == 2) {
-                    waitForUpOrCancellation()
+                    // The fork's slide-scrub: a horizontal slide on the video drives the scrub
+                    // from where play is, the way dragging the bar itself does. Playback waits
+                    // (beginScrubDragging), the time above the seam shows where it is, and the
+                    // release seeks there. The bar keeps its own touch pad; this takes the rest.
+                    val duration = state.durationMs
+                    if (ScrubGestures.slideSeek && duration > 0) {
+                        state.beginScrubDragging()
+                        currentView.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                        var fraction = (state.positionMs.toFloat() / duration).coerceIn(0f, 1f)
+                        val width = size.width.coerceAtLeast(1).toFloat()
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!change.pressed) {
+                                change.consume()
+                                break
+                            }
+                            val dx = change.positionChange().x
+                            if (dx != 0f) {
+                                fraction = (fraction + dx / width).coerceIn(0f, 1f)
+                                state.scrubPreviewMs = (fraction * duration).toLong()
+                            }
+                            change.consume()
+                        }
+                        state.endScrubDragging((fraction * duration).toLong())
+                        currentView.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                    } else {
+                        waitForUpOrCancellation()
+                    }
                     return@awaitEachGesture
                 }
                 down.consume()
                 val up = upOrHold
                 if (up == null) {
                     seekWindow?.cancel()
-                    if (!state.scrubDragging && state.beginHoldSpeed()) {
+                    if (ScrubGestures.hold2xSpeed && !state.scrubDragging && state.beginHoldSpeed()) {
                         currentView.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                         controlsVisible = false
                         burstActive = false
@@ -692,7 +726,7 @@ fun VideoContent(
                 active = scrubActive,
                 relativeDrag = true,
                 edgeToEdge = portraitEdgeScrub,
-                tapToSeek = false,
+                tapToSeek = ScrubGestures.tapToSeek,
                 edgeTouchPadAbove = EdgeScrubTouchPadAbove,
                 trackHeight = if (fullscreenControlsScrub) FullscreenScrubTrackHeight else 4.dp,
                 touchHeight = when {
@@ -835,6 +869,7 @@ fun AudioOnlyStage(
                     bufferedMs = state.bufferedMs,
                     durationMs = state.durationMs,
                     enabled = interactive,
+                    tapToSeek = ScrubGestures.tapToSeek,
                     onPreview = { scrubPreview = it },
                     onSeek = { scrubPreview = null; state.seekTo(it) },
                     track = c.surfaceContainerHighest,
