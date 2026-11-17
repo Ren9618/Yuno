@@ -145,16 +145,23 @@ Publishing: bump `versionName` / `versionCode` in `app/build.gradle.kts`, then r
 
 <h1><a id="building"></a>Building</h1>
 
-Android SDK (compileSdk 36) and JDK 17+. Android Studio’s bundled JDK works:
+Android SDK (compileSdk 36) and a JDK 21 (e.g. [Temurin 21](https://adoptium.net)). Note: Android
+Studio's bundled JBR 25 **crashes** this Gradle (8.11.1) — its build-script compiler (Kotlin 2.0.20)
+can't parse a Java "25.0.3" version string — so point Gradle at a JDK 21 instead:
 
 ```sh
-export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+# ~/.gradle/gradle.properties  (macOS example; adjust to your install)
+org.gradle.java.home=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+
 ./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk
 ./gradlew assembleRelease    # R8-shrunk, debug-signed — judge feel on this build
 ./gradlew testDebugUnitTest  # InnerTube / parser tests
+adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
-Key paths: `app/src/main/java/com/yuno/` (player, feeds, Shorts, service).
+Both builds are debug-signed; the repository ships no release keystore. Key paths:
+`app/src/main/java/com/yuno/` (player, feeds, Shorts, service; the fork's extras live beside them,
+`Fork.kt` / `Enhancers.kt` / `Account.kt` / `ContentLanguage.kt`).
 
 </div>
 
