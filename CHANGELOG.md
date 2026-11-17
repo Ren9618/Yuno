@@ -9,6 +9,7 @@ Add every change someone would notice under **Unreleased**, under `### New`, `##
 changes something people see or feel (faster, fewer errors); then say that.
 
 ## Fork changes (unreleased)
+- The player's related videos follow the app's language: their titles, channels, view counts and ages come from InnerTube in the content language (the request that already carries the description, now shared) instead of NewPipeExtractor's English watch page.
 - Bring in upstream's Yuno 1.1.1: the channel page's tabs (Home, Videos, Shorts, Live, Playlists, Posts, About), home recommendation categories, release-style playlist pages, Flow-style search with filter chips and anchored menus, livestreams with live chat, sharper thumbnails, letterboxed widescreen videos and Shorts, a player that opens from the tapped thumbnail with a morph and returns to the same spot, search results staying behind the player, the status bar's blur following the video, and channel/playlist colours as an opt-in (Settings › Appearance).
 - The audio-only mode is gone with the merge: upstream removed it in 1.1.0, so its switch, stage and kept preference are out of the fork too.
 - The 69 strings the release added are translated into Japanese, so the new screens speak the app's language like the rest.
