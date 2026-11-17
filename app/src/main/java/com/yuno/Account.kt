@@ -156,7 +156,7 @@ class YouTubeRefusedException(val code: Int) : IOException(
  * are merged back in so the session stays alive.
  */
 object Account {
-    /** One saved Google login: its cookies and the profile Google reported for it. */
+    /** One saved Google login: its cookies, the profile Google reported for it, and the channel it acts as. */
     private class Session(
         var cookies: LinkedHashMap<String, String>,
         var name: String,
@@ -164,11 +164,25 @@ object Account {
         var avatar: String?,
         var clientVersion: String,
         var visitor: String?,
+        /** The brand channel this login last acted as (null: its own identity); see [switchBrand]. */
+        var acting: Profile? = null,
     )
 
-    var profile by mutableStateOf<Profile?>(null)
+    /** The active Google login's own identity (its account photo, never a brand channel's). */
+    var googleProfile by mutableStateOf<Profile?>(null)
         private set
-    val signedIn get() = profile != null
+
+    /** The brand channel the session is acting as, or null when it acts as the Google login itself. */
+    var actingAs by mutableStateOf<Profile?>(null)
+        private set
+
+    /**
+     * The identity the session speaks as and the UI shows (the top-right photo, the comment
+     * composer): the selected brand channel, else the Google login itself.
+     */
+    val profile: Profile?
+        get() = actingAs ?: googleProfile
+    val signedIn get() = googleProfile != null
 
     /** Every Google login kept on this phone, oldest first; [active] is the one in use. */
     private val sessions = mutableListOf<Session>()
@@ -232,7 +246,11 @@ object Account {
             cookies.clear()
             s?.let { cookies.putAll(it.cookies) }
         }
-        profile = s?.let { Profile(it.name, it.handle, it.avatar) }
+        googleProfile = s?.let { Profile(it.name, it.handle, it.avatar) }
+        // The brand channel this login last acted as comes back with it (its delegation cookie is
+        // saved with the session too); without the cookie the stored identity would be stale.
+        val delegated = synchronized(cookies) { !cookies["DELEGATED_SESSION_ID"].isNullOrBlank() }
+        actingAs = if (delegated) s?.acting else null
         clientVersion = s?.clientVersion ?: FALLBACK_CLIENT_VERSION
         visitorData = s?.visitor
         brandAccounts = emptyList()
@@ -262,7 +280,10 @@ object Account {
                     .put("handle", s.handle ?: JSONObject.NULL)
                     .put("avatar", s.avatar ?: JSONObject.NULL)
                     .put("clientVersion", s.clientVersion)
-                    .put("visitor", s.visitor ?: JSONObject.NULL),
+                    .put("visitor", s.visitor ?: JSONObject.NULL)
+                    .put("actingName", s.acting?.name ?: JSONObject.NULL)
+                    .put("actingHandle", s.acting?.handle ?: JSONObject.NULL)
+                    .put("actingAvatar", s.acting?.avatar ?: JSONObject.NULL),
             )
         }
         sessionStore?.put(KEY_SESSIONS, arr.toString())
@@ -284,6 +305,8 @@ object Account {
             // A session saved before the JSON-null fix can carry the literal string "null"
             // (a poisoned cache); read such a value as absent too.
             fun String?.notNullString() = takeUnless { it == "null" }
+            // The acting-as identity rides the same "null"-string guard as the rest.
+            val actingName = o.optText("actingName").notNullString()
             Session(
                 map,
                 o.optText("name").notNullString() ?: str(R.string.app_account_fallback_name),
@@ -291,6 +314,7 @@ object Account {
                 o.optText("avatar").notNullString(),
                 o.optText("clientVersion") ?: FALLBACK_CLIENT_VERSION,
                 o.optText("visitor").notNullString(),
+                actingName?.let { Profile(it, o.optText("actingHandle").notNullString(), o.optText("actingAvatar").notNullString()) },
             )
         }
     }.getOrDefault(emptyList())
@@ -329,9 +353,11 @@ object Account {
             active = if (existing >= 0) existing else sessions.lastIndex
             cookiesBelongToActive = true
             brandAccounts = emptyList()
+            // A fresh sign-in starts from empty cookies: no delegation is riding it.
+            actingAs = null
             persistSessions()
             generation++
-            withContext(Dispatchers.Main) { profile = p }
+            withContext(Dispatchers.Main) { googleProfile = p }
             p
         } catch (e: Throwable) {
             synchronized(cookies) {
@@ -394,7 +420,8 @@ object Account {
         cookiesBelongToActive = true
         store?.clear()
         sessionStore?.clear()
-        profile = null
+        googleProfile = null
+        actingAs = null
         generation++
         // The bells are the account's; signed out there are none (and no new-video notifications).
         Bells.clear()
@@ -503,6 +530,12 @@ object Account {
                 if (cookies["DELEGATED_SESSION_ID"].isNullOrBlank()) cookies["DELEGATED_SESSION_ID"] = account.pageId
             }
         }
+        // The identity the session speaks as from now on: the channel's own, or the Google login
+        // for the personal channel. Kept with the session, so a restart shows the same photo the
+        // requests act as (the top bar's and the comment composer's both read it).
+        val acting = account.pageId?.let { Profile(account.name, account.handle, account.avatar) }
+        actingAs = acting
+        sessions.getOrNull(active)?.acting = acting
         saveActive()
         brandAccounts = brandAccounts.map { it.copy(selected = it.pageId == account.pageId) }
         generation++
