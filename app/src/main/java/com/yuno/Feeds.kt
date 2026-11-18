@@ -313,7 +313,16 @@ class LibraryData(scope: CoroutineScope, context: Context) {
     }
 
     fun loadChannels() = ensureChannels()
-    fun loadPlaylists() = scope.launch { runCatching { InnerTube.playlists() }.onSuccess { playlists = it } }
+    fun loadPlaylists() = scope.launch {
+        runCatching { InnerTube.playlists() }.onSuccess { playlists = it; learnSavedShorts(it) }
+    }
+
+    /** The Saved shorts playlist learned from the library's rows, if not known yet (its id differs across accounts). */
+    private fun learnSavedShorts(list: List<PlaylistRef>) {
+        if (!Account.signedIn || SavedShortsPlaylist.id != null) return
+        list.firstOrNull { isSavedShortsTitle(it.title) }
+            ?.let { SavedShortsPlaylist.remember(PlaylistChoice(it.id, it.title, contains = null, privacy = null)) }
+    }
 
     /**
      * Signed in: reads Subscriptions and its channel row ahead, once Home's first page is in (so

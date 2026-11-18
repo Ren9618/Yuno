@@ -269,6 +269,28 @@ object ShortsPip {
 }
 
 /**
+ * Where the rail's save button saves: straight into the Saved shorts playlist (YouTube's own
+ * save button's playlist — the default), or the playlist picker every time (Settings › Shorts).
+ */
+object ShortsSaveAsk {
+    private const val KEY = "shorts_save_ask"
+    private var prefs: SharedPreferences? = null
+
+    var on by mutableStateOf(false)
+        private set
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        on = prefs?.getBoolean(KEY, false) == true
+    }
+
+    fun set(value: Boolean) {
+        on = value
+        prefs?.edit()?.putBoolean(KEY, value)?.apply()
+    }
+}
+
+/**
  * A playlist of nothing but shorts plays in the shorts' own pager (2026's 「保存したショート動画」
  * does, like YouTube's app), instead of the video player one after another. On — the shorts are
  * the shorts — and a playlist of full-length videos still plays as videos (Settings › Shorts).

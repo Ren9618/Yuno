@@ -132,6 +132,9 @@
     <!-- Settings › Shorts: a playlist of nothing but shorts plays in the shorts\' own pager. -->
     <string name="settings_shorts_playlist_player_title">Play short playlists as Shorts</string>
     <string name="settings_shorts_playlist_player_line">A playlist of nothing but Shorts plays in the Shorts pager, like YouTube\'s Saved shorts; off plays it in the video player</string>
+    <!-- Settings › Shorts: where the rail\'s save button saves. -->
+    <string name="settings_shorts_save_ask_title">Ask where to save every time</string>
+    <string name="settings_shorts_save_ask_line">The playlist picker opens for every save; off, the save button saves straight into the Saved shorts playlist</string>
 
     <!-- The fork's per-network quality (Settings › Playback): each connection gets its own ceiling. -->
     <string name="settings_quality_wifi_title">Quality on Wi-Fi</string>

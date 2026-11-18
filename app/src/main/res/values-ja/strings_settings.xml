@@ -118,6 +118,9 @@
     <!-- Settings › Shorts: a playlist of nothing but shorts plays in the shorts\' own pager. -->
     <string name="settings_shorts_playlist_player_title">ショートのみのプレイリストをショートで再生</string>
     <string name="settings_shorts_playlist_player_line">ショートだけのプレイリスト（保存したショートなど）をショートのプレイヤーで再生します。オフにすると動画プレイヤーで再生します</string>
+    <!-- Settings › Shorts: where the rail\'s save button saves. -->
+    <string name="settings_shorts_save_ask_title">保存先を毎回確認</string>
+    <string name="settings_shorts_save_ask_line">保存のたびにプレイリストの選択を開きます。オフのときは「保存したショート動画」に直接保存します</string>
 
     <!-- The fork's per-network quality (Settings › Playback): each connection gets its own ceiling. -->
     <string name="settings_quality_wifi_title">Wi-Fi 接続時の画質</string>

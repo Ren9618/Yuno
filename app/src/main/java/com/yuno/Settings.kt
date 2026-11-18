@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
+import androidx.compose.material.icons.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.SmartDisplay
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SignalCellularAlt
@@ -573,6 +574,11 @@ private fun ShortsBody(search: SettingsSearch) {
             val playlistLine = stringResource(R.string.settings_shorts_playlist_player_line)
             row(playlistTitle, playlistLine) {
                 ToggleRow(Icons.Rounded.SmartDisplay, playlistTitle, playlistLine, PlaylistShortsPlayer.on) { PlaylistShortsPlayer.set(it) }
+            }
+            val askTitle = stringResource(R.string.settings_shorts_save_ask_title)
+            val askLine = stringResource(R.string.settings_shorts_save_ask_line)
+            row(askTitle, askLine) {
+                ToggleRow(Icons.Rounded.PlaylistAdd, askTitle, askLine, ShortsSaveAsk.on) { ShortsSaveAsk.set(it) }
             }
         }
     }

@@ -1100,14 +1100,19 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
 
     /**
      * Whether the short sits in the Saved shorts playlist, fetched as it comes on screen (the
-     * save button shows it). Only when the playlist is already known — an unknown one comes
-     * to light with the first save.
+     * save button shows it). An answer also names the playlist the first time — so quick
+     * saving works even before a save dialog (or the library) has met it.
      */
     private fun saveFor(id: String) {
-        if (!Account.signedIn || SavedShortsPlaylist.id == null || !saveAsked.add(id)) return
+        if (!Account.signedIn || !saveAsked.add(id)) return
         scope.launch {
             runCatching { InnerTube.saveChoices(id) }
-                .onSuccess { choices -> choices.firstOrNull { it.isSavedShorts }?.let { savedShorts[id] = it.contains == true } }
+                .onSuccess { choices ->
+                    choices.firstOrNull { it.isSavedShorts }?.let {
+                        if (SavedShortsPlaylist.id == null) SavedShortsPlaylist.remember(it)
+                        savedShorts[id] = it.contains == true
+                    }
+                }
                 .onFailure { if (it is CancellationException) throw it; saveAsked.remove(id) }
         }
     }
@@ -1116,12 +1121,14 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
      * The rail's save button ([ShortsRail]): the short in (or out of) the Saved shorts
      * playlist — YouTube's own save button's playlist — at a tap; a hold opens the same
      * playlist picker a video's gets ([onOpenSave]). The playlist's id is learned from the
-     * short's own save dialog the first time; without one (the dialog didn't name it, the
-     * account is brand-new) the picker opens right away instead.
+     * short's save dialog, the save state ([saveFor]) or the library's rows; without one (the
+     * account is brand-new) the picker opens right away instead. [ShortsSaveAsk] skips all
+     * that: every save opens the picker.
      */
     fun quickSave() {
         val item = current ?: return
         if (!Account.signedIn) { onMessage(str(R.string.shorts_sign_in_to_save)); return }
+        if (ShortsSaveAsk.on) { onOpenSave(item); return }
         val knownId = SavedShortsPlaylist.id
         if (knownId != null) {
             toggleSaved(item, knownId)
