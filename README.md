@@ -27,9 +27,9 @@
 > - **Chapters, marked and tappable** — notches on the player's progress bar where a video's chapters change, the current chapter's name beside the time (tapping it opens the chapter list), and timestamps in the description that seek to their moment.
 > - **Shorts autoplay** — a short that runs out starts the next one by itself, YouTube-style (a toggle in Settings › Shorts, off by default).
 > - **Shorts picture-in-picture** — leaving the app while a short plays floats it in its own 9:16 window; the rail's PiP button enters it by hand and closing the window pauses the short (a toggle in Settings › Shorts, off by default).
-> - **The author under the short** — a short's description ends with the channel's picture and name, opening the channel on its Videos tab.
+> - **The author under the short** — a short's description ends with the video the author set for it (YouTube's blue-circle row): another short plays in the Shorts pager, a full-length video in the player; with none, the channel's picture and name open the channel on its Videos tab.
 > - **History's shorts** — Library › History shows Shorts in their own shelf beside the videos, and one tap plays the history's shorts in the Shorts player.
-> - **Saved shorts** — a short's rail save button (held, the full save sheet) files it in YouTube's own 「保存したショート動画」 playlist, pinned in Library; a playlist of nothing but shorts plays in the Shorts pager (a toggle in Settings › Shorts decides, on by default).
+> - **Saved shorts** — a short's rail save button (held, the full save sheet) files it in YouTube's own 「保存したショート動画」 playlist, pinned in Library; a playlist of nothing but shorts opens as a wall of 9:16 tiles and plays in the Shorts pager (a toggle in Settings › Shorts decides, on by default), and the save button saves straight into the playlist unless the ask-every-time toggle says otherwise.
 >
 > ### Technical notes
 > - The content language rides through the InnerTube requests (`hl`/`gl`), so YouTube answers with localized strings the existing parsers read; counts and ages fall back to a locale-aware number parser when YouTube answers in Japanese.
@@ -119,7 +119,7 @@
 - **Shorts tab** — vertical feed (personalized when signed in). Frosted-glass bar with Like, Comments, Share, and channel subscribe.
 - **Shorts bank** — the next 10 unseen shorts are cached on disk (~100–150 MB) so they start instantly; seen shorts are forgotten and refilled in the background.
 - **Shorts autoplay & picture-in-picture** — a short that ends starts the next one by itself, and leaving the app floats the playing short in its own window (the rail's PiP button enters by hand). *(added in this fork)*
-- **Saved shorts** — the rail's save button fills YouTube's own 「保存したショート動画」 playlist, history shows its shorts in their own shelf, and shorts-only playlists play in the Shorts pager. *(added in this fork)*
+- **Saved shorts** — the rail's save button files a short straight into YouTube's own 「保存したショート動画」 playlist (the full save sheet on a hold, or for every save with the ask toggle), history shows its shorts in their own shelf, and shorts-only playlists open as 9:16 tiles playing in the Shorts pager. *(added in this fork)*
 - **Home & Subscriptions** when signed in; **Library** for history, playlists, Watch later, and liked videos.
 
 #### Account & community

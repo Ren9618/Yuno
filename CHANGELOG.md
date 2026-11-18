@@ -9,6 +9,9 @@ Add every change someone would notice under **Unreleased**, under `### New`, `##
 changes something people see or feel (faster, fewer errors); then say that.
 
 ## Fork changes (unreleased)
+- A short's linked video opens from the description's bottom edge — the one the author set for it, YouTube's blue-circle row: another short plays in the Shorts pager, a full-length video in the player. With nothing linked, the author's channel row stays.
+- The 保存したショート動画 (Saved shorts) playlist opens now: YouTube answered it as shorts beside an empty video list, which showed as a blank page — the shorts take the list's place, read as a wall of 9:16 tiles like the channel's Shorts tab, and Play runs them in the Shorts pager.
+- The rail's save button saves straight into 保存したショート動画: the playlist is learned from the short's own save state or the library's rows, not only the save sheet. A toggle in Settings › Shorts brings the picker back for every save.
 - Add 保存したショート動画 (Saved shorts): a short's rail gains a save button that files it in YouTube's own Saved shorts playlist — holding the button opens the full save sheet — the playlist is pinned in Library, and a playlist of nothing but shorts plays in the Shorts player instead of the video one (Settings › Shorts decides, on by default). Signing out or switching accounts forgets the learned playlist.
 - History shows Shorts in their own shelf beside the videos, and tapping one plays the history's shorts in the Shorts player.
 - A short's description ends with its author: the channel's picture and name open the channel on its Videos tab, pinned at the description's bottom edge whether the 概要欄 is open or not.
