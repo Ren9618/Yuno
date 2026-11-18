@@ -176,6 +176,40 @@ class InnerTubeParseTest {
         assertNull(InnerTube.parseShortLinkedVideo("<html>no data here</html>"))
     }
 
+    /**
+     * A playlist of shorts (the Saved shorts one): YouTube's browse answers with the shorts
+     * beside an empty videos list, which showed as a blank playlist. The fold moves them into
+     * the videos, and a page that has videos (any other playlist) is left as it is.
+     */
+    @Test fun shortsPlaylistFoldsIntoVideos() {
+        val root = JSONObject(
+            """{"onResponseReceivedActions":[{"appendContinuationItemsAction":{"continuationItems":[
+                {"shortsLockupViewModel":{"entityId":"shorts-video-1","accessibilityText":"A short - play Short",
+                 "onTap":{"innertubeCommand":{"reelWatchEndpoint":{"videoId":"n2sn4kkkGQM"}}},
+                 "overlayMetadata":{"primaryText":{"content":"The Deadly Power of a Coin-Sized Black Hole"},
+                                    "secondaryText":{"content":"20 million views"}}}}]}}]}""",
+        )
+        val page = InnerTube.parseFeed(root)
+        assertTrue("shorts beside the videos, got ${page.videos.size} videos and ${page.shorts.size} shorts",
+            page.videos.isEmpty() && page.shorts.size == 1)
+        val folded = page.withShortsAsVideos()
+        assertEquals(page.shorts, folded.videos)
+        assertTrue("plays as shorts, got $folded", folded.videos.shortsOnly())
+        // Any other playlist has videos: the fold changes nothing.
+        val withVideos = page.copy(videos = listOf(page.shorts.first())).withShortsAsVideos()
+        assertEquals(1, withVideos.videos.size)
+        assertEquals(1, withVideos.shorts.size)
+    }
+
+    /** The Saved shorts playlist is known by its title (its id differs across accounts). */
+    @Test fun savedShortsByTitle() {
+        assertTrue(isSavedShortsTitle("保存したショート動画"))
+        assertTrue(isSavedShortsTitle("Saved shorts"))
+        assertTrue(isSavedShortsTitle("SAVED SHORTS"))
+        assertFalse(isSavedShortsTitle("Watch later"))
+        assertFalse(isSavedShortsTitle("あとで見る"))
+    }
+
     @Test fun watchNextRelated() {
         val page = InnerTube.parseFeed(fixture("next"))
         assertTrue("got ${page.videos.size}", page.videos.size >= 10)

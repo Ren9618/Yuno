@@ -48,8 +48,11 @@ data class PlaylistChoice(val id: String, val title: String, val contains: Boole
  * The playlist YouTube saves a short to with its save button ("Saved shorts"; 2026's
  * 「保存したショート動画」). Its id isn't fixed across accounts, so it's known by title.
  */
+internal fun isSavedShortsTitle(title: String): Boolean =
+    title.lowercase().let { it.contains("saved short") || it.contains("保存したショート") }
+
 internal val PlaylistChoice.isSavedShorts: Boolean
-    get() = title.lowercase().let { it.contains("saved short") || it.contains("保存したショート") }
+    get() = isSavedShortsTitle(title)
 
 @Immutable
 data class ChannelRef(val id: String, val name: String, val avatar: String?)
@@ -87,6 +90,14 @@ data class FeedPage(
 
 /** The playlist header Flow reads off the browse: the owner, and the description when YouTube sent one. */
 data class PlaylistHeaderInfo(val owner: String?, val description: String)
+
+/**
+ * A playlist of shorts (the Saved shorts one): YouTube's browse answers with the shorts in
+ * [shorts] and an empty [videos] — a blank page, since nothing reads a playlist's shorts —
+ * so when no video came and shorts did, the shorts take the videos' place.
+ */
+internal fun FeedPage.withShortsAsVideos(): FeedPage =
+    if (videos.isEmpty() && shorts.isNotEmpty()) copy(videos = shorts) else this
 
 /**
  * One of Home's category chips ("All", "Music", "Gaming", "Recently uploaded"…), titled as
@@ -1262,7 +1273,7 @@ object InnerTube {
     suspend fun playlist(id: String, next: String? = null): FeedPage = withContext(Dispatchers.IO) {
         val body = if (next != null) JSONObject().put("continuation", next) else JSONObject().put("browseId", "VL$id")
         val root = postAny("browse", body)
-        val page = parseFeed(root)
+        val page = parseFeed(root).withShortsAsVideos()
         if (next != null) page else page.copy(playlistHeader = parsePlaylistHeader(root))
     }
 

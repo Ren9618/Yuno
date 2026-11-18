@@ -181,7 +181,7 @@ private fun PlaylistBody(
                             }
                         }
                         else -> {
-                            playlistVideos(videos, columns, grid, palette) { index ->
+                            playlistVideos(videos, columns, grid, palette, shortsOnly) { index ->
                                 if (shortsOnly) {
                                     onOpenShorts(ShortsList(videos, index, feed.nextToken) { token -> InnerTube.playlist(playlist.id, token) })
                                 } else {
@@ -199,14 +199,33 @@ private fun PlaylistBody(
     }
 }
 
-/** The videos under the sleeve. List is the channel row; grid is the home card. */
+/** The videos under the sleeve. Shorts (the Saved shorts playlist) are 9:16 tiles; list is the channel row; grid is the home card. */
 private fun androidx.compose.foundation.lazy.LazyListScope.playlistVideos(
     videos: List<VideoItem>,
     columns: Int,
     grid: Boolean,
     palette: ArtworkPalette,
+    shorts: Boolean,
     onOpen: (Int) -> Unit,
 ) {
+    // A playlist of shorts reads as a wall of 9:16 tiles, like the channel's Shorts tab — the
+    // video rows (a 16:9 thumb, a duration line reading "0 min") would misread every entry.
+    if (shorts) {
+        val cols = columns.coerceAtLeast(2)
+        items(videos.chunked(cols), key = { row -> row.first().id }) { row ->
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 5.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                row.forEach { video ->
+                    val at = videos.indexOf(video)
+                    ShortTile(video, Modifier.weight(1f), palette) { onOpen(at) }
+                }
+                repeat(cols - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+        return
+    }
     if (!grid) {
         items(videos.size, key = { videos[it].id }) { index ->
             ChannelVideoRow(videos[index], palette) { onOpen(index) }

@@ -1248,7 +1248,7 @@ private fun ShortsShelf(
 
 /** A short, as Flow's reel card: the 9:16 poster, then the title and the view count under it. */
 @Composable
-private fun ShortTile(short: VideoItem, modifier: Modifier, palette: ArtworkPalette, onClick: () -> Unit) {
+internal fun ShortTile(short: VideoItem, modifier: Modifier, palette: ArtworkPalette, onClick: () -> Unit) {
     Column(modifier.pressable(pressedScale = 0.97f, onClick = onClick)) {
         Thumbnail(short.thumbnail, Modifier.fillMaxWidth().aspectRatio(9f / 16f), radius = 16, videoId = short.id, portrait = true)
         Spacer(Modifier.height(8.dp))
