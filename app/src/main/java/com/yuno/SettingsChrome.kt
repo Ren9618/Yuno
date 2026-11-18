@@ -339,6 +339,8 @@ internal fun SettingsRow(
     enabled: Boolean = true,
     iconPainter: Painter? = null,
     iconContent: (@Composable () -> Unit)? = null,
+    /** The subtitle drawn itself (a link inside the line, the fork's maintainer) instead of [subtitle]. */
+    subtitleContent: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     /** A row that only selects (a language, a tick) has no chevron. */
     showChevron: Boolean = true,
@@ -381,7 +383,9 @@ internal fun SettingsRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (subtitle != null) {
+            if (subtitleContent != null) {
+                subtitleContent()
+            } else if (subtitle != null) {
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,

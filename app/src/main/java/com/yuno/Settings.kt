@@ -64,6 +64,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yuno.icons.SfIcons
@@ -798,13 +803,45 @@ private fun AboutBody(player: PlayerState, search: SettingsSearch) {
                 context.openOrSay(Intent(Intent.ACTION_VIEW, Uri.parse(SourceUrl))) { player.actionMessage = it }
             })
         }
-        // The fork's own identity, next to (not instead of) Yuno's version row above.
+        // The fork's own identity, next to (not instead of) Yuno's version row above. The row
+        // opens the repository; the maintainer's name inside the line is a link that opens
+        // their GitHub profile.
         val forkTitle = stringResource(R.string.settings_fork_title)
-        val forkLine = stringResource(R.string.settings_fork_line, Fork.VERSION, Fork.AUTHOR)
+        val forkLine = stringResource(R.string.settings_fork_line, Fork.label, Fork.AUTHOR)
+        val authorAt = forkLine.indexOf(Fork.AUTHOR)
         row(forkTitle, forkLine, "fork") {
-            SettingsRow(icon = Icons.Rounded.CallSplit, title = forkTitle, subtitle = forkLine, onClick = {
-                context.openOrSay(Intent(Intent.ACTION_VIEW, Uri.parse(Fork.URL))) { player.actionMessage = it }
-            })
+            SettingsRow(
+                icon = Icons.Rounded.CallSplit,
+                title = forkTitle,
+                subtitleContent = {
+                    Text(
+                        text = if (authorAt >= 0) {
+                            buildAnnotatedString {
+                                append(forkLine)
+                                addLink(
+                                    LinkAnnotation.Clickable(
+                                        "maintainer",
+                                        TextLinkStyles(SpanStyle(color = DescriptionLinkBlue, textDecoration = TextDecoration.Underline)),
+                                        {
+                                            context.openOrSay(Intent(Intent.ACTION_VIEW, Uri.parse(Fork.PROFILE))) { player.actionMessage = it }
+                                        },
+                                    ),
+                                    authorAt,
+                                    authorAt + Fork.AUTHOR.length,
+                                )
+                            }
+                        } else {
+                            buildAnnotatedString { append(forkLine) }
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 5,
+                    )
+                },
+                onClick = {
+                    context.openOrSay(Intent(Intent.ACTION_VIEW, Uri.parse(Fork.URL))) { player.actionMessage = it }
+                },
+            )
         }
     }
     if (whatsNew) AppUpdate.available?.let { WhatsNewSheet(it, onDismiss = { whatsNew = false }) }
