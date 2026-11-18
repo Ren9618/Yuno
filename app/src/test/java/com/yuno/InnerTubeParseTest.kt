@@ -151,17 +151,23 @@ class InnerTubeParseTest {
         fun page(vararg buttons: String) = """<html><script>var ytInitialData = {"overlay":{
             "reelCarouselViewModel":{"buttonViewModels":[${buttons.joinToString()}]}
         }};</script></html>"""
-        fun short(id: String) = """{"reelCarouselButtonViewModel":{"buttonViewModel":{
-            "buttonViewModel":{"onTap":{"innertubeCommand":{"reelWatchEndpoint":{"videoId":"$id",
-            "thumbnail":{"thumbnails":[{"url":"https://i.ytimg.com/vi/$id/frame0.jpg","width":1080,"height":1920}]}}}}},
+        // Live pages carry the title inside the second `buttonViewModel`, right beside `onTap`.
+        fun short(id: String) = """{"reelCarouselButtonViewModel":{"buttonViewModel":{"buttonViewModel":{
+            "onTap":{"innertubeCommand":{"reelWatchEndpoint":{"videoId":"$id",
+            "thumbnail":{"thumbnails":[{"url":"https://i.ytimg.com/vi/$id/frame0.jpg","width":1080,"height":1920}]}}}},
             "titleFormatted":{"content":"映画再現⁉︎ 一番くじ vol.2"},
-            "accessibilityText":"映画再現⁉︎ 一番くじ vol.2"}}}"""
-        fun video(id: String) = """{"reelCarouselButtonViewModel":{"buttonViewModel":{
-            "buttonViewModel":{"onTap":{"innertubeCommand":{"watchEndpoint":{"videoId":"$id"}}}},
-            "titleFormatted":{"content":"A full-length video"}}}}"""
-        fun outside(url: String) = """{"reelCarouselButtonViewModel":{"buttonViewModel":{
-            "buttonViewModel":{"onTap":{"innertubeCommand":{"urlEndpoint":{"url":"$url"}}}},
-            "titleFormatted":{"content":"The shop"}}}}"""
+            "accessibilityText":"映画再現⁉︎ 一番くじ vol.2"}}}}"""
+        fun video(id: String) = """{"reelCarouselButtonViewModel":{"buttonViewModel":{"buttonViewModel":{
+            "onTap":{"innertubeCommand":{"watchEndpoint":{"videoId":"$id"}}},
+            "titleFormatted":{"content":"A full-length video"}}}}}"""
+        fun outside(url: String) = """{"reelCarouselButtonViewModel":{"buttonViewModel":{"buttonViewModel":{
+            "onTap":{"innertubeCommand":{"urlEndpoint":{"url":"$url"}}},
+            "titleFormatted":{"content":"The shop"}}}}}"""
+        // An older capture keeps the title beside the nested button instead: still parsed.
+        fun flatShort(id: String) = """{"reelCarouselButtonViewModel":{"buttonViewModel":{
+            "buttonViewModel":{"onTap":{"innertubeCommand":{"reelWatchEndpoint":{"videoId":"$id"}}}},
+            "titleFormatted":{"content":"フラットな古い形"},
+            "accessibilityText":"フラットな古い形"}}}"""
         val short = InnerTube.parseShortLinkedVideo(page(short("ILUzMJlFluQ")))
         assertEquals("ILUzMJlFluQ", short?.id)
         assertEquals("映画再現⁉︎ 一番くじ vol.2", short?.title)
@@ -174,6 +180,7 @@ class InnerTubeParseTest {
         // The outside link is not a video: nothing plays, so nothing comes back.
         assertNull(InnerTube.parseShortLinkedVideo(page(outside("https://example.com"))))
         assertNull(InnerTube.parseShortLinkedVideo("<html>no data here</html>"))
+        assertEquals("フラットな古い形", InnerTube.parseShortLinkedVideo(page(flatShort("ILUzMJlFluQ")))?.title)
     }
 
     /**

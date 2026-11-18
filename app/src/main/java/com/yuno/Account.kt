@@ -885,9 +885,14 @@ object InnerTube {
         root.walk { key, obj -> if (key == "reelCarouselViewModel" && carousel == null) carousel = obj }
         val buttons = carousel?.optJSONArray("buttonViewModels") ?: return null
         for (i in 0 until buttons.length()) {
+            // The button's words: live pages keep them inside the nested `buttonViewModel`,
+            // beside `onTap`; older captures kept them beside the nested one — both spots count.
             val button = buttons.optJSONObject(i)?.optJSONObject("reelCarouselButtonViewModel")
                 ?.optJSONObject("buttonViewModel") ?: continue
-            val title = button.optJSONObject("titleFormatted")?.optString("content")?.ifBlank { null }
+            val nested = button.optJSONObject("buttonViewModel")
+            val title = nested?.optJSONObject("titleFormatted")?.optString("content")?.ifBlank { null }
+                ?: button.optJSONObject("titleFormatted")?.optString("content")?.ifBlank { null }
+                ?: nested?.optString("accessibilityText")?.ifBlank { null }
                 ?: button.optString("accessibilityText").ifBlank { null } ?: continue
             val command = button.optJSONObject("buttonViewModel")?.optJSONObject("onTap")?.optJSONObject("innertubeCommand")
             val reel = command?.optJSONObject("reelWatchEndpoint")
