@@ -357,9 +357,26 @@ fun YunoApp() {
     }
     orientation.Bind(playerOpen, landscape)
     val pip = remember(activity) { PipController(activity) }
-    // Closing the picture-in-picture window pauses (expanding it just comes back).
-    pip.Bind(onClosed = { player.controller?.pause() })
-    pip.AutoEnter(AutoPip.on && player.isPlaying && player.current != null, player.videoAspect)
+    // Closing the picture-in-picture window pauses whatever was floating in it (expanding it
+    // just comes back): a video pauses its player, a short its short.
+    pip.Bind(onClosed = {
+        if (pip.inShorts) {
+            if (shorts.playing) shorts.togglePause()
+        } else {
+            player.controller?.pause()
+        }
+    })
+    // Leaving the app floats the picture on screen: a playing video ([AutoPip]) or a playing
+    // short ([ShortsPip], whose window carries the short's own 9:16). A video already open
+    // keeps the shorts' window off, so the two never argue over the same floating window.
+    val videoAutoPip = AutoPip.on && player.isPlaying && player.current != null
+    val shortsAutoPip = ShortsPip.on && tab == Tab.Shorts && shorts.playing && player.current == null && !pip.active
+    val pipAspect = if (shortsAutoPip) {
+        shorts.aspects[shorts.current?.id]?.takeIf { it > 0f } ?: 9f / 16f
+    } else {
+        player.videoAspect
+    }
+    pip.AutoEnter(videoAutoPip || shortsAutoPip, pipAspect, isShorts = shortsAutoPip)
     // The PiP window can be any shape: hold whatever was showing when it opened.
     val fullscreenBeforePip = remember { mutableStateOf(false) }
     val tabletop = windowLayout.tabletopY != null && playerOpen && !pip.active
@@ -832,7 +849,9 @@ fun YunoApp() {
             }
         }
         val shownTabs = NavTabs.shown()
-        val glassChrome = glassOn && !wide
+        // A short in the floating window carries the picture alone: the bar stands down with it.
+        val pipShorts = pip.active && pip.inShorts
+        val glassChrome = glassOn && !wide && !pipShorts
         if (glassChrome) {
             GlassNavBar(
                 tabs = shownTabs,
@@ -854,7 +873,7 @@ fun YunoApp() {
                         alpha = 1f - navAside
                     },
             )
-        } else {
+        } else if (!pipShorts) {
             Column(
                 Modifier
                     .align(Alignment.BottomCenter)
@@ -917,7 +936,7 @@ fun YunoApp() {
         if (!showNowPlaying) {
             QueueMessage(player, Modifier.align(Alignment.BottomCenter).padding(bottom = stackBottom + NavHeight + (if (hasMini) MiniHeight + MiniGap else 0.dp) + 12.dp))
         }
-        if (pip.active) {
+        if (pip.active && !pip.inShorts) {
             Box(Modifier.fillMaxSize().background(Color.Black)) {
                 Box(Modifier.fillMaxSize().aspectFit(player.videoAspect)) {
                     sharedSurface(Modifier.fillMaxSize())

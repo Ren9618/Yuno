@@ -53,6 +53,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -102,6 +104,7 @@ import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalConfiguration
@@ -693,9 +696,17 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
 
     /** A player started playing: how long the short on screen took to (Shorts' feel, in the log). */
     internal fun onStartedPlaying(player: ShortPlayer) {
+        // The shorts' autoplay ([ShortsAutoplay]): the short on screen plays through (no loop),
+        // its own ENDED stepping the pager forward; any other short, and autoplay off, loops.
+        player.exo.repeatMode = if (ShortsAutoplay.on && player.index == index) Player.REPEAT_MODE_OFF else Player.REPEAT_MODE_ONE
         if (startLogged || player.index != index) return
         startLogged = true
         Log.i(TAG, "shorts: ${player.id} playing ${SystemClock.elapsedRealtime() - onScreenAt} ms after coming on screen ($readyWhenShown)")
+    }
+
+    /** The autoplay's nudge ([ShortPlayer] saw its short end): the pager animates one forward. */
+    internal fun autoplayAdvance() {
+        skipRequest++
     }
 
     fun refresh() {
@@ -1263,6 +1274,8 @@ internal class ShortPlayer(context: Context, private val state: ShortsState) {
     private var surface: Surface? = null
     private var retried = false
     private var loadedNoted = false
+    /** The autoplay already stepped on from this short (its ENDED answered to once). */
+    private var advanced = false
     /** How far ahead of its position it may load (ms); read on the playback thread. */
     @Volatile
     var capMs = Long.MAX_VALUE
@@ -1278,6 +1291,14 @@ internal class ShortPlayer(context: Context, private val state: ShortsState) {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_BUFFERING && exo.currentPosition > 0 && index == state.index) {
                     Log.w("Yuno", "shorts: $id stalled at ${exo.currentPosition / 1000}s (${lead} ms loaded ahead)")
+                }
+                // The shorts' autoplay ([ShortsAutoplay]): the short on screen ran out, so the
+                // pager steps to the next one. Its own player loops (REPEAT_MODE_ONE) unless
+                // autoplay is on — onStartedPlaying swaps the mode when it is.
+                if (playbackState == Player.STATE_ENDED && ShortsAutoplay.on && !advanced && index == state.index && !state.userPaused) {
+                    advanced = true
+                    Log.i(TAG, "shorts: $id ended; autoplay on to the next")
+                    state.autoplayAdvance()
                 }
                 state.poke()
             }
@@ -1300,6 +1321,7 @@ internal class ShortPlayer(context: Context, private val state: ShortsState) {
         firstFrame = false
         retried = false
         loadedNoted = false
+        advanced = false
         capMs = PreviewMs
         urls = emptyList()
         banked = false
@@ -1431,6 +1453,9 @@ fun ShortsScreen(
     overlayBottom: Dp,
     onChannel: (String) -> Unit,
 ) {
+    // The floating window is a short (the shorts' PiP): its panels stand down around it.
+    val pip = LocalPictureInPicture.current
+    val pipOnly = pip?.active == true && pip.inShorts
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         Box(
             Modifier
@@ -1447,12 +1472,12 @@ fun ShortsScreen(
                 else -> CircularProgressIndicator(color = Ink, strokeWidth = 3.dp, modifier = Modifier.align(Alignment.Center).size(36.dp))
             }
         }
-        if (shorts.commentsOpen) {
+        if (shorts.commentsOpen && !pipOnly) {
             BoxWithConstraints(Modifier.fillMaxSize()) {
                 CommentsPanel(shorts.comments, partialTop = maxHeight * 0.42f, onClose = { shorts.commentsOpen = false })
             }
         }
-        ShortsChannelMenu(shorts, bottom = overlayBottom + 52.dp, onChannel = onChannel)
+        if (!pipOnly) ShortsChannelMenu(shorts, bottom = overlayBottom + 52.dp, onChannel = onChannel)
     }
 }
 
@@ -1500,6 +1525,17 @@ private fun ShortsRail(shorts: ShortsState, page: Int, enabled: Boolean, modifie
             shareLink(context, "https://youtube.com/shorts/${item.id}", details?.item?.title ?: "")
         }) {
             Icon(SfIcons.Share, contentDescription = null, tint = Ink, modifier = Modifier.size(28.dp))
+        }
+        // The short in a floating window (the shorts' PiP): the rail's own button, like the
+        // video player's beside its quality pill.
+        val pip = LocalPictureInPicture.current
+        if (pip?.supported == true) {
+            RailButton(enabled, str(R.string.shorts_pip), onClick = {
+                val aspect = shorts.aspects[item.id]?.takeIf { it > 0f } ?: 9f / 16f
+                if (!pip.enterShorts(aspect)) shorts.onMessage(str(R.string.shorts_pip_off))
+            }) {
+                Icon(Icons.Rounded.PictureInPictureAlt, contentDescription = str(R.string.shorts_pip), tint = Ink, modifier = Modifier.size(28.dp))
+            }
         }
         Box(Modifier.size(48.dp).pressable(enabled = enabled, onClick = shorts::toggleChannelMenu), contentAlignment = Alignment.Center) {
             Box(Modifier.size(40.dp)) {
@@ -1570,6 +1606,10 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
     val failure = shorts.failed[item.id]
     val aspect = shorts.aspects[item.id] ?: details?.aspect ?: (9f / 16f)
     val onScreen = shorts.index == page
+    // The floating window is showing this short (the shorts' PiP): the chrome around the
+    // picture hides, and the window carries the video alone.
+    val pip = LocalPictureInPicture.current
+    val pipOnly = pip?.active == true && pip.inShorts
     DisposableEffect(page) { onDispose { shorts.forgetPage(page) } }
     // Wide windows (Rail 3): the short as big as the window allows, never cropped — full height,
     // centred on a tablet, against the left edge on an open foldable (its details on the right page).
@@ -1617,21 +1657,27 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                     .width(videoWidth)
                     .fillMaxHeight()
                     .aspectFit(aspect, cover = !wide && aspect < 0.7f && !ShortsRatio.original)
-                    .onGloballyPositioned { shorts.videoRects[page] = Rect(it.positionInRoot(), it.size.toSize()) },
+                    .onGloballyPositioned {
+                        shorts.videoRects[page] = Rect(it.positionInRoot(), it.size.toSize())
+                        // The floating window grows out of this picture while it's the one on screen.
+                        if (page == shorts.index) pip?.videoBounds = it.boundsInWindow()
+                    },
             ) {
                 ResolvedThumbnail(url = item.thumbnail, videoId = item.id, portrait = true, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 ShortVideo(shorts, page, Modifier.fillMaxSize())
             }
         }
         // Shades for the status bar's icons and the text.
-        Box(
-            Modifier.fillMaxWidth().height(110.dp)
-                .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.38f), Color.Black.copy(alpha = 0f)))),
-        )
-        Box(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(330.dp)
-                .background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0f), 0.35f to Color.Black.copy(alpha = 0.18f), 1f to Color.Black.copy(alpha = 0.62f))),
-        )
+        if (!pipOnly) {
+            Box(
+                Modifier.fillMaxWidth().height(110.dp)
+                    .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.38f), Color.Black.copy(alpha = 0f)))),
+            )
+            Box(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(330.dp)
+                    .background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0f), 0.35f to Color.Black.copy(alpha = 0.18f), 1f to Color.Black.copy(alpha = 0.62f))),
+            )
+        }
         // A finger on the progress line: the words make way for the time it lands on.
         val scrubbing = onScreen && shorts.scrub != null
         val reduced = rememberReducedMotion()
@@ -1640,7 +1686,7 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
             if (reduced) tween(0) else spring(dampingRatio = 0.8f, stiffness = 900f),
             label = "shortScrub",
         )
-        if (details != null) {
+        if (details != null && !pipOnly) {
             val shade = LocalTextStyle.current.copy(shadow = Shadow(Color.Black.copy(alpha = 0.3f), Offset(0f, 2f), 4f))
             // Wide: in the margin beside the short, a size up — the left one on a tablet (the glass bar
             // has the right), the right page on an open foldable, above the bar.
@@ -1719,7 +1765,7 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
         }
         // The fork's hold-to-2×: the pill while the finger holds (under the status bar, so the
         // punch-hole camera never covers it; the dark pill reads over any picture).
-        if (onScreen && shorts.holdFast) {
+        if (!pipOnly && onScreen && shorts.holdFast) {
             Text(
                 str(R.string.shorts_hold_2x),
                 color = Ink,
@@ -1739,7 +1785,7 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
         val lineStart = if (wide) videoStart + LineInset else LineInset
         val lineWidth = (if (wide) videoWidth else maxWidth) - LineInset * 2 - (if (wide) 0.dp else 56.dp)
         val lineCentre = if (wide) LineWideBottom else overlayBottom - LineOverBar
-        if (scrubbing || swell > 0f) {
+        if (!pipOnly && (scrubbing || swell > 0f)) {
             val at = shorts.scrub ?: shorts.progress
             val length = shorts.durationMs
             Text(
@@ -1754,7 +1800,7 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                     .graphicsLayer { alpha = swell; translationY = (1f - swell) * 12.dp.toPx() },
             )
         }
-        Box(
+        if (!pipOnly) Box(
             Modifier
                 .align(Alignment.BottomStart)
                 .padding(start = lineStart, bottom = lineCentre - LineTouch / 2)
@@ -1816,7 +1862,7 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
             SfIcons.PlayFill, contentDescription = null, tint = Ink,
             modifier = Modifier.align(Alignment.Center).size(56.dp).graphicsLayer { alpha = pausedAlpha * 0.9f },
         )
-        if (!shorts.commentsOpen) {
+        if (!shorts.commentsOpen && !pipOnly) {
             ShortsRail(
                 shorts, page, enabled = onScreen,
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 8.dp, bottom = overlayBottom),

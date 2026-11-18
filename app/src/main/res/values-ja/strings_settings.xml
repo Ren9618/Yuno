@@ -109,6 +109,13 @@
     <string name="settings_shorts_double_tap_line">ショートを素早く 2 回タップして高く評価します。オフにすると何も起きません</string>
     <string name="settings_shorts_hold_fast_title">長押しで 2 倍速</string>
     <string name="settings_shorts_hold_fast_line">ショートを長押しすると 2 倍速で再生し、離すと元の速度に戻ります</string>
+    <!-- Settings › Shorts: a short that ends starts the next one by itself (YouTube's autoplay). -->
+    <string name="settings_shorts_autoplay_title">次のショートを自動再生</string>
+    <string name="settings_shorts_autoplay_line">終わったショートの次を自動で再生します</string>
+    <!-- Settings › Shorts: the shorts' picture-in-picture (the rail's PiP button, and leaving the app). -->
+    <string name="settings_shorts_pip_title">ピクチャーインピクチャー</string>
+    <string name="settings_shorts_pip_line">アプリを離れてもショートを小窓で再生し続けます。右の PiP ボタンから手動でも切り替えられます</string>
+    <!-- Settings › Shorts: a playlist of nothing but shorts plays in the shorts\' own pager. -->
 
     <!-- The fork's per-network quality (Settings › Playback): each connection gets its own ceiling. -->
     <string name="settings_quality_wifi_title">Wi-Fi 接続時の画質</string>

@@ -210,11 +210,19 @@ class PipController(private val activity: ComponentActivity) {
     /** The video's bounds in the window, so the floating window grows out of it. */
     var videoBounds: Rect? = null
 
+    /** The floating window is showing a short ([ShortsPip]); the chrome around it hides while it is. */
+    var inShorts by mutableStateOf(false)
+        private set
+
     /** False when the system refused (PiP switched off for the app in Settings). */
     fun enter(videoAspect: Float): Boolean {
         if (!supported) return false
         return activity.enterPictureInPictureMode(params(videoAspect).build())
     }
+
+    /** The short's own PiP: the window carries the short's picture, and the chrome knows to hide. */
+    fun enterShorts(videoAspect: Float): Boolean =
+        enter(videoAspect).also { if (it) inShorts = true }
 
     private fun params(videoAspect: Float): PictureInPictureParams.Builder {
         // Android accepts 1:2.39 to 2.39:1; anything outside it would throw.
@@ -232,8 +240,12 @@ class PipController(private val activity: ComponentActivity) {
      * (auto-enter); older versions on the user-leave hint (Home / Recents pressed).
      */
     @Composable
-    fun AutoEnter(wanted: Boolean, videoAspect: Float) {
+    fun AutoEnter(wanted: Boolean, videoAspect: Float, isShorts: Boolean = false) {
         if (!supported) return
+        // A wanted window remembers whether it's the video's or a short's (the shorts' chrome
+        // hides around it); an unwanted one leaves whatever is in the window alone, so a short
+        // already floating keeps being one until the window actually closes.
+        if (wanted) inShorts = isShorts
         val currentWanted by rememberUpdatedState(wanted)
         val currentAspect by rememberUpdatedState(videoAspect)
         if (Build.VERSION.SDK_INT >= 31) {
@@ -254,8 +266,12 @@ class PipController(private val activity: ComponentActivity) {
         DisposableEffect(activity) {
             val listener = Consumer<PictureInPictureModeChangedInfo> { info ->
                 active = info.isInPictureInPictureMode
-                // Closing the window stops the activity; expanding it doesn't.
-                if (!info.isInPictureInPictureMode && !activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) onClosed()
+                if (!info.isInPictureInPictureMode) {
+                    // Closing the window stops the activity; expanding it doesn't. (onClosed
+                    // reads [inShorts] to pause the right thing, so it goes before the reset.)
+                    if (!activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) onClosed()
+                    inShorts = false
+                }
             }
             activity.addOnPictureInPictureModeChangedListener(listener)
             onDispose { activity.removeOnPictureInPictureModeChangedListener(listener) }

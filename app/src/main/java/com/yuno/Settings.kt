@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
+import androidx.compose.material.icons.rounded.SmartDisplay
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SignalCellularAlt
 import androidx.compose.material.icons.rounded.SystemUpdateAlt
@@ -557,6 +558,16 @@ private fun ShortsBody(search: SettingsSearch) {
             val holdLine = stringResource(R.string.settings_shorts_hold_fast_line)
             row(holdTitle, holdLine) {
                 ToggleRow(Icons.Rounded.Speed, holdTitle, holdLine, ShortsGestures.holdFast) { ShortsGestures.setHoldFast(context, it) }
+            }
+            val autoTitle = stringResource(R.string.settings_shorts_autoplay_title)
+            val autoLine = stringResource(R.string.settings_shorts_autoplay_line)
+            row(autoTitle, autoLine) {
+                ToggleRow(Icons.Rounded.SmartDisplay, autoTitle, autoLine, ShortsAutoplay.on) { ShortsAutoplay.set(it) }
+            }
+            val pipTitle = stringResource(R.string.settings_shorts_pip_title)
+            val pipLine = stringResource(R.string.settings_shorts_pip_line)
+            row(pipTitle, pipLine) {
+                ToggleRow(Icons.Rounded.PictureInPictureAlt, pipTitle, pipLine, ShortsPip.on) { ShortsPip.set(it) }
             }
         }
     }

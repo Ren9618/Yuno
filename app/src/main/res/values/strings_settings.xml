@@ -123,6 +123,13 @@
     <string name="settings_shorts_double_tap_line">Two quick taps on a short give it a like. Off, they do nothing</string>
     <string name="settings_shorts_hold_fast_title">Hold a short for 2×</string>
     <string name="settings_shorts_hold_fast_line">Pressing and holding a short fasts it forward; letting go returns to normal speed</string>
+    <!-- Settings › Shorts: a short that ends starts the next one by itself (YouTube's autoplay). -->
+    <string name="settings_shorts_autoplay_title">Autoplay the next short</string>
+    <string name="settings_shorts_autoplay_line">A short that runs out goes on to the next one by itself</string>
+    <!-- Settings › Shorts: the shorts' picture-in-picture (the rail's PiP button, and leaving the app). -->
+    <string name="settings_shorts_pip_title">Picture-in-picture</string>
+    <string name="settings_shorts_pip_line">Leaving the app keeps the short playing in a floating window; the rail\'s PiP button enters it by hand</string>
+    <!-- Settings › Shorts: a playlist of nothing but shorts plays in the shorts\' own pager. -->
 
     <!-- The fork's per-network quality (Settings › Playback): each connection gets its own ceiling. -->
     <string name="settings_quality_wifi_title">Quality on Wi-Fi</string>

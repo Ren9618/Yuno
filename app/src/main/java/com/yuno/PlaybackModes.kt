@@ -225,6 +225,50 @@ object AutoPip {
 }
 
 /**
+ * The shorts' autoplay (as YouTube's own autoplay and Morphe's patch do): a short that runs
+ * out goes on to the next one by itself. Off by default — a short that ran out stays put.
+ */
+object ShortsAutoplay {
+    private const val KEY = "shorts_autoplay"
+    private var prefs: SharedPreferences? = null
+
+    var on by mutableStateOf(false)
+        private set
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        on = prefs?.getBoolean(KEY, false) == true
+    }
+
+    fun set(value: Boolean) {
+        on = value
+        prefs?.edit()?.putBoolean(KEY, value)?.apply()
+    }
+}
+
+/**
+ * The shorts' picture-in-picture: leaving the app while a short plays keeps it in a floating
+ * window (and the rail's PiP button enters it by hand). Off by default, like [AutoPip].
+ */
+object ShortsPip {
+    private const val KEY = "shorts_pip"
+    private var prefs: SharedPreferences? = null
+
+    var on by mutableStateOf(false)
+        private set
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        on = prefs?.getBoolean(KEY, false) == true
+    }
+
+    fun set(value: Boolean) {
+        on = value
+        prefs?.edit()?.putBoolean(KEY, value)?.apply()
+    }
+}
+
+/**
  * Zoom to fill in fullscreen (2026-11-02, Derek; asked for by many users), as YouTube's app does it:
  * pinch out on the fullscreen video and it fills the screen (the edges past the screen are cropped),
  * pinch in and the whole picture is back with black bars. A pinch only changes that video

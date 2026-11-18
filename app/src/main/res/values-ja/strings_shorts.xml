@@ -20,6 +20,10 @@
     <string name="shorts_like">高く評価</string>
     <string name="shorts_comments">コメント</string>
     <string name="shorts_share">共有</string>
+    <!-- The rail's PiP button: the short in a floating window. -->
+    <string name="shorts_pip">ピクチャーインピクチャー</string>
+    <!-- Shown when the system refused the shorts' PiP (it is off for the app in Settings). -->
+    <string name="shorts_pip_off">設定で Yuno のピクチャーインピクチャーがオフになっています。</string>
     <string name="shorts_channel">チャンネル</string>
 
     <!-- Channel card over a short (228 dp wide card, one line each). -->
