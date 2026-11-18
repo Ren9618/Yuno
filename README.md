@@ -12,7 +12,7 @@
 > - **Self-recovering bot check** — when YouTube's "confirm you're not a bot" refuses the streams, Yuno keeps waiting it out in the background (and again the moment the network changes), then opens the video by itself: the error panel needs no manual retry, and a video playing its 360p fallback swaps to the real streams.
 > - **Signed-in extraction** — while signed in, the video's player requests ride the Google session the way yt-dlp uses cookies, so YouTube reads them as signed-in ones and the bot check rarely comes up at all (a toggle in Settings › Enhancements, on by default).
 > - **Comment translation** — a Translate button under every comment turns it into the app's language, the original one tap away.
-> - **The fork, labelled** — Settings › About shows this fork's own version and maintainer next to Yuno's, and the player's Save / Playlist pills speak the app's language.
+> - **The fork, labelled** — Settings › About shows this fork's own date-version with a build number (2026.11.18 (4)) and maintainer next to Yuno's, the maintainer's name opening their GitHub profile, and the player's Save / Playlist pills speak the app's language.
 > - **Skip silence** — long quiet stretches in a video are fast-forwarded while it plays (a toggle in Settings › Playback, off by default).
 > - **Shorts that speak the app's language** — the Shorts screen's chrome (Subscribe, Go to channel, Back, Comments, Share, the error notes) reads the string tables like the rest of the app.
 > - **Shorts at their own ratio** — a short keeps its shape with black bars where the screen is wider, instead of being blown up to fill the screen (a toggle in Settings › Shorts).
@@ -24,6 +24,12 @@
 > - **Scrub gestures, chosen** — a tap on the progress bar seeks there, holding the video for 2× can be kept or turned off, and a horizontal slide on the video scrubs from where play is (toggles in Settings › Playback; the slide is off by default).
 > - **Downloads** — a video's long-press menu and the quality pickers open a download sheet: the combined MP4 and the audio's M4A go through Android's Download Manager (its notification shows the progress; the file lands in Downloads), and an external-downloader row hands the cleaned link to an app like Seal, which isn't capped at 360p.
 > - **Everything in the app's language** — the last hardcoded English is gone: the search page, the long-press menu, the player's notes and errors, the SponsorBlock pills, the quality/speed/chapters sheets, the queue, the account sheet's settings, the accessibility labels, and the onboarding all follow Japanese.
+> - **Chapters, marked and tappable** — notches on the player's progress bar where a video's chapters change, the current chapter's name beside the time (tapping it opens the chapter list), and timestamps in the description that seek to their moment.
+> - **Shorts autoplay** — a short that runs out starts the next one by itself, YouTube-style (a toggle in Settings › Shorts, off by default).
+> - **Shorts picture-in-picture** — leaving the app while a short plays floats it in its own 9:16 window; the rail's PiP button enters it by hand and closing the window pauses the short (a toggle in Settings › Shorts, off by default).
+> - **The author under the short** — a short's description ends with the channel's picture and name, opening the channel on its Videos tab.
+> - **History's shorts** — Library › History shows Shorts in their own shelf beside the videos, and one tap plays the history's shorts in the Shorts player.
+> - **Saved shorts** — a short's rail save button (held, the full save sheet) files it in YouTube's own 「保存したショート動画」 playlist, pinned in Library; a playlist of nothing but shorts plays in the Shorts pager (a toggle in Settings › Shorts decides, on by default).
 >
 > ### Technical notes
 > - The content language rides through the InnerTube requests (`hl`/`gl`), so YouTube answers with localized strings the existing parsers read; counts and ages fall back to a locale-aware number parser when YouTube answers in Japanese.
@@ -98,6 +104,7 @@
 - **Enhancements page** — Return YouTube Dislike on the like pill, DeArrow, the player's mute, loop and copy buttons, tracking-parameter-free share links, and a per-codec decoder policy. *(added in this fork)*
 - **Self-recovering bot check** — when YouTube's "confirm you're not a bot" check blocks the streams, Yuno keeps trying in the background and retries the moment the network changes, then opens the video by itself. *(added in this fork)*
 - **Skip silence** — long quiet stretches in a video are fast-forwarded while it plays. *(added in this fork)*
+- **Chapters on the bar** — notches where a video's chapters change, the chapter's name by the time row, and description timestamps that seek. *(added in this fork)*
 
 #### Player bar
 - While a video is open, the tab bar becomes the **player bar** (−10 · play · +10 · tools): quality, PiP, fullscreen, speed, chapters, and scrub with storyboard preview.
@@ -111,6 +118,8 @@
 - **Empty states** — a feed that loads with no videos shows an empty state with a retry, and a signed-in Home with nothing of its own falls back to the guest recommendations for the session. *(added in this fork)*
 - **Shorts tab** — vertical feed (personalized when signed in). Frosted-glass bar with Like, Comments, Share, and channel subscribe.
 - **Shorts bank** — the next 10 unseen shorts are cached on disk (~100–150 MB) so they start instantly; seen shorts are forgotten and refilled in the background.
+- **Shorts autoplay & picture-in-picture** — a short that ends starts the next one by itself, and leaving the app floats the playing short in its own window (the rail's PiP button enters by hand). *(added in this fork)*
+- **Saved shorts** — the rail's save button fills YouTube's own 「保存したショート動画」 playlist, history shows its shorts in their own shelf, and shorts-only playlists play in the Shorts pager. *(added in this fork)*
 - **Home & Subscriptions** when signed in; **Library** for history, playlists, Watch later, and liked videos.
 
 #### Account & community

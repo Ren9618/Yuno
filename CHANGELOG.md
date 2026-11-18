@@ -9,6 +9,13 @@ Add every change someone would notice under **Unreleased**, under `### New`, `##
 changes something people see or feel (faster, fewer errors); then say that.
 
 ## Fork changes (unreleased)
+- Add 保存したショート動画 (Saved shorts): a short's rail gains a save button that files it in YouTube's own Saved shorts playlist — holding the button opens the full save sheet — the playlist is pinned in Library, and a playlist of nothing but shorts plays in the Shorts player instead of the video one (Settings › Shorts decides, on by default). Signing out or switching accounts forgets the learned playlist.
+- History shows Shorts in their own shelf beside the videos, and tapping one plays the history's shorts in the Shorts player.
+- A short's description ends with its author: the channel's picture and name open the channel on its Videos tab, pinned at the description's bottom edge whether the 概要欄 is open or not.
+- Add Shorts picture-in-picture: leaving the app while a short plays floats it in a window that carries the short's own 9:16, the rail's PiP button enters it by hand, and closing the window pauses the short (a toggle in Settings › Shorts, off by default).
+- Add Shorts autoplay: a short that runs out starts the next one by itself (a toggle in Settings › Shorts, off by default).
+- The fork's row in Settings › About shows a build number with the date (2026.11.18 (4)), and the maintainer's name in the line opens their GitHub profile — the row itself still opens the repository.
+- Add chapter marks in the player: notches on the progress bar where the chapters change, the current chapter's name beside the time (tapping it opens the chapter list), and the description's timestamps seek to their moment when tapped.
 - The player's related videos follow the app's language: their titles, channels, view counts and ages come from InnerTube in the content language (the request that already carries the description, now shared) instead of NewPipeExtractor's English watch page.
 - Bring in upstream's Yuno 1.1.1: the channel page's tabs (Home, Videos, Shorts, Live, Playlists, Posts, About), home recommendation categories, release-style playlist pages, Flow-style search with filter chips and anchored menus, livestreams with live chat, sharper thumbnails, letterboxed widescreen videos and Shorts, a player that opens from the tapped thumbnail with a morph and returns to the same spot, search results staying behind the player, the status bar's blur following the video, and channel/playlist colours as an opt-in (Settings › Appearance).
 - The audio-only mode is gone with the merge: upstream removed it in 1.1.0, so its switch, stage and kept preference are out of the fork too.
