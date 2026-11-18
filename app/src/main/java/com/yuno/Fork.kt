@@ -10,10 +10,11 @@ object Fork {
 
     /**
      * Which build of the fork this is, bumped by hand with every apk that leaves the machine:
-     * 2026.11.16 = 1, 2026.11.17 = 2, the 1.1.1 merge = 3, this feature build = 4. It rides
-     * along the version (same-day rebuilds differ, as YouTube's own versionCode does).
+     * 2026.11.16 = 1, 2026.11.17 = 2, the 1.1.1 merge = 3, the chapters/shorts batch = 4, this
+     * feature build = 5. It rides along the version (same-day rebuilds differ, as YouTube's
+     * own versionCode does).
      */
-    const val BUILD = 4
+    const val BUILD = 5
 
     const val AUTHOR = "Ren9618"
 
