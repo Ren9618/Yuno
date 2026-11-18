@@ -3,6 +3,7 @@ package com.yuno
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -108,6 +109,36 @@ class InnerTubeParseTest {
             "high-res thumbnails from InnerTube, not hqdefault placeholders",
             page.videos.count { !it.thumbnail.orEmpty().endsWith("/hqdefault.jpg") } >= page.videos.size * 0.8,
         )
+    }
+
+    @Test fun shortsAreKeptBesideTheVideosNotInThem() {
+        val page = InnerTube.parseFeed(fixture("search"))
+        // The search page's shorts shelf: its shorts land in [FeedPage.shorts], never in [videos]
+        // (the history reads the same feed shape and shows them as their own row).
+        assertTrue("got ${page.shorts.size} shorts", page.shorts.isNotEmpty())
+        assertTrue("shorts carry their ids", page.shorts.all { it.id.length == 11 })
+        assertTrue("shorts stay out of the videos", page.videos.none { v -> page.shorts.any { it.id == v.id } })
+    }
+
+    @Test fun shortsOnlyPlaylists() {
+        fun item(id: String, dur: Long, live: Boolean = false) =
+            VideoItem(id, "t", "c", null, null, null, dur, 1, null, live)
+        // A short's card carries no duration at all (a lockup) or at most the cap; anything
+        // longer, or a live stream, is a video's playlist.
+        assertTrue(listOf(item("abcdefghijk", 0L), item("lmnopqrstu", 31L)).shortsOnly())
+        assertTrue(listOf(item("abcdefghijk", 62L)).shortsOnly())
+        assertFalse(listOf(item("abcdefghijk", 63L)).shortsOnly())
+        assertFalse(listOf(item("abcdefghijk", 0L, live = true)).shortsOnly())
+        assertFalse(emptyList<VideoItem>().shortsOnly())
+    }
+
+    @Test fun savedShortsChoices() {
+        val saved = PlaylistChoice("PL123", "保存したショート動画", contains = true, privacy = "PRIVATE")
+        val english = PlaylistChoice("PL123", "Saved shorts", contains = false, privacy = "PUBLIC")
+        val other = PlaylistChoice("PL456", "Watch later", contains = null, privacy = null)
+        assertTrue(saved.isSavedShorts)
+        assertTrue(english.isSavedShorts)
+        assertFalse(other.isSavedShorts)
     }
 
     @Test fun watchNextRelated() {

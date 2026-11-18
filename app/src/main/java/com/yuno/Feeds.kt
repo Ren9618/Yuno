@@ -85,6 +85,9 @@ class FeedState(
     /** A playlist's description, from the first page's header. Empty when YouTube sent none. */
     var playlistDescription by mutableStateOf("")
         private set
+    /** The feed's shorts, which YouTube keeps beside (not in) the videos: the history's shelf's. */
+    var shorts by mutableStateOf<List<VideoItem>>(emptyList())
+        private set
     private var next: String? = null
     private var loaded = false
     /** When the first page shown last landed (elapsedRealtime); 0 before. */
@@ -121,6 +124,7 @@ class FeedState(
     fun selectChip(pick: FeedChip) {
         chip = if (pick.token == null || pick.title == chip?.title) null else pick
         videos = emptyList(); next = null
+        shorts = emptyList()
         generation++
         load(fresh = false)
     }
@@ -150,6 +154,7 @@ class FeedState(
             result
                 .onSuccess {
                     videos = it.videos; next = it.next
+                    shorts = if (replacing) it.shorts else shorts + it.shorts.filterNot { s -> shorts.any { it.id == s.id } }
                     if (replacing) generation++
                     landedAt = android.os.SystemClock.elapsedRealtime()
                     if (pick == null) {
@@ -183,6 +188,7 @@ class FeedState(
                     val seen = videos.mapTo(HashSet()) { it.id }
                     val added = page.videos.filter { seen.add(it.id) }
                     videos = videos + added
+                    shorts = shorts + page.shorts.filterNot { s -> shorts.any { it.id == s.id } }
                     if (freshOnRefresh && pick == null) added.forEach { v -> shown += v.id }
                     next = page.next
                 }
@@ -215,6 +221,7 @@ class FeedState(
         job?.cancel()
         shown.clear()
         videos = emptyList(); next = null; loaded = false; loading = false; error = null
+        shorts = emptyList()
         chips = emptyList(); chip = null; landedAt = 0L
         scroll.requestScrollToItem(0)
     }

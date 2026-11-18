@@ -44,6 +44,13 @@ data class PlaylistRef(val id: String, val title: String, val thumbnail: String?
 @Immutable
 data class PlaylistChoice(val id: String, val title: String, val contains: Boolean?, val privacy: String?)
 
+/**
+ * The playlist YouTube saves a short to with its save button ("Saved shorts"; 2026's
+ * 「保存したショート動画」). Its id isn't fixed across accounts, so it's known by title.
+ */
+internal val PlaylistChoice.isSavedShorts: Boolean
+    get() = title.lowercase().let { it.contains("saved short") || it.contains("保存したショート") }
+
 @Immutable
 data class ChannelRef(val id: String, val name: String, val avatar: String?)
 
@@ -59,6 +66,8 @@ data class FeedPage(
     val filters: List<ChannelFilterGroup> = emptyList(),
     /** A playlist's first page only. Flow's `VideoPlaylistPage` owner and description. */
     val playlistHeader: PlaylistHeaderInfo? = null,
+    /** The page's shorts, which YouTube keeps out of the videos (the library's history shelf, #79). */
+    val shorts: List<VideoItem> = emptyList(),
 )
 
 /** The playlist header Flow reads off the browse: the owner, and the description when YouTube sent one. */
@@ -440,6 +449,7 @@ object Account {
         activate(index)
         StreamCache.invalidateAll()
         Bells.clear()
+        SavedShortsPlaylist.forget()
         true
     }
 
@@ -471,6 +481,8 @@ object Account {
         generation++
         // The bells are the account's; signed out there are none (and no new-video notifications).
         Bells.clear()
+        // So are the shorts' saved playlist (learned from this account's save dialog).
+        SavedShortsPlaylist.forget()
         android.webkit.CookieManager.getInstance().apply { removeAllCookies(null); flush() }
     }
 
@@ -587,6 +599,8 @@ object Account {
         generation++
         StreamCache.invalidateAll()
         Bells.clear()
+        // The brand speaks with its own playlists; the shorts' saved one is learned anew.
+        SavedShortsPlaylist.forget()
     }
 
     private fun resolveSigninUrl(url: String): String = when {
@@ -1615,6 +1629,7 @@ object InnerTube {
      */
     internal fun parseFeed(root: JSONObject, includeLive: Boolean = false): FeedPage {
         val videos = LinkedHashMap<String, VideoItem>()
+        val shorts = LinkedHashMap<String, VideoItem>()
         var next: String? = null
         root.walk { key, obj ->
             when (key) {
@@ -1626,13 +1641,16 @@ object InnerTube {
                 "lockupViewModel" -> if (obj.optString("contentType") == "LOCKUP_CONTENT_TYPE_VIDEO" && !isMembersOnly(obj) && (includeLive || !isLive(obj)) && !isMovie(obj)) {
                     parseLockup(obj)?.let { videos.putIfAbsent(it.id, it) }
                 }
+                // The page's shorts, which YouTube sends beside the videos (the library's
+                // history has a "Shorts" shelf of them); kept out of the videos themselves.
+                "shortsLockupViewModel", "reelItemRenderer" -> parseShortLockup(obj)?.let { shorts.putIfAbsent(it.id, it) }
                 // Only the feed's own "load more" item (old and new names); chip filters
                 // carry tokens too and must not be mistaken for the next page.
                 "continuationItemRenderer", "continuationItemViewModel" ->
                     obj.collectStrings("token").firstOrNull()?.let { next = it }
             }
         }
-        return FeedPage(videos.values.toList(), next)
+        return FeedPage(videos.values.toList(), next, shorts = shorts.values.toList())
     }
 
     /**

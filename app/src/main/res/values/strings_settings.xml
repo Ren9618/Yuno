@@ -130,6 +130,8 @@
     <string name="settings_shorts_pip_title">Picture-in-picture</string>
     <string name="settings_shorts_pip_line">Leaving the app keeps the short playing in a floating window; the rail\'s PiP button enters it by hand</string>
     <!-- Settings › Shorts: a playlist of nothing but shorts plays in the shorts\' own pager. -->
+    <string name="settings_shorts_playlist_player_title">Play short playlists as Shorts</string>
+    <string name="settings_shorts_playlist_player_line">A playlist of nothing but Shorts plays in the Shorts pager, like YouTube\'s Saved shorts; off plays it in the video player</string>
 
     <!-- The fork's per-network quality (Settings › Playback): each connection gets its own ceiling. -->
     <string name="settings_quality_wifi_title">Quality on Wi-Fi</string>

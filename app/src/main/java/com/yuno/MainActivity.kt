@@ -492,6 +492,9 @@ fun YunoApp() {
         StatusBarOverVideo.shorts = tab == Tab.Shorts && shownRoute() !is AppRoute.Channel
         shorts.onMessage = { player.actionMessage = it }
         shorts.mainBusy = { player.isBuffering }
+        // The shorts' save button, where the fork couldn't name the Saved shorts playlist:
+        // the video player's own "Save to playlist" sheet opens.
+        shorts.onOpenSave = { player.openPlaylists(it) }
     }
 
     LaunchedEffect(player.openRequest, player.expanded, player.current?.id) {
@@ -641,6 +644,7 @@ fun YunoApp() {
                         Tab.Library -> LibraryScreen(
                             lib, contentPadding, onOpen = player::open,
                             onOpenPlaylist = { navigator.push(AppRoute.Playlist(it)) },
+                            onOpenShorts = ::openShorts,
                             onSearch = openSearchPage,
                             onSignIn = { signingIn = true }, onAccount = openSettingsPage,
                             scrollToTop = scrollToTop[Tab.Library] ?: 0, pullState = libraryPull,
@@ -675,6 +679,7 @@ fun YunoApp() {
                         contentPadding,
                         grid = playlistGrid[pageRoute.ref.id] != false,
                         onOpen = { videos, index -> player.openList(videos, index) },
+                        onOpenShorts = ::openShorts,
                         onShuffle = { player.openList(it, shuffle = true) },
                         channelAvatarSeed = lib.channels.associate { it.id to it.avatar },
                         onFootColor = { channelFoot = it },

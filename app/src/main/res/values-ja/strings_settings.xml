@@ -116,6 +116,8 @@
     <string name="settings_shorts_pip_title">ピクチャーインピクチャー</string>
     <string name="settings_shorts_pip_line">アプリを離れてもショートを小窓で再生し続けます。右の PiP ボタンから手動でも切り替えられます</string>
     <!-- Settings › Shorts: a playlist of nothing but shorts plays in the shorts\' own pager. -->
+    <string name="settings_shorts_playlist_player_title">ショートのみのプレイリストをショートで再生</string>
+    <string name="settings_shorts_playlist_player_line">ショートだけのプレイリスト（保存したショートなど）をショートのプレイヤーで再生します。オフにすると動画プレイヤーで再生します</string>
 
     <!-- The fork's per-network quality (Settings › Playback): each connection gets its own ceiling. -->
     <string name="settings_quality_wifi_title">Wi-Fi 接続時の画質</string>

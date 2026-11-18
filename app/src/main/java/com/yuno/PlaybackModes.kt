@@ -269,6 +269,29 @@ object ShortsPip {
 }
 
 /**
+ * A playlist of nothing but shorts plays in the shorts' own pager (2026's 「保存したショート動画」
+ * does, like YouTube's app), instead of the video player one after another. On — the shorts are
+ * the shorts — and a playlist of full-length videos still plays as videos (Settings › Shorts).
+ */
+object PlaylistShortsPlayer {
+    private const val KEY = "playlist_shorts_player"
+    private var prefs: SharedPreferences? = null
+
+    var on by mutableStateOf(true)
+        private set
+
+    fun init(context: Context) {
+        prefs = context.getSharedPreferences("playback", Context.MODE_PRIVATE)
+        on = prefs?.getBoolean(KEY, true) == true
+    }
+
+    fun set(value: Boolean) {
+        on = value
+        prefs?.edit()?.putBoolean(KEY, value)?.apply()
+    }
+}
+
+/**
  * Zoom to fill in fullscreen (2026-11-02, Derek; asked for by many users), as YouTube's app does it:
  * pinch out on the fullscreen video and it fills the screen (the edges past the screen are cropped),
  * pinch in and the whole picture is back with black bars. A pinch only changes that video

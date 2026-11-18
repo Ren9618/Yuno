@@ -132,6 +132,8 @@
     <string name="ui_history">History</string>
     <string name="ui_history_empty">Nothing watched yet.</string>
     <string name="ui_history_signed_out">Videos you watch on this phone show up here.</string>
+    <!-- The saved shorts' playlist in the Library (YouTube's 「保存したショート動画」): its pin tile, and the label beside the shorts in the history shelf. -->
+    <string name="ui_saved_shorts">Saved shorts</string>
     <!-- Section title in Library. -->
     <string name="ui_playlists">Playlists</string>
     <string name="ui_playlist_empty_title">Nothing here yet</string>

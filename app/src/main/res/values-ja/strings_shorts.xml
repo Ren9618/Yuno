@@ -24,6 +24,13 @@
     <string name="shorts_pip">ピクチャーインピクチャー</string>
     <!-- Shown when the system refused the shorts' PiP (it is off for the app in Settings). -->
     <string name="shorts_pip_off">設定で Yuno のピクチャーインピクチャーがオフになっています。</string>
+    <!-- The rail's save button: the short in (or out of) the Saved shorts playlist; a hold opens the playlist picker. -->
+    <string name="shorts_save_to_playlist">プレイリストに保存</string>
+    <!-- The save button asked for a sign-in (the playlists are the account's). -->
+    <string name="shorts_sign_in_to_save">ショートを保存するにはログインしてください。</string>
+    <!-- The save's request failed (offline, YouTube refused). -->
+    <string name="shorts_save_failed">ショートを保存できませんでした。</string>
+    <!-- The link under a short: the author's own videos. %1$s is the channel. -->
     <string name="shorts_more_from">%1$s の動画をもっと見る</string>
     <string name="shorts_channel">チャンネル</string>
 

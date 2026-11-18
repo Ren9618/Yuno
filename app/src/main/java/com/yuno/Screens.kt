@@ -52,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -363,6 +364,7 @@ fun LibraryScreen(
     contentPadding: PaddingValues,
     onOpen: (VideoItem) -> Unit,
     onOpenPlaylist: (PlaylistRef) -> Unit,
+    onOpenShorts: (ShortsList) -> Unit = {},
     onSearch: () -> Unit,
     onSignIn: () -> Unit,
     onAccount: () -> Unit,
@@ -376,6 +378,7 @@ fun LibraryScreen(
     val watchLaterTitle = stringResource(R.string.ui_watch_later)
     val likedVideosTitle = stringResource(R.string.ui_liked_videos)
     val libraryTitle = stringResource(R.string.ui_library_title)
+    val savedShortsTitle = stringResource(R.string.ui_saved_shorts)
     LaunchedEffect(signedIn) {
         if (signedIn) {
             lib.history.ensureLoaded()
@@ -408,13 +411,50 @@ fun LibraryScreen(
                         modifier = Modifier.padding(horizontal = PageGutter),
                     )
                 }
+                // The history's shorts, which YouTube keeps beside its videos: their own shelf,
+                // opened in the shorts' own pager ([ShortsList], paged on over the history).
+                val historyShorts = lib.history.shorts
+                if (signedIn && historyShorts.isNotEmpty()) {
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = PageGutter),
+                    ) {
+                        Icon(SfIcons.Shorts, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(17.dp))
+                        Spacer(Modifier.width(7.dp))
+                        Text(stringResource(R.string.ui_shorts), color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = PageGutter),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(historyShorts, key = { "hs-" + it.id }) { short ->
+                            ShortHistoryCard(short) {
+                                val at = historyShorts.indexOf(short).coerceAtLeast(0)
+                                onOpenShorts(ShortsList(historyShorts, at, lib.history.nextToken) { token ->
+                                    // The history's pages keep the shorts beside the videos; the
+                                    // pager wants the shorts alone.
+                                    InnerTube.history(token).let { page -> page.copy(videos = page.shorts) }
+                                })
+                            }
+                        }
+                    }
+                }
             }
             if (signedIn) {
                 item(key = "playlistsTitle") { SectionTitle(playlistsTitle) }
-                val pinned = listOf(
-                    PlaylistRef("WL", watchLaterTitle, null, null),
-                    PlaylistRef("LL", likedVideosTitle, null, null),
-                )
+                // Watch later and liked are the app's own pins; the saved shorts' playlist
+                // joins them once the account has one (its title named it in a save dialog),
+                // left out when the account's own list already shows it.
+                val savedId = SavedShortsPlaylist.id
+                val pinned = buildList {
+                    add(PlaylistRef("WL", watchLaterTitle, null, null))
+                    add(PlaylistRef("LL", likedVideosTitle, null, null))
+                    if (savedId != null && lib.playlists.none { it.id == savedId }) {
+                        add(PlaylistRef(savedId, SavedShortsPlaylist.title ?: savedShortsTitle, null, null))
+                    }
+                }
                 items((pinned + lib.playlists).chunked(2), key = { row -> row.joinToString { it.id } }) { row ->
                     Row(Modifier.padding(horizontal = PageGutter, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         row.forEach { pl -> PlaylistTile(pl, Modifier.weight(1f)) { onOpenPlaylist(pl) } }
@@ -468,6 +508,36 @@ private fun HistoryCard(video: VideoItem, onClick: () -> Unit) {
         Spacer(Modifier.height(7.dp))
         FadingTitle(
             text = video.title,
+            style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, lineHeight = 16.sp),
+        )
+    }
+}
+
+/** A short of the history shelf ([LibraryScreen]): the portrait card, its mark over the corner. */
+@Composable
+private fun ShortHistoryCard(short: VideoItem, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .width(106.dp)
+            .prefetchOnPress(short.id)
+            .pressable(pressedScale = 0.97f, onClick = onClick),
+    ) {
+        Box {
+            Thumbnail(short.thumbnail, Modifier.fillMaxWidth().aspectRatio(9f / 16f), radius = FeedVideoThumbRadius, videoId = short.id, portrait = true)
+            Box(
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(6.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.72f))
+                    .padding(4.dp),
+            ) {
+                Icon(SfIcons.Shorts, null, tint = Color.White, modifier = Modifier.size(12.dp))
+            }
+        }
+        Spacer(Modifier.height(7.dp))
+        FadingTitle(
+            text = short.title,
             style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, lineHeight = 16.sp),
         )
     }

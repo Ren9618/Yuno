@@ -76,6 +76,8 @@ fun PlaylistScreen(
     contentPadding: PaddingValues,
     grid: Boolean,
     onOpen: (List<VideoItem>, Int) -> Unit,
+    /** A shorts-only playlist ([PlaylistShortsPlayer]) opening in the shorts' own pager. */
+    onOpenShorts: (ShortsList) -> Unit = {},
     onShuffle: (List<VideoItem>) -> Unit,
     channelAvatarSeed: Map<String, String?> = emptyMap(),
     onFootColor: (Color?) -> Unit = {},
@@ -93,9 +95,12 @@ fun PlaylistScreen(
     }
     androidx.compose.runtime.SideEffect { onFootColor(palette.background) }
     val scheme = MaterialTheme.colorScheme
+    // A playlist of nothing but shorts (2026's 「保存したショート動画」) plays in the shorts' own
+    // pager, like YouTube's app; the switch ([PlaylistShortsPlayer]) says so, or the video player.
+    val shortsOnly = PlaylistShortsPlayer.on && feed.videos.shortsOnly()
     MaterialTheme(colorScheme = scheme, typography = BitChordTypography, shapes = MaterialTheme.shapes) {
         CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyLarge.merge(OwnDirectionText)) {
-            PlaylistBody(playlist, feed, contentPadding, grid, palette, onOpen, onShuffle)
+            PlaylistBody(playlist, feed, contentPadding, grid, palette, onOpen, onOpenShorts, shortsOnly, onShuffle)
         }
     }
 }
@@ -108,6 +113,8 @@ private fun PlaylistBody(
     grid: Boolean,
     palette: ArtworkPalette,
     onOpen: (List<VideoItem>, Int) -> Unit,
+    onOpenShorts: (ShortsList) -> Unit,
+    shortsOnly: Boolean,
     onShuffle: (List<VideoItem>) -> Unit,
 ) {
     val videos = feed.videos
@@ -139,7 +146,15 @@ private fun PlaylistBody(
                             description = feed.playlistDescription,
                             palette = palette,
                             showActions = videos.isNotEmpty(),
-                            onPlay = { onOpen(videos, 0) },
+                            onPlay = {
+                                if (shortsOnly) {
+                                    // A short's own playlist in the shorts' pager, pages after
+                                    // pages ([ShortsList]) — the same list the playlist rows open.
+                                    onOpenShorts(ShortsList(videos, 0, feed.nextToken) { token -> InnerTube.playlist(playlist.id, token) })
+                                } else {
+                                    onOpen(videos, 0)
+                                }
+                            },
                             onShuffle = { onShuffle(videos) },
                         )
                     }
@@ -166,7 +181,13 @@ private fun PlaylistBody(
                             }
                         }
                         else -> {
-                            playlistVideos(videos, columns, grid, palette) { index -> onOpen(videos, index) }
+                            playlistVideos(videos, columns, grid, palette) { index ->
+                                if (shortsOnly) {
+                                    onOpenShorts(ShortsList(videos, index, feed.nextToken) { token -> InnerTube.playlist(playlist.id, token) })
+                                } else {
+                                    onOpen(videos, index)
+                                }
+                            }
                             if (feed.loading || feed.hasMore) item {
                                 ChannelTabSkeleton(if (grid) ChannelBone.VideoCard else ChannelBone.VideoRow, page = false)
                             }

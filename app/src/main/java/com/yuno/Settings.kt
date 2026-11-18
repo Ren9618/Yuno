@@ -569,6 +569,11 @@ private fun ShortsBody(search: SettingsSearch) {
             row(pipTitle, pipLine) {
                 ToggleRow(Icons.Rounded.PictureInPictureAlt, pipTitle, pipLine, ShortsPip.on) { ShortsPip.set(it) }
             }
+            val playlistTitle = stringResource(R.string.settings_shorts_playlist_player_title)
+            val playlistLine = stringResource(R.string.settings_shorts_playlist_player_line)
+            row(playlistTitle, playlistLine) {
+                ToggleRow(Icons.Rounded.SmartDisplay, playlistTitle, playlistLine, PlaylistShortsPlayer.on) { PlaylistShortsPlayer.set(it) }
+            }
         }
     }
 }
