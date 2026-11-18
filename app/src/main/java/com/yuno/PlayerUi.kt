@@ -296,9 +296,10 @@ fun PlayerScreen(
                         if (descriptionOpen && details != null) {
                             // The fork's links: a tapped url opens in the browser; nothing to open
                             // it, and the player says so (its action message, like its own buttons).
+                            // The 概要欄's chapter timestamps seek there (as YouTube's own do).
                             val context = LocalContext.current
                             Text(
-                                linkifiedDescription(details.description, DescriptionLinkBlue) { url ->
+                                linkifiedDescription(details.description, DescriptionLinkBlue, onSeek = { ms -> state.seekTo(ms) }) { url ->
                                     try {
                                         context.startActivity(
                                             android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))

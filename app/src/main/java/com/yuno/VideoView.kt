@@ -676,10 +676,13 @@ fun VideoContent(
                                     LiveChip(state.durationMs - state.positionMs <= 20_000) { touched(); state.jumpToLiveEdge() }
                                 }
                             }
-                            state.chapterAt(shownMs)?.let {
+                            state.chapterAt(shownMs)?.let { chapter ->
                                 Text(
-                                    " · $it", color = Color.White.copy(alpha = 0.72f), fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                                    " · $chapter", color = Color.White.copy(alpha = 0.72f), fontSize = 12.sp, fontWeight = FontWeight.Bold,
                                     maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .pressable { state.sheet = PlayerSheet.Chapters }
+                                        .semantics { contentDescription = str(R.string.video_chapters) },
                                 )
                             }
                         }
@@ -733,6 +736,7 @@ fun VideoContent(
             val lockedLive = state.live && !state.liveDvr
             Scrubber(
                 segments = if (lockedLive) emptyList() else segments,
+                chapters = if (lockedLive) emptyList() else state.details?.chapters.orEmpty(),
                 positionMs = if (lockedLive) 1L else state.positionMs,
                 bufferedMs = if (lockedLive) 1L else state.bufferedMs,
                 durationMs = if (lockedLive) 1L else state.durationMs,
@@ -1689,6 +1693,9 @@ fun MorphPlayButton(
 
 private val ScrubberActiveRed = Color(0xFFFF0033)
 
+/** The chapters' seams in the scrubber: a dark tick, readable over the played bar and the track. */
+private val ChapterNotch = Color.Black.copy(alpha = 0.55f)
+
 /** Touch above the bar (on the video) and below it (into the page — the list must not steal this). */
 internal val EdgeScrubTouchPadAbove = 14.dp
 internal val EdgeScrubTouchPadBelow = 36.dp
@@ -1732,6 +1739,7 @@ private val FullscreenScrubKnobDragging = 6.dp
 @Composable
 private fun Scrubber(
     segments: List<SponsorBlock.Segment>,
+    chapters: List<Chapter> = emptyList(),
     positionMs: Long,
     bufferedMs: Long,
     durationMs: Long,
@@ -1837,6 +1845,15 @@ private fun Scrubber(
             val x0 = left + trackW * (seg.startMs.toFloat() / duration).coerceIn(0f, 1f)
             val x1 = left + trackW * (seg.endMs.toFloat() / duration).coerceIn(0f, 1f)
             if (x1 > x0) drawRoundRect(seg.category.color, Offset(x0, y), Size(x1 - x0, trackH), r)
+        }
+        // The chapters' seams (as YouTube's bar carries them): a notch of the track's own dark,
+        // where each chapter after the first starts — readable over the played white and over
+        // the resting track alike. The video's start isn't a seam.
+        val notchW = 2.dp.toPx()
+        chapters.forEach { chapter ->
+            if (chapter.startMs <= 0L || chapter.startMs >= durationMs) return@forEach
+            val x = (left + trackW * (chapter.startMs.toFloat() / duration) - notchW / 2f).coerceIn(left, left + trackW - notchW)
+            drawRoundRect(ChapterNotch, Offset(x, y), Size(notchW, trackH), CornerRadius(notchW / 2f))
         }
         if (chromeActive) {
             val knobR = knobRadius.toPx()

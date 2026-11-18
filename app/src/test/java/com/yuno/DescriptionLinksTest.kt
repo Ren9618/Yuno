@@ -35,4 +35,22 @@ class DescriptionLinksTest {
         )
         assertTrue(descriptionLinks(text).zipWithNext().all { (a, b) -> a.end < b.start })
     }
+
+    @Test fun timestampsAreFoundWithTheirTimes() {
+        val text = "0:00 始まり\n1:23 二つ目\n1:02:03 長い章"
+        assertEquals(listOf(0L, 83_000L, 3_723_000L), descriptionTimestamps(text).map { it.ms })
+        assertEquals(text.indexOf("0:00"), descriptionTimestamps(text).first().start)
+        assertEquals(text.indexOf("0:00") + 4, descriptionTimestamps(text).first().end)
+    }
+
+    @Test fun timestampsInsideUrlsStayPartOfTheUrl() {
+        val text = "see https://example.com/watch?v=x&t=1:23 for the good part and 0:45 here"
+        val links = descriptionLinks(text)
+        assertEquals(listOf(45_000L), descriptionTimestamps(text, links).map { it.ms })
+    }
+
+    @Test fun clockReadingsAreNotTimestamps() {
+        assertTrue(descriptionTimestamps("0:60 と 9:61 は時計の読み").isEmpty())
+        assertTrue(descriptionTimestamps("v0:00x は語の一部").isEmpty())
+    }
 }
