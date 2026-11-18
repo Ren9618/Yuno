@@ -456,6 +456,11 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
     val savedShorts = mutableStateMapOf<String, Boolean>()
     private val saveAsked = HashSet<String>()
 
+    /** The author-set video a short links to (the row under the 概要欄), off the shorts page. */
+    val linkedVideos = mutableStateMapOf<String, ShortLinkedVideo>()
+    private val linkedAsked = HashSet<String>()
+    private var linkedJob: Job? = null
+
     val comments = CommentsState(scope)
     var commentsOpen by mutableStateOf(false)
     /** The channel button's card (Subscribe · Go to channel) is open. */
@@ -722,6 +727,16 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
             if (details[id]?.description?.isEmpty() == true) {
                 scope.launch {
                     runCatching { YouTube.details(id, wait = false) }.getOrNull()?.let { details[id] = it }
+                }
+            }
+            // The author's linked video (the row under the 概要欄): read off the short's page,
+            // once — one page at a time, so a fast swipe doesn't queue a pile of them.
+            if (linkedVideos[id] == null && linkedAsked.add(id)) {
+                linkedJob?.cancel()
+                linkedJob = scope.launch {
+                    runCatching { InnerTube.shortLinkedVideo(id) }
+                        .onSuccess { it?.let { linkedVideos[id] = it } }
+                        .onFailure { if (it is CancellationException) throw it; linkedAsked.remove(id) }
                 }
             }
             // The fork's counts: RYD's votes (likes and estimated dislikes) for the rail, and
@@ -1582,6 +1597,10 @@ fun ShortsScreen(
     navClearance: Dp,
     overlayBottom: Dp,
     onChannel: (String) -> Unit,
+    /** The author's linked short ([ShortLinkedVideo]): it plays in the shorts' own pager. */
+    onOpenShorts: (ShortsList) -> Unit = {},
+    /** The author's linked video ([ShortLinkedVideo]): it plays in the video player. */
+    onOpenVideo: (VideoItem) -> Unit = {},
 ) {
     // The floating window is a short (the shorts' PiP): its panels stand down around it.
     val pip = LocalPictureInPicture.current
@@ -1597,7 +1616,7 @@ fun ShortsScreen(
                 },
         ) {
             when {
-                shorts.items.isNotEmpty() -> key(shorts.feedVersion) { ShortsPager(shorts, overlayBottom, progress, onChannel) }
+                shorts.items.isNotEmpty() -> key(shorts.feedVersion) { ShortsPager(shorts, overlayBottom, progress, onChannel, onOpenShorts, onOpenVideo) }
                 shorts.error != null && !shorts.loading -> ShortsProblem(shorts.error.orEmpty(), onRetry = shorts::refresh)
                 else -> CircularProgressIndicator(color = Ink, strokeWidth = 3.dp, modifier = Modifier.align(Alignment.Center).size(36.dp))
             }
@@ -1722,7 +1741,14 @@ private fun votesFor(shorts: ShortsState, item: VideoItem): ReturnYouTubeDislike
     if (ReturnYouTubeDislike.enabled) shorts.votes[item.id] else null
 
 @Composable
-private fun ShortsPager(shorts: ShortsState, overlayBottom: Dp, barProgress: () -> Float, onChannel: (String) -> Unit) {
+private fun ShortsPager(
+    shorts: ShortsState,
+    overlayBottom: Dp,
+    barProgress: () -> Float,
+    onChannel: (String) -> Unit,
+    onOpenShorts: (ShortsList) -> Unit,
+    onOpenVideo: (VideoItem) -> Unit,
+) {
     val pager = rememberPagerState(initialPage = shorts.index.coerceIn(0, (shorts.items.size - 1).coerceAtLeast(0))) { shorts.items.size }
     LaunchedEffect(pager) { snapshotFlow { pager.settledPage }.collect { shorts.select(it) } }
     // The fork's "not interested": the short steps aside for the next one (a swipe forward).
@@ -1737,11 +1763,19 @@ private fun ShortsPager(shorts: ShortsState, overlayBottom: Dp, barProgress: () 
         // The pages either side are composed, so their views (and loaded first frames) are ready mid-swipe.
         beyondViewportPageCount = 1,
         key = { shorts.items.getOrNull(it)?.id ?: it },
-    ) { page -> ShortPage(shorts, page, overlayBottom, barProgress, onChannel) }
+    ) { page -> ShortPage(shorts, page, overlayBottom, barProgress, onChannel, onOpenShorts, onOpenVideo) }
 }
 
 @Composable
-private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProgress: () -> Float, onChannel: (String) -> Unit) {
+private fun ShortPage(
+    shorts: ShortsState,
+    page: Int,
+    overlayBottom: Dp,
+    barProgress: () -> Float,
+    onChannel: (String) -> Unit,
+    onOpenShorts: (ShortsList) -> Unit,
+    onOpenVideo: (VideoItem) -> Unit,
+) {
     val item = shorts.items.getOrNull(page) ?: return
     val details = shorts.details[item.id]
     val failure = shorts.failed[item.id]
@@ -1902,10 +1936,40 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                         )
                     }
                 }
-                // The author's own videos, the link YouTube puts under a short: pinned at the
-                // block's bottom edge, whether the 概要欄 is open or not; it opens the channel
-                // on its Videos tab.
-                details.item.channelUrl?.let { channelUrl ->
+                // The author's link under a short — the blue-circle row YouTube puts at the
+                // 概要欄's bottom edge, whether the 概要欄 is open or not: the video the author
+                // set for the short (another short plays in the shorts' pager, a video in the
+                // player); with none set, the channel's Videos tab.
+                val linked = shorts.linkedVideos[item.id]
+                if (linked != null) {
+                    Spacer(Modifier.height(9.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(7.dp),
+                        modifier = Modifier
+                            .pressable {
+                                val target = VideoItem(
+                                    id = linked.id, title = linked.title,
+                                    channel = details.item.channel, channelUrl = details.item.channelUrl,
+                                    thumbnail = linked.thumbnail, avatar = null,
+                                    durationSec = 0, views = 0, uploaded = null,
+                                )
+                                if (linked.short) onOpenShorts(ShortsList(listOf(target), 0)) else onOpenVideo(target)
+                            }
+                            .padding(vertical = 2.dp),
+                    ) {
+                        ResolvedThumbnail(
+                            url = linked.thumbnail, videoId = linked.id, portrait = linked.short,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(24.dp).clip(CircleShape).background(Ink.copy(alpha = 0.16f)),
+                        )
+                        Text(
+                            linked.title,
+                            color = Ink, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis, style = shade,
+                        )
+                    }
+                } else details.item.channelUrl?.let { channelUrl ->
                     Spacer(Modifier.height(9.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

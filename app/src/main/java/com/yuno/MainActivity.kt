@@ -416,6 +416,8 @@ fun YunoApp() {
                 shorts.cover(true)
                 shorts.closeList()
             }
+            // A list opened on the Shorts tab itself (a linked short): back restores its feed.
+            backToChannelOnTab -> shorts.closeList()
             else -> tab = shortsFrom
         }
     }
@@ -640,6 +642,8 @@ fun YunoApp() {
                             navClearance = stackBottom + NavHeight,
                             overlayBottom = stackBottom + NavHeight + 28.dp,
                             onChannel = ::showChannel,
+                            onOpenShorts = ::openShorts,
+                            onOpenVideo = { v -> if (tab == Tab.Shorts) tab = shortsFrom; player.open(v) },
                         )
                         Tab.Library -> LibraryScreen(
                             lib, contentPadding, onOpen = player::open,

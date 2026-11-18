@@ -55,6 +55,21 @@ internal val PlaylistChoice.isSavedShorts: Boolean
 data class ChannelRef(val id: String, val name: String, val avatar: String?)
 
 /**
+ * The video a short's author set for it ("multi format link" — the blue-circle row under the
+ * 概要欄): another short of theirs or a full-length video. It rides no InnerTube answer (the
+ * `next` and the reel ones leave it out), so the short's own page is fetched and its
+ * `ytInitialData` read, where it's a `reelCarouselViewModel` of buttons.
+ */
+@Immutable
+data class ShortLinkedVideo(
+    val id: String,
+    val title: String,
+    /** The target plays in the shorts' pager (it's a short itself), not the video player. */
+    val short: Boolean,
+    val thumbnail: String?,
+)
+
+/**
  * One page of a feed plus the token for the next page, if any. [chips]: the category chips
  * YouTube put over the feed (Home's first page only; empty everywhere else).
  */
@@ -829,6 +844,59 @@ object InnerTube {
      * in every feed.
      */
     suspend fun relatedVideos(videoId: String): List<VideoItem> = runCatching { watchPage(videoId) }.getOrNull()?.related ?: emptyList()
+
+    private val shortLinks = android.util.LruCache<String, ShortLinkedVideo>(80)
+
+    /**
+     * The video a short's author set for it ([ShortLinkedVideo]), read off the short's page —
+     * the answer the shorts screen shows under the 概要欄. Cached per id for the session.
+     */
+    suspend fun shortLinkedVideo(videoId: String): ShortLinkedVideo? = withContext(Dispatchers.IO) {
+        shortLinks.get(videoId)?.let { return@withContext it }
+        runCatching {
+            val request = Request.Builder().url("https://www.youtube.com/shorts/$videoId?hl=${ContentLanguage.hl}")
+                .header("User-Agent", Net.USER_AGENT)
+                .build()
+            Net.client.newCall(request).execute().use { r -> r.body?.string().orEmpty() }
+        }.getOrNull()?.let { parseShortLinkedVideo(it) }?.also { shortLinks.put(videoId, it) }
+    }
+
+    /**
+     * The parsing half of [shortLinkedVideo]: the page's `ytInitialData` carries the linked
+     * video as a `reelCarouselViewModel`, whose buttons tap a reelWatchEndpoint (another
+     * short) or a watchEndpoint (a video); anything else (an outside link) is left out.
+     */
+    internal fun parseShortLinkedVideo(html: String): ShortLinkedVideo? {
+        val json = html.substringAfter("ytInitialData = ", "").substringBefore(";</script>").trim()
+        if (!json.startsWith("{")) return null
+        val root = runCatching { JSONObject(json) }.getOrNull() ?: return null
+        var carousel: JSONObject? = null
+        root.walk { key, obj -> if (key == "reelCarouselViewModel" && carousel == null) carousel = obj }
+        val buttons = carousel?.optJSONArray("buttonViewModels") ?: return null
+        for (i in 0 until buttons.length()) {
+            val button = buttons.optJSONObject(i)?.optJSONObject("reelCarouselButtonViewModel")
+                ?.optJSONObject("buttonViewModel") ?: continue
+            val title = button.optJSONObject("titleFormatted")?.optString("content")?.ifBlank { null }
+                ?: button.optString("accessibilityText").ifBlank { null } ?: continue
+            val command = button.optJSONObject("buttonViewModel")?.optJSONObject("onTap")?.optJSONObject("innertubeCommand")
+            val reel = command?.optJSONObject("reelWatchEndpoint")
+            val reelId = reel?.optString("videoId").orEmpty()
+            if (reel != null && reelId.length == 11) {
+                return ShortLinkedVideo(
+                    id = reelId, title = title, short = true,
+                    thumbnail = reel.optJSONObject("thumbnail")?.optJSONArray("thumbnails")?.widestSourceUrl(),
+                )
+            }
+            val watchId = command?.optJSONObject("watchEndpoint")?.optString("videoId").orEmpty()
+            if (watchId.length == 11) {
+                return ShortLinkedVideo(
+                    id = watchId, title = title, short = false,
+                    thumbnail = "https://i.ytimg.com/vi/$watchId/hqdefault.jpg",
+                )
+            }
+        }
+        return null
+    }
 
     /**
      * Guest Home. Anonymous `FEwhat_to_watch` is an empty "history is off" wall, and Trending

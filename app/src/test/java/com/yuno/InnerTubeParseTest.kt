@@ -5,6 +5,7 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -139,6 +140,40 @@ class InnerTubeParseTest {
         assertTrue(saved.isSavedShorts)
         assertTrue(english.isSavedShorts)
         assertFalse(other.isSavedShorts)
+    }
+
+    /**
+     * The author's linked video (the blue-circle row), read off the short's page: a button
+     * tapping a reelWatchEndpoint is another short, one tapping a watchEndpoint is a video,
+     * and a page without the carousel (an outside link only, or none) answers null.
+     */
+    @Test fun shortLinkedVideo() {
+        fun page(vararg buttons: String) = """<html><script>var ytInitialData = {"overlay":{
+            "reelCarouselViewModel":{"buttonViewModels":[${buttons.joinToString()}]}
+        }};</script></html>"""
+        fun short(id: String) = """{"reelCarouselButtonViewModel":{"buttonViewModel":{
+            "buttonViewModel":{"onTap":{"innertubeCommand":{"reelWatchEndpoint":{"videoId":"$id",
+            "thumbnail":{"thumbnails":[{"url":"https://i.ytimg.com/vi/$id/frame0.jpg","width":1080,"height":1920}]}}}}},
+            "titleFormatted":{"content":"映画再現⁉︎ 一番くじ vol.2"},
+            "accessibilityText":"映画再現⁉︎ 一番くじ vol.2"}}}"""
+        fun video(id: String) = """{"reelCarouselButtonViewModel":{"buttonViewModel":{
+            "buttonViewModel":{"onTap":{"innertubeCommand":{"watchEndpoint":{"videoId":"$id"}}}},
+            "titleFormatted":{"content":"A full-length video"}}}}"""
+        fun outside(url: String) = """{"reelCarouselButtonViewModel":{"buttonViewModel":{
+            "buttonViewModel":{"onTap":{"innertubeCommand":{"urlEndpoint":{"url":"$url"}}}},
+            "titleFormatted":{"content":"The shop"}}}}"""
+        val short = InnerTube.parseShortLinkedVideo(page(short("ILUzMJlFluQ")))
+        assertEquals("ILUzMJlFluQ", short?.id)
+        assertEquals("映画再現⁉︎ 一番くじ vol.2", short?.title)
+        assertEquals(true, short?.short)
+        assertEquals("https://i.ytimg.com/vi/ILUzMJlFluQ/frame0.jpg", short?.thumbnail)
+        val video = InnerTube.parseShortLinkedVideo(page(video("abcdefghijk"), short("ILUzMJlFluQ"), outside("https://example.com")))
+        assertEquals("abcdefghijk", video?.id)
+        assertEquals(false, video?.short)
+        assertEquals("https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg", video?.thumbnail)
+        // The outside link is not a video: nothing plays, so nothing comes back.
+        assertNull(InnerTube.parseShortLinkedVideo(page(outside("https://example.com"))))
+        assertNull(InnerTube.parseShortLinkedVideo("<html>no data here</html>"))
     }
 
     @Test fun watchNextRelated() {
