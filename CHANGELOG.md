@@ -9,7 +9,7 @@ Add every change someone would notice under **Unreleased**, under `### New`, `##
 changes something people see or feel (faster, fewer errors); then say that.
 
 ## Fork changes (unreleased)
-- A short's linked video opens from the description's bottom edge — the one the author set for it, YouTube's blue-circle row: another short plays in the Shorts pager, a full-length video in the player. With nothing linked, the author's channel row stays.
+- A short's linked video opens from the description's bottom edge — the one the author set for it, YouTube's blue-circle row: another short plays in the Shorts pager, a full-length video in the player. The row is the linked video's title alone, and a short with nothing linked has no row at all.
 - The 保存したショート動画 (Saved shorts) playlist opens now: YouTube answered it as shorts beside an empty video list, which showed as a blank page — the shorts take the list's place, read as a wall of 9:16 tiles like the channel's Shorts tab, and Play runs them in the Shorts pager.
 - The rail's save button opens the full save sheet again (後で見る or any of the account's own playlists). YouTube's 保存したショート動画 playlist is read-only over InnerTube — its header says it can't be edited and every add is refused — so the fork can show and play it but not save into it; the direct save and its 「保存先を毎回確認」 toggle are gone.
 - Add 保存したショート動画 (Saved shorts): when the account has the playlist it is pinned in Library, and a playlist of nothing but shorts plays in the Shorts player instead of the video one (Settings › Shorts decides, on by default). Signing out or switching accounts forgets the learned playlist.
