@@ -24,6 +24,7 @@
     <string name="shorts_pip">Picture-in-picture</string>
     <!-- Shown when the system refused the shorts' PiP (it is off for the app in Settings). -->
     <string name="shorts_pip_off">Picture-in-picture is turned off for Yuno in Settings.</string>
+    <string name="shorts_more_from">More videos from %1$s</string>
     <string name="shorts_channel">Channel</string>
 
     <!-- Channel card over a short (228 dp wide card, one line each). -->

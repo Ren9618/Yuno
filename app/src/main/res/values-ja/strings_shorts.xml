@@ -24,6 +24,7 @@
     <string name="shorts_pip">ピクチャーインピクチャー</string>
     <!-- Shown when the system refused the shorts' PiP (it is off for the app in Settings). -->
     <string name="shorts_pip_off">設定で Yuno のピクチャーインピクチャーがオフになっています。</string>
+    <string name="shorts_more_from">%1$s の動画をもっと見る</string>
     <string name="shorts_channel">チャンネル</string>
 
     <!-- Channel card over a short (228 dp wide card, one line each). -->

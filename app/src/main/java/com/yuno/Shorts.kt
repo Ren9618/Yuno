@@ -38,10 +38,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -1467,7 +1468,7 @@ fun ShortsScreen(
                 },
         ) {
             when {
-                shorts.items.isNotEmpty() -> key(shorts.feedVersion) { ShortsPager(shorts, overlayBottom, progress) }
+                shorts.items.isNotEmpty() -> key(shorts.feedVersion) { ShortsPager(shorts, overlayBottom, progress, onChannel) }
                 shorts.error != null && !shorts.loading -> ShortsProblem(shorts.error.orEmpty(), onRetry = shorts::refresh)
                 else -> CircularProgressIndicator(color = Ink, strokeWidth = 3.dp, modifier = Modifier.align(Alignment.Center).size(36.dp))
             }
@@ -1581,7 +1582,7 @@ private fun votesFor(shorts: ShortsState, item: VideoItem): ReturnYouTubeDislike
     if (ReturnYouTubeDislike.enabled) shorts.votes[item.id] else null
 
 @Composable
-private fun ShortsPager(shorts: ShortsState, overlayBottom: Dp, barProgress: () -> Float) {
+private fun ShortsPager(shorts: ShortsState, overlayBottom: Dp, barProgress: () -> Float, onChannel: (String) -> Unit) {
     val pager = rememberPagerState(initialPage = shorts.index.coerceIn(0, (shorts.items.size - 1).coerceAtLeast(0))) { shorts.items.size }
     LaunchedEffect(pager) { snapshotFlow { pager.settledPage }.collect { shorts.select(it) } }
     // The fork's "not interested": the short steps aside for the next one (a swipe forward).
@@ -1596,11 +1597,11 @@ private fun ShortsPager(shorts: ShortsState, overlayBottom: Dp, barProgress: () 
         // The pages either side are composed, so their views (and loaded first frames) are ready mid-swipe.
         beyondViewportPageCount = 1,
         key = { shorts.items.getOrNull(it)?.id ?: it },
-    ) { page -> ShortPage(shorts, page, overlayBottom, barProgress) }
+    ) { page -> ShortPage(shorts, page, overlayBottom, barProgress, onChannel) }
 }
 
 @Composable
-private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProgress: () -> Float) {
+private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProgress: () -> Float, onChannel: (String) -> Unit) {
     val item = shorts.items.getOrNull(page) ?: return
     val details = shorts.details[item.id]
     val failure = shorts.failed[item.id]
@@ -1758,6 +1759,26 @@ private fun ShortPage(shorts: ShortsState, page: Int, overlayBottom: Dp, barProg
                             stringResource(R.string.shorts_description_more),
                             color = Ink.copy(alpha = 0.75f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, style = shade,
                             modifier = Modifier.pressable { open = true },
+                        )
+                    }
+                }
+                // The author's own videos, the link YouTube puts under a short: pinned at the
+                // block's bottom edge, whether the 概要欄 is open or not; it opens the channel
+                // on its Videos tab.
+                details.item.channelUrl?.let { channelUrl ->
+                    Spacer(Modifier.height(9.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(7.dp),
+                        modifier = Modifier
+                            .pressable { onChannel("$channelUrl/videos") }
+                            .padding(vertical = 2.dp),
+                    ) {
+                        ChannelAvatar(details.item.avatar, details.item.channel, size = 20)
+                        Text(
+                            str(R.string.shorts_more_from, details.item.channel),
+                            color = Ink, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+                            maxLines = 1, overflow = TextOverflow.Ellipsis, style = shade,
                         )
                     }
                 }

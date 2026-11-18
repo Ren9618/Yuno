@@ -102,6 +102,21 @@ val LocalChannelOpener = staticCompositionLocalOf<(String) -> Unit> { {} }
 private fun channelIdIn(url: String): String? =
     url.substringAfter("/channel/", "").takeWhile { it != '/' && it != '?' }.takeIf { it.startsWith("UC") && it.length == 24 }
 
+/** The tab an address ends with (@name/videos), so a link straight to a tab lands on it. */
+private fun tabIn(url: String): ChannelTab? {
+    val segment = url.substringBefore('?').trimEnd('/').substringAfterLast('/').lowercase()
+    if (segment.startsWith("@") || segment.startsWith("uc")) return null
+    return when (segment) {
+        "videos" -> ChannelTab.Videos
+        "shorts" -> ChannelTab.Shorts
+        "streams", "live" -> ChannelTab.Live
+        "playlists" -> ChannelTab.Playlists
+        "podcasts" -> ChannelTab.Podcasts
+        "shows" -> ChannelTab.Shows
+        else -> null
+    }
+}
+
 /**
  * A channel page (GitHub #53, Derek picked A "Underline tabs" in docs/design/channel-page.html):
  * the profile, then YouTube's tabs — Home (the creator's shelves), Videos (Latest / Popular /
@@ -160,8 +175,9 @@ class ChannelState(val url: String, private val scope: CoroutineScope) {
         private set
     var subscribed by mutableStateOf<Boolean?>(null)
         private set
-    /** The tab picked; [current] is the one shown (Home first, as on YouTube — Derek). */
-    private var tab by mutableStateOf(ChannelTab.Home)
+    /** The tab picked; [current] is the one shown (Home first, as on YouTube — Derek). An address
+     * that ends in a tab's own path (@name/videos) opens there. */
+    private var tab by mutableStateOf(tabIn(url) ?: ChannelTab.Home)
     /**
      * Each tab's scroll, kept here so back from a short, video, or playlist returns to the same row.
      * [list] is the Videos tab.
