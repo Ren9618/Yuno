@@ -57,7 +57,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BookmarkAdd
-import androidx.compose.material.icons.rounded.BookmarkAdded
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -446,15 +445,10 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
     /** Short notes ("Sign in to like Shorts."), shown by the app shell. */
     var onMessage: (String) -> Unit = {}
     /**
-     * The save button's fallback ([quickSave]): the fork couldn't tell the short's own save
-     * dialog apart, so the video player's one opens — the same sheet a video's
-     * "Save to playlist" uses.
+     * The rail's save button ([quickSave]): the video player's own save sheet, the same one a
+     * video's "Save to playlist" opens.
      */
     var onOpenSave: (VideoItem) -> Unit = {}
-
-    /** The short is in the Saved shorts playlist, as last known ([saveFor] keeps it fresh). */
-    val savedShorts = mutableStateMapOf<String, Boolean>()
-    private val saveAsked = HashSet<String>()
 
     /** The author-set video a short links to (the row under the 概要欄), off the shorts page. */
     val linkedVideos = mutableStateMapOf<String, ShortLinkedVideo>()
@@ -930,7 +924,6 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
         val duration = now?.exo?.duration ?: 0L
         progress = scrub ?: if (now != null && duration > 0) (now.exo.currentPosition.toFloat() / duration).coerceIn(0f, 1f) else 0f
         accountFor(curId)
-        saveFor(curId)
         if (playing) joinHistory(curId)
     }
 
@@ -1099,79 +1092,17 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
     }
 
     /**
-     * Whether the short sits in the Saved shorts playlist, fetched as it comes on screen (the
-     * save button shows it). An answer also names the playlist the first time — so quick
-     * saving works even before a save dialog (or the library) has met it.
-     */
-    private fun saveFor(id: String) {
-        if (!Account.signedIn || !saveAsked.add(id)) return
-        scope.launch {
-            runCatching { InnerTube.saveChoices(id) }
-                .onSuccess { choices ->
-                    choices.firstOrNull { it.isSavedShorts }?.let {
-                        if (SavedShortsPlaylist.id == null) SavedShortsPlaylist.remember(it)
-                        savedShorts[id] = it.contains == true
-                    }
-                }
-                .onFailure { if (it is CancellationException) throw it; saveAsked.remove(id) }
-        }
-    }
-
-    /**
-     * The rail's save button ([ShortsRail]): the short in (or out of) the Saved shorts
-     * playlist — YouTube's own save button's playlist — at a tap; a hold opens the same
-     * playlist picker a video's gets ([onOpenSave]). The playlist's id is learned from the
-     * short's save dialog, the save state ([saveFor]) or the library's rows; without one (the
-     * account is brand-new) the picker opens right away instead. [ShortsSaveAsk] skips all
-     * that: every save opens the picker.
+     * The rail's save button ([ShortsRail]): the player's save sheet ([onOpenSave]). YouTube's
+     * own save button on a short writes into the 「保存したショート動画」 playlist, but that
+     * playlist is read-only over InnerTube — its header says `isEditable: false` and every
+     * `browse/edit_playlist` attempt is refused (`INVALID_ARGUMENT`) — so the fork can show and
+     * play it ([SavedShortsPlaylist], the Library pin) but not add to it. The sheet can still
+     * save the short to Watch later or any of the account's own playlists.
      */
     fun quickSave() {
         val item = current ?: return
         if (!Account.signedIn) { onMessage(str(R.string.shorts_sign_in_to_save)); return }
-        if (ShortsSaveAsk.on) { onOpenSave(item); return }
-        val knownId = SavedShortsPlaylist.id
-        if (knownId != null) {
-            toggleSaved(item, knownId)
-            return
-        }
-        scope.launch {
-            val choices = runCatching { InnerTube.saveChoices(item.id) }
-                .onFailure {
-                    if (it is CancellationException) throw it
-                    Log.w(TAG, "shorts: save choices for ${item.id}", it)
-                    onMessage(str(R.string.shorts_save_failed))
-                }
-                .getOrNull()
-                ?: return@launch
-            val savedShortsChoice = choices.firstOrNull { it.isSavedShorts }
-            if (savedShortsChoice == null) {
-                onOpenSave(item)
-                return@launch
-            }
-            SavedShortsPlaylist.remember(savedShortsChoice)
-            toggleSaved(item, savedShortsChoice.id)
-        }
-    }
-
-    /** The save's other half, once the playlist is known: out if it's in, in if it isn't. */
-    private fun toggleSaved(item: VideoItem, playlistId: String) {
-        val saved = savedShorts[item.id] == true
-        // Known already (the fetch when it came on screen): flip now, as the like does.
-        val asked = savedShorts.containsKey(item.id)
-        savedShorts[item.id] = !saved
-        scope.launch {
-            runCatching { InnerTube.setInPlaylist(playlistId, item.id, add = !saved) }
-                .onSuccess {
-                    savedShorts[item.id] = !saved
-                    onMessage(str(if (!saved) R.string.player_saved_to else R.string.player_removed_from, SavedShortsPlaylist.title ?: str(R.string.ui_saved_shorts)))
-                }
-                .onFailure {
-                    if (it is CancellationException) throw it
-                    if (asked) savedShorts[item.id] = saved
-                    Log.w(TAG, "shorts: save ${item.id}", it)
-                    onMessage(str(R.string.shorts_save_failed))
-                }
-        }
+        onOpenSave(item)
     }
 
     /** Watched Shorts join the account's history, as on YouTube (the start ping; no watch time). */
@@ -1677,14 +1608,13 @@ private fun ShortsRail(shorts: ShortsState, page: Int, enabled: Boolean, modifie
                 RailCount(shorts.commentCounts[item.id]?.takeIf { it > 0 }?.toLong())
             }
         }
-        // The save button (YouTube's own under the comments'): a tap puts the short in (or
-        // takes it out of) the Saved shorts playlist; a hold opens the whole playlist picker.
+        // The save button (YouTube's own under the comments'): the player's save sheet. The
+        // Saved shorts playlist is read-only over InnerTube, so there is no direct toggle.
         RailButton(
-            enabled, str(R.string.shorts_save_to_playlist),
-            onClick = shorts::quickSave, onLongClick = { shorts.current?.let(shorts.onOpenSave) },
+            enabled, str(R.string.shorts_save_to_playlist), onClick = shorts::quickSave,
         ) {
             Icon(
-                if (shorts.savedShorts[item.id] == true) Icons.Rounded.BookmarkAdded else Icons.Rounded.BookmarkAdd,
+                Icons.Rounded.BookmarkAdd,
                 contentDescription = str(R.string.shorts_save_to_playlist), tint = Ink, modifier = Modifier.size(28.dp),
             )
         }

@@ -24,12 +24,10 @@
     <string name="shorts_pip">Picture-in-picture</string>
     <!-- Shown when the system refused the shorts' PiP (it is off for the app in Settings). -->
     <string name="shorts_pip_off">Picture-in-picture is turned off for Yuno in Settings.</string>
-    <!-- The rail's save button: the short in (or out of) the Saved shorts playlist; a hold opens the playlist picker. -->
+    <!-- The rail's save button: the player's save sheet (the Saved shorts playlist is read-only over InnerTube). -->
     <string name="shorts_save_to_playlist">Save to playlist</string>
     <!-- The save button asked for a sign-in (the playlists are the account's). -->
     <string name="shorts_sign_in_to_save">Sign in to save Shorts.</string>
-    <!-- The save's request failed (offline, YouTube refused). -->
-    <string name="shorts_save_failed">Couldn\'t save the Short.</string>
     <!-- The link under a short: the author's own videos. %1$s is the channel. -->
     <string name="shorts_more_from">More videos from %1$s</string>
     <string name="shorts_channel">Channel</string>

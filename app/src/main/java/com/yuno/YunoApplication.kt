@@ -56,7 +56,6 @@ class YunoApplication : Application(), ImageLoaderFactory {
         ShortsAutoplay.init(this)
         ShortsPip.init(this)
         PlaylistShortsPlayer.init(this)
-        ShortsSaveAsk.init(this)
         ShortsNotInterested.init(this)
         SavedShortsPlaylist.init(this)
         NavTabs.init(this)

@@ -575,11 +575,6 @@ private fun ShortsBody(search: SettingsSearch) {
             row(playlistTitle, playlistLine) {
                 ToggleRow(Icons.Rounded.SmartDisplay, playlistTitle, playlistLine, PlaylistShortsPlayer.on) { PlaylistShortsPlayer.set(it) }
             }
-            val askTitle = stringResource(R.string.settings_shorts_save_ask_title)
-            val askLine = stringResource(R.string.settings_shorts_save_ask_line)
-            row(askTitle, askLine) {
-                ToggleRow(Icons.Rounded.PlaylistAdd, askTitle, askLine, ShortsSaveAsk.on) { ShortsSaveAsk.set(it) }
-            }
         }
     }
 }
