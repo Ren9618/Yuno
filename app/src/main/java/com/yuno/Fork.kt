@@ -6,15 +6,15 @@ package com.yuno
  * when a feature lands, and keep [AUTHOR]/[PROFILE]/[URL] honest with the repository's owner.
  */
 object Fork {
-    const val VERSION = "2026.11.18"
+    const val VERSION = "2026.11.19"
 
     /**
      * Which build of the fork this is, bumped by hand with every apk that leaves the machine:
-     * 2026.11.16 = 1, 2026.11.17 = 2, the 1.1.1 merge = 3, the chapters/shorts batch = 4, this
-     * feature build = 5. It rides along the version (same-day rebuilds differ, as YouTube's
-     * own versionCode does).
+     * 2026.11.16 = 1, 2026.11.17 = 2, the 1.1.1 merge = 3, the chapters/shorts batch = 4, the
+     * linked-video/saved-shorts batch = 5, the sound chips/sheet = 6. It rides along the version
+     * (same-day rebuilds differ, as YouTube's own versionCode does).
      */
-    const val BUILD = 5
+    const val BUILD = 6
 
     const val AUTHOR = "Ren9618"
 

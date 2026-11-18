@@ -184,6 +184,61 @@ class InnerTubeParseTest {
     }
 
     /**
+     * The sound under a short: `pivotButtonViewModel.soundAttributionTitle` words the track,
+     * and the audio-pivot panel's continuation token lists the shorts that use it. The same
+     * page parse carries the linked video too; a page without the panel has no sound.
+     */
+    @Test fun shortSoundFromPage() {
+        fun page(panel: String) = """<html><script>var ytInitialData = {
+            "overlay":{"reelPlayerOverlayRenderer":{"playerOverlay":{"reelPlayerOverlayViewModel":{"actionBar":{"reelActionBarViewModel":{"buttonViewModels":[
+                {"pivotButtonViewModel":{"soundAttributionTitle":{"content":"結び"},
+                 "contentDescription":"このサウンドを使用している動画をもっと見る"}}
+            ]}}}}}},
+            "engagementPanels":[$panel]
+        };</script></html>"""
+        val pivot = """{"engagementPanelSectionListRenderer":{"identifier":{"surface":"ENGAGEMENT_PANEL_SURFACE_SHORTS",
+            "tag":"engagement-panel-shorts-audio-pivot"},"content":{"richGridRenderer":{"contents":[
+                {"continuationItemRenderer":{"continuationEndpoint":{"continuationCommand":{
+                    "token":"4qmFsgKaARIRRkVzZnZfYXVkaW9fcGl2b3Q","request":"CONTINUATION_REQUEST_TYPE_BROWSE"}}}}]}}}}"""
+        val links = InnerTube.parseShortPageLinks(page(pivot))
+        assertEquals("結び", links?.sound?.title)
+        assertEquals("4qmFsgKaARIRRkVzZnZfYXVkaW9fcGl2b3Q", links?.sound?.token)
+        assertNull(links?.linked)
+        // No audio-pivot panel: the chip's words alone aren't a sound (nothing to open).
+        assertNull(InnerTube.parseShortPageLinks(page("[]"))?.sound)
+        assertNull(InnerTube.parseShortPageLinks("<html>no data here</html>"))
+    }
+
+    /**
+     * The audio pivot's first page: its tiles carry the words only in accessibilityText
+     * ("<title>, <views> - Play Short"), so the title comes off that, the last comma marking
+     * the views; the continuation rides along for the next page.
+     */
+    @Test fun soundShortsFromAudioPivot() {
+        val root = JSONObject(
+            """{"onResponseReceivedActions":[{"reloadContinuationItemsCommand":{
+              "targetId":"browse-feedFEsfv_audio_pivot","continuationItems":[
+                {"richItemRenderer":{"content":{"shortsLockupViewModel":{
+                  "accessibilityText":"Hello, world, 58万回視聴 - ショート動画を再生",
+                  "onTap":{"innertubeCommand":{"reelWatchEndpoint":{"videoId":"RvZEExkcGoc",
+                    "thumbnail":{"thumbnails":[{"url":"https://i.ytimg.com/vi/RvZEExkcGoc/frame0.jpg","width":720,"height":1280}]}}}},
+                  "overlayMetadata":{"secondaryText":{"content":"58万回視聴"}},
+                  "thumbnailViewModel":{"thumbnailViewModel":{"image":{"sources":[
+                    {"url":"https://i.ytimg.com/vi/RvZEExkcGoc/oardefault.jpg","width":405,"height":720}]}}}}}}},
+                {"continuationItemRenderer":{"continuationEndpoint":{"continuationCommand":{"token":"NEXT"}}}}
+              ]}}]}""",
+        )
+        val page = InnerTube.parseFeed(root)
+        assertEquals("NEXT", page.next)
+        assertEquals(1, page.shorts.size)
+        val short = page.shorts.first()
+        assertEquals("RvZEExkcGoc", short.id)
+        assertEquals("Hello, world", short.title)
+        assertTrue("the audio pivot plays as shorts, got $short", listOf(short).shortsOnly())
+        assertEquals(page.shorts, page.withShortsAsVideos().videos)
+    }
+
+    /**
      * A playlist of shorts (the Saved shorts one): YouTube's browse answers with the shorts
      * beside an empty videos list, which showed as a blank playlist. The fold moves them into
      * the videos, and a page that has videos (any other playlist) is left as it is.

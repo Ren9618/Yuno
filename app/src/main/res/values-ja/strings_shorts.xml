@@ -45,6 +45,10 @@
     <string name="shorts_description_more">もっと見る</string>
     <string name="shorts_description_less">折りたたむ</string>
 
+    <!-- The sound chip\'s panel: the shorts that use the sound (YouTube\'s audio pivot). -->
+    <string name="shorts_sound_shorts">この曲を使ったショート</string>
+    <string name="shorts_sound_failed">この曲のショートを読み込めませんでした。</string>
+
     <!-- The fork\'s dislike on a short (a real dislike, and the channel stops being offered). -->
     <string name="shorts_dislike">低く評価</string>
     <string name="shorts_not_interested">%1$s をおすすめしないようにしました。</string>

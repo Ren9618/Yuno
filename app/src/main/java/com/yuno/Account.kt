@@ -73,6 +73,18 @@ data class ShortLinkedVideo(
 )
 
 /**
+ * The sound under a short (YouTube's music-note chip): [title] as the page words it
+ * (「結び」, 「オリジナルの音声」), and [token] — the audio-pivot panel's browse, which lists
+ * the other shorts that use the same sound.
+ */
+@Immutable
+data class ShortSound(val title: String, val token: String)
+
+/** What a short's own page carries: the author's linked video and the sound it plays. */
+@Immutable
+data class ShortPageLinks(val linked: ShortLinkedVideo?, val sound: ShortSound?)
+
+/**
  * One page of a feed plus the token for the next page, if any. [chips]: the category chips
  * YouTube put over the feed (Home's first page only; empty everywhere else).
  */
@@ -856,31 +868,45 @@ object InnerTube {
      */
     suspend fun relatedVideos(videoId: String): List<VideoItem> = runCatching { watchPage(videoId) }.getOrNull()?.related ?: emptyList()
 
-    private val shortLinks = android.util.LruCache<String, ShortLinkedVideo>(80)
+    private const val AUDIO_PIVOT_TAG = "engagement-panel-shorts-audio-pivot"
+
+    private val shortPages = android.util.LruCache<String, ShortPageLinks>(80)
 
     /**
-     * The video a short's author set for it ([ShortLinkedVideo]), read off the short's page —
-     * the answer the shorts screen shows under the 概要欄. Cached per id for the session.
+     * What a short's own page carries ([ShortPageLinks]): the video its author linked and the
+     * sound it plays — the answer the shorts screen shows under the 概要欄. Cached per id for
+     * the session.
      */
-    suspend fun shortLinkedVideo(videoId: String): ShortLinkedVideo? = withContext(Dispatchers.IO) {
-        shortLinks.get(videoId)?.let { return@withContext it }
+    suspend fun shortPageLinks(videoId: String): ShortPageLinks? = withContext(Dispatchers.IO) {
+        shortPages.get(videoId)?.let { return@withContext it }
         runCatching {
             val request = Request.Builder().url("https://www.youtube.com/shorts/$videoId?hl=${ContentLanguage.hl}")
                 .header("User-Agent", Net.USER_AGENT)
                 .build()
             Net.client.newCall(request).execute().use { r -> r.body?.string().orEmpty() }
-        }.getOrNull()?.let { parseShortLinkedVideo(it) }?.also { shortLinks.put(videoId, it) }
+        }.getOrNull()?.let { parseShortPageLinks(it) }?.also { shortPages.put(videoId, it) }
     }
 
     /**
-     * The parsing half of [shortLinkedVideo]: the page's `ytInitialData` carries the linked
+     * The parsing half of [shortPageLinks]: the page's `ytInitialData` carries the linked
      * video as a `reelCarouselViewModel`, whose buttons tap a reelWatchEndpoint (another
      * short) or a watchEndpoint (a video); anything else (an outside link) is left out.
      */
-    internal fun parseShortLinkedVideo(html: String): ShortLinkedVideo? {
+    internal fun parseShortPageLinks(html: String): ShortPageLinks? {
+        val root = initialData(html) ?: return null
+        return ShortPageLinks(parseLinkedVideo(root), parseSound(root))
+    }
+
+    internal fun parseShortLinkedVideo(html: String): ShortLinkedVideo? =
+        initialData(html)?.let(::parseLinkedVideo)
+
+    private fun initialData(html: String): JSONObject? {
         val json = html.substringAfter("ytInitialData = ", "").substringBefore(";</script>").trim()
         if (!json.startsWith("{")) return null
-        val root = runCatching { JSONObject(json) }.getOrNull() ?: return null
+        return runCatching { JSONObject(json) }.getOrNull()
+    }
+
+    private fun parseLinkedVideo(root: JSONObject): ShortLinkedVideo? {
         var carousel: JSONObject? = null
         root.walk { key, obj -> if (key == "reelCarouselViewModel" && carousel == null) carousel = obj }
         val buttons = carousel?.optJSONArray("buttonViewModels") ?: return null
@@ -912,6 +938,35 @@ object InnerTube {
             }
         }
         return null
+    }
+
+    /**
+     * The sound's chip: `pivotButtonViewModel.soundAttributionTitle` words the track, and the
+     * audio-pivot panel's continuation lists the shorts that use it (a browse).
+     */
+    private fun parseSound(root: JSONObject): ShortSound? {
+        var title: String? = null
+        var token: String? = null
+        root.walk { key, obj ->
+            when (key) {
+                "pivotButtonViewModel" -> if (title == null) {
+                    title = obj.optJSONObject("soundAttributionTitle")?.optString("content")?.trim()?.ifBlank { null }
+                }
+                "engagementPanelSectionListRenderer" -> if (token == null && obj.optJSONObject("identifier")?.optString("tag") == AUDIO_PIVOT_TAG) {
+                    token = obj.optJSONObject("content")?.optJSONObject("richGridRenderer")
+                        ?.optJSONArray("contents")?.optJSONObject(0)
+                        ?.optJSONObject("continuationItemRenderer")
+                        ?.optJSONObject("continuationEndpoint")
+                        ?.optJSONObject("continuationCommand")?.optString("token")?.ifBlank { null }
+                }
+            }
+        }
+        return ShortSound(title ?: return null, token ?: return null)
+    }
+
+    /** The shorts that use a sound, from the audio-pivot panel's next page token. */
+    suspend fun soundShorts(token: String): FeedPage = withContext(Dispatchers.IO) {
+        parseFeed(postAny("browse", JSONObject().put("continuation", token))).withShortsAsVideos()
     }
 
     /**
@@ -2056,7 +2111,12 @@ object InnerTube {
         val reel = o.optJSONObject("onTap")?.optJSONObject("innertubeCommand")?.optJSONObject("reelWatchEndpoint")
         val id = (reel?.optString("videoId") ?: o.optString("videoId")).takeIf { it.length == 11 } ?: return null
         val meta = o.optJSONObject("overlayMetadata")
-        val title = meta?.optJSONObject("primaryText")?.optString("content")?.ifBlank { null } ?: o.text("headline") ?: return null
+        val title = meta?.optJSONObject("primaryText")?.optString("content")?.ifBlank { null }
+            ?: o.text("headline")
+            // The audio-pivot tiles carry their words only in accessibilityText:
+            // "<title>, <views> - Play Short" — the last comma starts the views.
+            ?: o.optString("accessibilityText").substringBeforeLast(", ").ifBlank { null }
+            ?: return null
         val views = meta?.optJSONObject("secondaryText")?.optString("content")?.ifBlank { null } ?: o.text("viewCountText")
         val frame = (o.optJSONObject("thumbnailViewModel") ?: o.optJSONObject("thumbnail"))?.collectStrings("url")?.firstOrNull()
         return VideoItem(

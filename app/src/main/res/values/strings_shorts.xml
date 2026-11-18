@@ -45,6 +45,10 @@
     <string name="shorts_description_more">More</string>
     <string name="shorts_description_less">Show less</string>
 
+    <!-- The sound chip\'s panel: the shorts that use the sound (YouTube\'s audio pivot). -->
+    <string name="shorts_sound_shorts">Shorts using this sound</string>
+    <string name="shorts_sound_failed">Couldn\'t load this sound\'s Shorts.</string>
+
     <!-- The fork\'s dislike on a short (a real dislike, and the channel stops being offered). -->
     <string name="shorts_dislike">Dislike</string>
     <string name="shorts_not_interested">We\'ll stop showing Shorts from %1$s.</string>

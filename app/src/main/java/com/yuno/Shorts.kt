@@ -40,6 +40,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -52,11 +54,19 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.BookmarkAdd
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -452,8 +462,25 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
 
     /** The author-set video a short links to (the row under the 概要欄), off the shorts page. */
     val linkedVideos = mutableStateMapOf<String, ShortLinkedVideo>()
+    /** The sound under a short (the music-note chip), off the same page. */
+    val sounds = mutableStateMapOf<String, ShortSound>()
     private val linkedAsked = HashSet<String>()
     private var linkedJob: Job? = null
+
+    /** The sound panel: its title (null = closed) and the shorts that use it. */
+    var soundTitle by mutableStateOf<String?>(null)
+        private set
+    var soundVideos by mutableStateOf<List<VideoItem>>(emptyList())
+        private set
+    var soundNext by mutableStateOf<String?>(null)
+        private set
+    var soundLoading by mutableStateOf(false)
+        private set
+    var soundFailed by mutableStateOf(false)
+        private set
+    private var soundToken: String? = null
+    private var soundJob: Job? = null
+    private val soundCache = HashMap<String, FeedPage>()
 
     val comments = CommentsState(scope)
     var commentsOpen by mutableStateOf(false)
@@ -622,6 +649,7 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
         covered = false
         playing = false
         buffering = false
+        closeSound()
         pool.forEach { it.exo.playWhenReady = false }
         val back = saved
         if (back != null) {
@@ -723,13 +751,17 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
                     runCatching { YouTube.details(id, wait = false) }.getOrNull()?.let { details[id] = it }
                 }
             }
-            // The author's linked video (the row under the 概要欄): read off the short's page,
-            // once — one page at a time, so a fast swipe doesn't queue a pile of them.
-            if (linkedVideos[id] == null && linkedAsked.add(id)) {
+            // The author's linked video and the short's sound (the rows under the 概要欄):
+            // read off the short's page, once — one page at a time, so a fast swipe doesn't
+            // queue a pile of them.
+            if ((linkedVideos[id] == null || sounds[id] == null) && linkedAsked.add(id)) {
                 linkedJob?.cancel()
                 linkedJob = scope.launch {
-                    runCatching { InnerTube.shortLinkedVideo(id) }
-                        .onSuccess { it?.let { linkedVideos[id] = it } }
+                    runCatching { InnerTube.shortPageLinks(id) }
+                        .onSuccess { links ->
+                            links?.linked?.let { linkedVideos[id] = it }
+                            links?.sound?.let { sounds[id] = it }
+                        }
                         .onFailure { if (it is CancellationException) throw it; linkedAsked.remove(id) }
                 }
             }
@@ -886,7 +918,7 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
         val now = assigned[cur]
         if (now != null && !now.prepared) prepare(now, "on screen")
         now?.capMs = Long.MAX_VALUE
-        pool.forEach { it.exo.playWhenReady = it === now && foreground && !userPaused && !covered && scrub == null }
+        pool.forEach { it.exo.playWhenReady = it === now && foreground && !userPaused && !covered && soundTitle == null && scrub == null }
         // The shorts after it: their first seconds once this one has a safe lead, all of each
         // once everything before it is loaded.
         // Nothing else starts until this short has played its first second: three players starting
@@ -1256,6 +1288,52 @@ class ShortsState(context: Context, private val scope: CoroutineScope) {
         channelMenu = !channelMenu
     }
 
+    /**
+     * The music-note chip: the panel of shorts that use [sound], the audio-pivot browse the
+     * short's page points at. Its first page is cached per token for the session.
+     */
+    fun openSound(sound: ShortSound) {
+        if (soundTitle == sound.title && soundToken == sound.token && !soundFailed) return
+        soundTitle = sound.title
+        soundToken = sound.token
+        soundFailed = false
+        soundCache[sound.token]?.let { page ->
+            soundVideos = page.videos
+            soundNext = page.next
+            soundLoading = false
+            return
+        }
+        soundVideos = emptyList()
+        soundNext = null
+        soundLoading = true
+        if (active) tick()
+        soundJob?.cancel()
+        soundJob = scope.launch {
+            try {
+                val page = InnerTube.soundShorts(sound.token)
+                soundCache[sound.token] = page
+                soundVideos = page.videos
+                soundNext = page.next
+                if (page.videos.isEmpty()) soundFailed = true
+            } catch (it: CancellationException) {
+                throw it
+            } catch (_: Exception) {
+                soundFailed = true
+            } finally {
+                soundLoading = false
+            }
+        }
+    }
+
+    fun closeSound() {
+        soundJob?.cancel()
+        soundJob = null
+        soundTitle = null
+        soundLoading = false
+        soundFailed = false
+        if (active) tick()
+    }
+
     /** A page went over Shorts (or away): pause the short under it (or carry on). */
     fun cover(value: Boolean) {
         if (covered == value) return
@@ -1565,6 +1643,30 @@ fun ShortsScreen(
             }
         }
         if (!pipOnly) ShortsChannelMenu(shorts, bottom = overlayBottom + 52.dp, onChannel = onChannel)
+        if (!pipOnly) ShortsSoundSheet(shorts, overlayBottom, onOpenShorts)
+    }
+}
+
+/**
+ * A short's bottom chip: one line in a round dark glass, its icon ahead. The glass is what
+ * makes the words read over a white short, where plain white text disappeared.
+ */
+@Composable
+private fun ShortChip(icon: ImageVector, text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color.Black.copy(alpha = 0.55f))
+            .pressable(onClick = onClick)
+            .padding(start = 9.dp, end = 10.dp, top = 5.dp, bottom = 5.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = Ink, modifier = Modifier.size(14.dp))
+        Text(
+            text, color = Ink, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+            maxLines = 1, overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -1871,29 +1973,44 @@ private fun ShortPage(
                         )
                     }
                 }
-                // The video the author linked under a short — YouTube's blue-circle row at the
-                // 概要欄's bottom edge, whether the 概要欄 is open or not: another short plays in
-                // the shorts' pager, a video in the player. The title alone opens it; a short
-                // with no linked video has no row (the author's channel stays on the rail).
+                // YouTube's two chips under the 概要欄: the video the author linked (a play
+                // triangle; another short plays in the shorts' pager, a video in the player)
+                // and the sound (a music note; the panel of shorts that use it). Each pill
+                // carries its own dark glass, so its words read over a white short too. A
+                // short with no linked video has no link chip (the channel stays on the rail).
                 val linked = shorts.linkedVideos[item.id]
-                if (linked != null) {
+                val sound = shorts.sounds[item.id]
+                if (linked != null || sound != null) {
                     Spacer(Modifier.height(9.dp))
-                    Text(
-                        linked.title,
-                        color = Ink, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis, style = shade,
-                        modifier = Modifier
-                            .pressable {
-                                val target = VideoItem(
-                                    id = linked.id, title = linked.title,
-                                    channel = details.item.channel, channelUrl = details.item.channelUrl,
-                                    thumbnail = linked.thumbnail, avatar = null,
-                                    durationSec = 0, views = 0, uploaded = null,
-                                )
-                                if (linked.short) onOpenShorts(ShortsList(listOf(target), 0)) else onOpenVideo(target)
+                    // Two chips share the width, each at most half; one chip keeps its own
+                    // width and starts at the left edge, like YouTube's.
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        val chipWidth = (maxWidth - 6.dp) / 2
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if (linked != null) {
+                                ShortChip(
+                                    icon = Icons.Rounded.PlayArrow,
+                                    text = linked.title,
+                                    modifier = Modifier.widthIn(max = chipWidth),
+                                ) {
+                                    val target = VideoItem(
+                                        id = linked.id, title = linked.title,
+                                        channel = details.item.channel, channelUrl = details.item.channelUrl,
+                                        thumbnail = linked.thumbnail, avatar = null,
+                                        durationSec = 0, views = 0, uploaded = null,
+                                    )
+                                    if (linked.short) onOpenShorts(ShortsList(listOf(target), 0)) else onOpenVideo(target)
+                                }
                             }
-                            .padding(vertical = 2.dp),
-                    )
+                            if (sound != null) {
+                                ShortChip(
+                                    icon = Icons.Rounded.MusicNote,
+                                    text = sound.title,
+                                    modifier = Modifier.widthIn(max = chipWidth),
+                                ) { shorts.openSound(sound) }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2669,6 +2786,109 @@ private fun MenuRow(icon: ImageVector, label: String, enabled: Boolean, onClick:
         Icon(icon, contentDescription = null, tint = Ink, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(14.dp))
         Text(label, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+/**
+ * The sound panel (the music-note chip): the shorts that use the same sound, a 3-column wall
+ * of 9:16 tiles. Tapping one plays the whole wall in the shorts pager; the ×, Back or a tap
+ * outside closes it. The page after the first rides [InnerTube.soundShorts] as the pager asks.
+ */
+@Composable
+private fun ShortsSoundSheet(shorts: ShortsState, overlayBottom: Dp, onOpenShorts: (ShortsList) -> Unit) {
+    val title = shorts.soundTitle ?: return
+    Box(Modifier.fillMaxSize()) {
+        // Outside the card: any touch only closes it (the short underneath doesn't feel it).
+        Box(
+            Modifier.fillMaxSize().pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false).consume()
+                    shorts.closeSound()
+                    do {
+                        val event = awaitPointerEvent()
+                        event.changes.forEach { it.consume() }
+                    } while (event.changes.any { it.pressed })
+                }
+            },
+        )
+        Column(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .fillMaxHeight(0.62f)
+                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .background(Color(0xFF151515).copy(alpha = 0.97f))
+                .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } },
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 8.dp),
+            ) {
+                Icon(Icons.Rounded.MusicNote, contentDescription = null, tint = Ink, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(9.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        title, color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        str(R.string.shorts_sound_shorts),
+                        color = Ink.copy(alpha = 0.65f), fontSize = 11.5.sp, maxLines = 1,
+                    )
+                }
+                Box(
+                    Modifier.size(40.dp).pressable { shorts.closeSound() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Rounded.Close, contentDescription = str(R.string.shorts_back),
+                        tint = Ink, modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+            when {
+                shorts.soundLoading -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Ink, strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
+                }
+                shorts.soundFailed -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text(
+                        str(R.string.shorts_sound_failed), color = Ink.copy(alpha = 0.75f),
+                        fontSize = 13.sp, textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp),
+                    )
+                }
+                else -> LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 4.dp, bottom = overlayBottom + 8.dp),
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                ) {
+                    itemsIndexed(shorts.soundVideos) { i, video ->
+                        Box(
+                            Modifier
+                                .aspectRatio(9f / 16f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .pressable {
+                                    shorts.closeSound()
+                                    onOpenShorts(
+                                        ShortsList(
+                                            items = shorts.soundVideos, start = i,
+                                            next = shorts.soundNext,
+                                            more = { token -> InnerTube.soundShorts(token) },
+                                        ),
+                                    )
+                                },
+                        ) {
+                            ResolvedThumbnail(
+                                url = video.thumbnail, videoId = video.id, portrait = true,
+                                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
