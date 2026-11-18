@@ -1554,7 +1554,7 @@ fun ShortsScreen(
                 },
         ) {
             when {
-                shorts.items.isNotEmpty() -> key(shorts.feedVersion) { ShortsPager(shorts, overlayBottom, progress, onChannel, onOpenShorts, onOpenVideo) }
+                shorts.items.isNotEmpty() -> key(shorts.feedVersion) { ShortsPager(shorts, overlayBottom, progress, onOpenShorts, onOpenVideo) }
                 shorts.error != null && !shorts.loading -> ShortsProblem(shorts.error.orEmpty(), onRetry = shorts::refresh)
                 else -> CircularProgressIndicator(color = Ink, strokeWidth = 3.dp, modifier = Modifier.align(Alignment.Center).size(36.dp))
             }
@@ -1682,7 +1682,6 @@ private fun ShortsPager(
     shorts: ShortsState,
     overlayBottom: Dp,
     barProgress: () -> Float,
-    onChannel: (String) -> Unit,
     onOpenShorts: (ShortsList) -> Unit,
     onOpenVideo: (VideoItem) -> Unit,
 ) {
@@ -1700,7 +1699,7 @@ private fun ShortsPager(
         // The pages either side are composed, so their views (and loaded first frames) are ready mid-swipe.
         beyondViewportPageCount = 1,
         key = { shorts.items.getOrNull(it)?.id ?: it },
-    ) { page -> ShortPage(shorts, page, overlayBottom, barProgress, onChannel, onOpenShorts, onOpenVideo) }
+    ) { page -> ShortPage(shorts, page, overlayBottom, barProgress, onOpenShorts, onOpenVideo) }
 }
 
 @Composable
@@ -1709,7 +1708,6 @@ private fun ShortPage(
     page: Int,
     overlayBottom: Dp,
     barProgress: () -> Float,
-    onChannel: (String) -> Unit,
     onOpenShorts: (ShortsList) -> Unit,
     onOpenVideo: (VideoItem) -> Unit,
 ) {
@@ -1873,16 +1871,17 @@ private fun ShortPage(
                         )
                     }
                 }
-                // The author's link under a short — the blue-circle row YouTube puts at the
-                // 概要欄's bottom edge, whether the 概要欄 is open or not: the video the author
-                // set for the short (another short plays in the shorts' pager, a video in the
-                // player); with none set, the channel's Videos tab.
+                // The video the author linked under a short — YouTube's blue-circle row at the
+                // 概要欄's bottom edge, whether the 概要欄 is open or not: another short plays in
+                // the shorts' pager, a video in the player. The title alone opens it; a short
+                // with no linked video has no row (the author's channel stays on the rail).
                 val linked = shorts.linkedVideos[item.id]
                 if (linked != null) {
                     Spacer(Modifier.height(9.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp),
+                    Text(
+                        linked.title,
+                        color = Ink, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis, style = shade,
                         modifier = Modifier
                             .pressable {
                                 val target = VideoItem(
@@ -1894,34 +1893,7 @@ private fun ShortPage(
                                 if (linked.short) onOpenShorts(ShortsList(listOf(target), 0)) else onOpenVideo(target)
                             }
                             .padding(vertical = 2.dp),
-                    ) {
-                        ResolvedThumbnail(
-                            url = linked.thumbnail, videoId = linked.id, portrait = linked.short,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(24.dp).clip(CircleShape).background(Ink.copy(alpha = 0.16f)),
-                        )
-                        Text(
-                            linked.title,
-                            color = Ink, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis, style = shade,
-                        )
-                    }
-                } else details.item.channelUrl?.let { channelUrl ->
-                    Spacer(Modifier.height(9.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp),
-                        modifier = Modifier
-                            .pressable { onChannel("$channelUrl/videos") }
-                            .padding(vertical = 2.dp),
-                    ) {
-                        ChannelAvatar(details.item.avatar, details.item.channel, size = 20)
-                        Text(
-                            str(R.string.shorts_more_from, details.item.channel),
-                            color = Ink, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis, style = shade,
-                        )
-                    }
+                    )
                 }
             }
         }
