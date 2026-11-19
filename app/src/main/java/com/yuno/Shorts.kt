@@ -1621,6 +1621,10 @@ fun ShortsScreen(
     // The floating window is a short (the shorts' PiP): its panels stand down around it.
     val pip = LocalPictureInPicture.current
     val pipOnly = pip?.active == true && pip.inShorts
+    // The sound panel is the fork's: its switch (Settings › Fork features) closes it at once.
+    LaunchedEffect(ForkSwitches.shortSound) {
+        if (!ForkSwitches.shortSound) shorts.closeSound()
+    }
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         Box(
             Modifier
@@ -1978,8 +1982,8 @@ private fun ShortPage(
                 // and the sound (a music note; the panel of shorts that use it). Each pill
                 // carries its own dark glass, so its words read over a white short too. A
                 // short with no linked video has no link chip (the channel stays on the rail).
-                val linked = shorts.linkedVideos[item.id]
-                val sound = shorts.sounds[item.id]
+                val linked = shorts.linkedVideos[item.id]?.takeIf { ForkSwitches.shortLinkedVideo }
+                val sound = shorts.sounds[item.id]?.takeIf { ForkSwitches.shortSound }
                 if (linked != null || sound != null) {
                     Spacer(Modifier.height(9.dp))
                     // Two chips share the width, each at most half; one chip keeps its own
@@ -2796,26 +2800,53 @@ private fun MenuRow(icon: ImageVector, label: String, enabled: Boolean, onClick:
  */
 @Composable
 private fun ShortsSoundSheet(shorts: ShortsState, overlayBottom: Dp, onOpenShorts: (ShortsList) -> Unit) {
-    val title = shorts.soundTitle ?: return
+    // The title outlives the state for the closing slide (closeSound() clears it at once).
+    var lastTitle by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(shorts.soundTitle) {
+        shorts.soundTitle?.let { lastTitle = it }
+    }
+    val open = shorts.soundTitle != null && ForkSwitches.shortSound
+    val title = if (open) shorts.soundTitle else lastTitle
+    if (title == null) return
+    // The channel card's motion: a spring up from the bottom edge, a short ease-out back down.
+    val reduced = rememberReducedMotion()
+    val rise = remember { Animatable(0f) }
+    LaunchedEffect(open, reduced) {
+        rise.animateTo(
+            if (open) 1f else 0f,
+            if (reduced) tween(0)
+            else if (open) spring(dampingRatio = 0.78f, stiffness = 520f)
+            else tween(180, easing = Motion.Exit),
+        )
+    }
+    val shown = rise.value
+    if (!open && shown < 0.01f) return
     Box(Modifier.fillMaxSize()) {
         // Outside the card: any touch only closes it (the short underneath doesn't feel it).
-        Box(
-            Modifier.fillMaxSize().pointerInput(Unit) {
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false).consume()
-                    shorts.closeSound()
-                    do {
-                        val event = awaitPointerEvent()
-                        event.changes.forEach { it.consume() }
-                    } while (event.changes.any { it.pressed })
-                }
-            },
-        )
+        // During the closing slide the layer stands down, so the touch reaches the short again.
+        if (open) {
+            Box(
+                Modifier.fillMaxSize().pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false).consume()
+                        shorts.closeSound()
+                        do {
+                            val event = awaitPointerEvent()
+                            event.changes.forEach { it.consume() }
+                        } while (event.changes.any { it.pressed })
+                    }
+                },
+            )
+        }
         Column(
             Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .fillMaxHeight(0.62f)
+                .graphicsLayer {
+                    alpha = shown.coerceIn(0f, 1f)
+                    translationY = (1f - shown) * size.height
+                }
                 .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                 .background(Color(0xFF151515).copy(alpha = 0.97f))
                 .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } },

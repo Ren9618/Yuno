@@ -183,7 +183,8 @@ internal fun SearchField(
  * on the screen has answered to it.
  */
 internal class SettingsSearch(
-    query: String,
+    /** What was typed in the search field (blank on a page). */
+    val query: String,
     /** Drawing one category's page rather than the main one: its top bar names it. */
     val inPage: Boolean = false,
 ) {

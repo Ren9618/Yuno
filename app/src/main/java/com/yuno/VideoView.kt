@@ -676,7 +676,7 @@ fun VideoContent(
                                     LiveChip(state.durationMs - state.positionMs <= 20_000) { touched(); state.jumpToLiveEdge() }
                                 }
                             }
-                            state.chapterAt(shownMs)?.let { chapter ->
+                            if (ForkSwitches.chapterMarks) state.chapterAt(shownMs)?.let { chapter ->
                                 Text(
                                     " · $chapter", color = Color.White.copy(alpha = 0.72f), fontSize = 12.sp, fontWeight = FontWeight.Bold,
                                     maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -736,7 +736,7 @@ fun VideoContent(
             val lockedLive = state.live && !state.liveDvr
             Scrubber(
                 segments = if (lockedLive) emptyList() else segments,
-                chapters = if (lockedLive) emptyList() else state.details?.chapters.orEmpty(),
+                chapters = if (lockedLive || !ForkSwitches.chapterMarks) emptyList() else state.details?.chapters.orEmpty(),
                 positionMs = if (lockedLive) 1L else state.positionMs,
                 bufferedMs = if (lockedLive) 1L else state.bufferedMs,
                 durationMs = if (lockedLive) 1L else state.durationMs,

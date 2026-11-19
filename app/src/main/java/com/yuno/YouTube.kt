@@ -485,7 +485,7 @@ object BotCheck {
             StreamCache.keepRefused(id, partial)
             // The 360p one plays for now; the check is waited out in the background and the
             // real streams swap in when it passes (the service's StreamRecoverer).
-            BotCheckRecovery.schedule(id)
+            if (ForkSwitches.botCheckRecovery) BotCheckRecovery.schedule(id)
             return partial
         }
         Log.w("Yuno", "bot check for $id; giving up")

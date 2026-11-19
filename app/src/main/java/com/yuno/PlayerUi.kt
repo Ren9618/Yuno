@@ -299,7 +299,10 @@ fun PlayerScreen(
                             // The 概要欄's chapter timestamps seek there (as YouTube's own do).
                             val context = LocalContext.current
                             Text(
-                                linkifiedDescription(details.description, DescriptionLinkBlue, onSeek = { ms -> state.seekTo(ms) }) { url ->
+                                linkifiedDescription(
+                                    details.description, DescriptionLinkBlue,
+                                    onSeek = if (ForkSwitches.chapterMarks) ({ ms -> state.seekTo(ms) }) else null,
+                                ) { url ->
                                     try {
                                         context.startActivity(
                                             android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))

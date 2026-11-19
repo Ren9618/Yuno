@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PictureInPictureAlt
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.SmartDisplay
 import androidx.compose.material.icons.rounded.Speed
@@ -92,6 +93,7 @@ enum class SettingsPage(@StringRes val titleRes: Int, val icon: ImageVector) {
     Captions(R.string.captions_title, Icons.Rounded.ClosedCaption),
     SponsorBlock(R.string.settings_sponsorblock, SfIcons.FastForward),
     Enhancers(R.string.settings_enhancers, SfIcons.AutoAwesome),
+    ForkFeatures(R.string.settings_fork_features, SfIcons.Extension),
     Shorts(R.string.ui_shorts, SfIcons.Shorts),
     Appearance(R.string.ui_appearance, SfIcons.Palette),
     Language(R.string.language_title, SfIcons.Language),
@@ -181,6 +183,7 @@ private fun MainPage(
         CaptionsBody(search)
         SponsorBlockBody(search)
         EnhancersBody(search)
+        ForkFeaturesBody(search)
         ShortsBody(search)
         AppearanceBody(search)
         LanguageBody(search)
@@ -211,6 +214,7 @@ private fun PageBody(
         SettingsPage.Captions -> CaptionsBody(search)
         SettingsPage.SponsorBlock -> SponsorBlockBody(search)
         SettingsPage.Enhancers -> EnhancersBody(search)
+        SettingsPage.ForkFeatures -> ForkFeaturesBody(search)
         SettingsPage.Shorts -> ShortsBody(search)
         SettingsPage.Appearance -> AppearanceBody(search)
         SettingsPage.Language -> LanguageBody(search)
@@ -531,6 +535,68 @@ private fun EnhancersBody(search: SettingsSearch) {
             row(title, line) {
                 ToggleRow(SfIcons.Video, title, line, CodecSettings.isDisabled(family)) { CodecSettings.updateDisabled(family, it) }
             }
+        }
+    }
+}
+
+/**
+ * Settings › Fork features: the fork's own additions, grouped by where they show — the short's
+ * rows, the library, the player, comments and the connection. Each switch is the fork's alone
+ * and starts on; the additions that already had a switch (autoplay, picture-in-picture, the
+ * shorts' ratio, the Enhancements page and the tab bar) keep it on their own page.
+ */
+@Composable
+private fun ForkFeaturesBody(search: SettingsSearch) {
+    // The page carries five groups, so their headings stay on screen: the same query, but not
+    // as a page (a page's bar names it, and would hide the first group's heading).
+    val groups = SettingsSearch(search.query, inPage = false)
+    SearchableSettingsGroup(groups, header = stringResource(R.string.settings_fork_group_shorts)) {
+        val linkedTitle = stringResource(R.string.settings_fork_short_linked_title)
+        val linkedLine = stringResource(R.string.settings_fork_short_linked_line)
+        row(linkedTitle, linkedLine, "short", "linked", "related") {
+            ToggleRow(Icons.Rounded.PlayArrow, linkedTitle, linkedLine, ForkSwitches.shortLinkedVideo) { ForkSwitches.updateShortLinkedVideo(it) }
+        }
+        val soundTitle = stringResource(R.string.settings_fork_short_sound_title)
+        val soundLine = stringResource(R.string.settings_fork_short_sound_line)
+        row(soundTitle, soundLine, "short", "sound", "music", "audio") {
+            ToggleRow(Icons.Rounded.MusicNote, soundTitle, soundLine, ForkSwitches.shortSound) { ForkSwitches.updateShortSound(it) }
+        }
+    }
+    SearchableSettingsGroup(groups, header = stringResource(R.string.settings_fork_group_library)) {
+        val savedTitle = stringResource(R.string.settings_fork_saved_shorts_title)
+        val savedLine = stringResource(R.string.settings_fork_saved_shorts_line)
+        row(savedTitle, savedLine, "library", "saved", "shorts", "playlist") {
+            ToggleRow(SfIcons.PlaylistPlay, savedTitle, savedLine, ForkSwitches.savedShortsPin) { ForkSwitches.updateSavedShortsPin(it) }
+        }
+        val historyTitle = stringResource(R.string.settings_fork_history_shorts_title)
+        val historyLine = stringResource(R.string.settings_fork_history_shorts_line)
+        row(historyTitle, historyLine, "library", "history", "shorts") {
+            ToggleRow(SfIcons.History, historyTitle, historyLine, ForkSwitches.historyShortsShelf) { ForkSwitches.updateHistoryShortsShelf(it) }
+        }
+    }
+    SearchableSettingsGroup(groups, header = stringResource(R.string.settings_fork_group_player)) {
+        val chaptersTitle = stringResource(R.string.settings_fork_chapters_title)
+        val chaptersLine = stringResource(R.string.settings_fork_chapters_line)
+        row(chaptersTitle, chaptersLine, "player", "chapters", "description", "timestamps") {
+            ToggleRow(Icons.AutoMirrored.Rounded.FormatListBulleted, chaptersTitle, chaptersLine, ForkSwitches.chapterMarks) { ForkSwitches.updateChapterMarks(it) }
+        }
+    }
+    SearchableSettingsGroup(groups, header = stringResource(R.string.settings_fork_group_comments)) {
+        val translationTitle = stringResource(R.string.settings_fork_translation_title)
+        val translationLine = stringResource(R.string.settings_fork_translation_line)
+        row(translationTitle, translationLine, "comments", "translate", "translation") {
+            ToggleRow(SfIcons.Translate, translationTitle, translationLine, ForkSwitches.commentTranslation) { ForkSwitches.updateCommentTranslation(it) }
+        }
+    }
+    SearchableSettingsGroup(
+        groups,
+        header = stringResource(R.string.settings_fork_group_connection),
+        footer = stringResource(R.string.settings_fork_footer),
+    ) {
+        val botTitle = stringResource(R.string.settings_fork_bot_recovery_title)
+        val botLine = stringResource(R.string.settings_fork_bot_recovery_line)
+        row(botTitle, botLine, "connection", "bot", "recovery", "background") {
+            ToggleRow(SfIcons.Cached, botTitle, botLine, ForkSwitches.botCheckRecovery) { ForkSwitches.updateBotCheckRecovery(it) }
         }
     }
 }

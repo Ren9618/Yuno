@@ -545,7 +545,7 @@ fun YunoApp() {
 
     // A channel opened from Shorts sits over the short, which waits paused.
     SideEffect { shorts.cover(tab == Tab.Shorts && shownRoute() is AppRoute.Channel) }
-    BackHandler(enabled = tab == Tab.Shorts && shorts.soundTitle != null) { shorts.closeSound() }
+    BackHandler(enabled = tab == Tab.Shorts && ForkSwitches.shortSound && shorts.soundTitle != null) { shorts.closeSound() }
     BackHandler(enabled = tab == Tab.Shorts && shorts.channelMenu) { shorts.channelMenu = false }
 
     val hazeState = remember { HazeState() }

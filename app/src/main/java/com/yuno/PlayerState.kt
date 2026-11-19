@@ -418,7 +418,7 @@ class PlayerState(private val scope: CoroutineScope) {
                     // The panel keeps its buttons, and the check is waited out in the
                     // background: the video opens itself when it passes (or sooner, when
                     // the network changes).
-                    if (botCheck) BotCheckRecovery.schedule(item.id)
+                    if (botCheck && ForkSwitches.botCheckRecovery) BotCheckRecovery.schedule(item.id)
                     // Comments wait for details; without this their spinner never stopped.
                     comments.load(item.id)
                 }

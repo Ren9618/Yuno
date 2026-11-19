@@ -414,7 +414,7 @@ fun LibraryScreen(
                 // The history's shorts, which YouTube keeps beside its videos: their own shelf,
                 // opened in the shorts' own pager ([ShortsList], paged on over the history).
                 val historyShorts = lib.history.shorts
-                if (signedIn && historyShorts.isNotEmpty()) {
+                if (ForkSwitches.historyShortsShelf && signedIn && historyShorts.isNotEmpty()) {
                     Spacer(Modifier.height(12.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -451,7 +451,7 @@ fun LibraryScreen(
                 val pinned = buildList {
                     add(PlaylistRef("WL", watchLaterTitle, null, null))
                     add(PlaylistRef("LL", likedVideosTitle, null, null))
-                    if (savedId != null && lib.playlists.none { it.id == savedId }) {
+                    if (ForkSwitches.savedShortsPin && savedId != null && lib.playlists.none { it.id == savedId }) {
                         add(PlaylistRef(savedId, SavedShortsPlaylist.title ?: savedShortsTitle, null, null))
                     }
                 }

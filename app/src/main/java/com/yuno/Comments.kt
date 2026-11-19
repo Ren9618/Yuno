@@ -680,7 +680,7 @@ private fun CommentRow(comment: Comment, state: CommentsState, isReply: Boolean 
                     )
                 }
                 // Translation (the fork's extra): the comment in the app's language, shown below.
-                if (!comment.id.startsWith("local-")) {
+                if (ForkSwitches.commentTranslation && !comment.id.startsWith("local-")) {
                     Spacer(Modifier.width(16.dp))
                     Text(
                         stringResource(if (state.translatedOpen[comment.id] == true) R.string.comments_show_original else R.string.comments_translate),
@@ -690,7 +690,7 @@ private fun CommentRow(comment: Comment, state: CommentsState, isReply: Boolean 
                 }
             }
             // The translation sits under the original (like the web's own), collapsible.
-            if (state.translatedOpen[comment.id] == true) {
+            if (ForkSwitches.commentTranslation && state.translatedOpen[comment.id] == true) {
                 Spacer(Modifier.height(4.dp))
                 when {
                     state.translating[comment.id] == true ->

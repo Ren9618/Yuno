@@ -14,6 +14,28 @@
     <string name="settings_account">Account</string>
     <string name="settings_about">About</string>
     <string name="settings_sponsorblock" translatable="false">SponsorBlock</string>
+    <!-- Settings › Fork features: the fork's own additions, grouped by where they show. -->
+    <string name="settings_fork_features">Fork features</string>
+    <string name="settings_fork_group_shorts">Shorts</string>
+    <string name="settings_fork_group_library">Library</string>
+    <string name="settings_fork_group_player">Player</string>
+    <string name="settings_fork_group_comments">Comments</string>
+    <string name="settings_fork_group_connection">Connection</string>
+    <string name="settings_fork_short_linked_title">Linked video row</string>
+    <string name="settings_fork_short_linked_line">The play chip under a short that opens the video its author linked</string>
+    <string name="settings_fork_short_sound_title">Sound reference</string>
+    <string name="settings_fork_short_sound_line">The music chip and the wall of other shorts that use the sound</string>
+    <string name="settings_fork_saved_shorts_title">Pin Saved shorts</string>
+    <string name="settings_fork_saved_shorts_line">Keep YouTube\'s saved-shorts playlist in Library</string>
+    <string name="settings_fork_history_shorts_title">Shorts in History</string>
+    <string name="settings_fork_history_shorts_line">Show History\'s shorts in their own shelf</string>
+    <string name="settings_fork_chapters_title">Chapter marks</string>
+    <string name="settings_fork_chapters_line">Notches on the scrubber and tappable timestamps in the description</string>
+    <string name="settings_fork_translation_title">Comment translation</string>
+    <string name="settings_fork_translation_line">The Translate button under comments</string>
+    <string name="settings_fork_bot_recovery_title">Recover from the bot check</string>
+    <string name="settings_fork_bot_recovery_line">Wait the check out in the background and reopen the video by itself</string>
+    <string name="settings_fork_footer">These switches change only the features this fork adds. The fork settings that already had their own switch stay in their own sections.</string>
     <!-- A quick toggle's state. -->
     <string name="settings_on">On</string>
     <string name="settings_off">Off</string>

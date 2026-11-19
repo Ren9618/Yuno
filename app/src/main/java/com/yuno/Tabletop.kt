@@ -115,7 +115,7 @@ fun TabletopPlayer(player: PlayerState, foldTop: Dp, foldBottom: Dp) {
 private fun TimeRow(player: PlayerState, scrubMs: Long?) {
     val position = scrubMs ?: player.positionMs
     val duration = player.durationMs
-    val chapter = player.chapterAt(position)
+    val chapter = if (ForkSwitches.chapterMarks) player.chapterAt(position) else null
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             formatDuration(position) + " / " + formatDuration(duration),
@@ -142,7 +142,7 @@ private fun ScrubSurface(player: PlayerState, onScrub: (Long?) -> Unit) {
     val density = LocalDensity.current
     val duration = player.durationMs.coerceAtLeast(1L)
     val boards = player.details?.storyboards.orEmpty()
-    val chapters = player.details?.chapters.orEmpty()
+    val chapters = if (ForkSwitches.chapterMarks) player.details?.chapters.orEmpty() else emptyList()
     val sheets = rememberStoryboardSheets(player)
     var width by remember { mutableStateOf(1) }
     var scrub by remember { mutableStateOf<Float?>(null) }
@@ -207,7 +207,7 @@ private fun ScrubSurface(player: PlayerState, onScrub: (Long?) -> Unit) {
         // While scrubbing: the landing time over the finger, kept inside the strip's width.
         scrub?.let { f ->
             val ms = (f * duration).toLong()
-            val label = listOfNotNull("→ " + formatDuration(ms), player.chapterAt(ms)).joinDots()
+            val label = listOfNotNull("→ " + formatDuration(ms), player.chapterAt(ms).takeIf { ForkSwitches.chapterMarks }).joinDots()
             val half = with(density) { 70.dp.toPx() }
             Box(
                 Modifier
